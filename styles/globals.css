@@ -1,0 +1,60 @@
+body {
+  font-family: 'Open Sans', sans-serif !important;
+}
+
+:root {
+  --primaryColor: #006ad4;
+}
+
+::-webkit-scrollbar {
+  /* display: none; */
+  height: 7px;
+  width: 7px;
+  transition: 0.3s ease;
+  background: transparent;
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  background: transparent;
+  transition: 0.3s ease;
+}
+
+/* Handle */
+::-webkit-scrollbar-thumb {
+  /* visibility: hidden; */
+  background: rgba(34, 51, 84, 0.1);
+  height: 50px;
+  transition: 0.3s ease;
+  border-radius: 10px;
+}
+
+input[type='time']::-webkit-calendar-picker-indicator {
+  filter: invert(65%) sepia(13%) saturate(3207%) hue-rotate(200deg)
+    brightness(95%) contrast(80%);
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  visibility: visible;
+  transition: 0.3s ease;
+  /* background: #006ad4; */
+  /* background: #93a0b7; */
+  background: rgba(34, 51, 84, 0.3);
+  /* Background Color Change By Shahzaib On Demand Of Designer Basit and Product Team Color Code Provided By Designer Basit */
+}
+
+html {
+  overflow-y: overlay;
+  /* scroll-behavior: smooth !important; */
+}
+#app-content {
+  margin: 85px 5px 5px 85px;
+  overflow-y: hidden;
+  background-color: #f7f8fa;
+}
+
+#app-com-content {
+  /* height: calc(100vh - 66px); sch */
+  height: calc(100vh - 79px);
+}

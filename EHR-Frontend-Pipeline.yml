@@ -1,0 +1,112 @@
+trigger:
+  branches:
+    include:
+      - none
+ 
+pool:
+  name: Ubuntu- AgentPool
+  demands:
+  - Agent.Name -equals Agent01
+  
+variables:
+ 
+# Pipeline Variable NOT Require to Change
+ 
+- name: tag
+  value: $(Build.BuildId)
+- name: DockerImageName
+  value: $(DeploymentName)
+- name: Dockerfile
+  value: ehr.clients.reactjs/Dockerfile
+- name: containerRegistry
+  value: DQEMRContainer
+- name: namespace
+  value: default
+- name: envName
+  value: pre-release
+- name: kubernetesServiceConnection
+  value: AKS-Dev-Test
+- name: DeploymentName
+  value: ehr-fe
+
+
+ 
+#####################################################################
+  
+stages:
+ 
+- stage: Build
+  dependsOn: []
+  displayName: Build stage
+  jobs:
+  - job: Build
+    displayName: Build
+    steps:
+
+    - task: Docker@2
+      inputs:
+        containerRegistry: '$(containerRegistry)'
+        command: 'login'
+
+
+ 
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        containerRegistry: '$(containerRegistry)'
+        repository: '$(DockerImageName)'
+        command: 'buildAndPush'
+        Dockerfile: '$(Dockerfile)'
+        buildContext: '$(Build.SourcesDirectory)/ehr.clients.reactjs/'
+        tags: '$(tag)'
+        
+    #- task: PostBuildCleanup@3
+
+- stage: PreRelease
+  displayName: Deploy stage
+  dependsOn: Build
+ 
+ 
+  jobs:
+  - deployment: PreRelease
+    displayName: PreRelease
+    environment: $(envName)
+    strategy:
+      runOnce:
+        deploy:
+          steps:
+          - checkout: none
+          - bash: >
+              echo "##vso[task.setvariable variable=imageTag]$(Build.BuildId)"
+ 
+          - task: replacetokens@5
+            inputs:
+              rootDirectory: '$(Pipeline.Workspace)/s/Manifests/'
+              targetFiles: '**/*.*'
+              encoding: 'auto'
+              tokenPattern: 'custom'
+              tokenPrefix: '${'
+              tokenSuffix: '}'
+              writeBOM: true
+              verbosity: 'detailed'
+              actionOnMissing: 'fail'
+              keepToken: false
+              actionOnNoFiles: 'continue'
+              enableTransforms: false
+              enableRecursion: false
+              useLegacyPattern: false
+              enableTelemetry: true
+
+          - task: KubernetesManifest@0
+            displayName: Deploy to Kubernetes cluster
+            inputs:
+              action: 'deploy'
+              kubernetesServiceConnection: '$(kubernetesServiceConnection)'
+              namespace: '$(namespace)'
+              manifests: |
+                $(Pipeline.Workspace)/s/Manifests/01-Deployment.yml
+                $(Pipeline.Workspace)/s/Manifests/02-ClusterIP-Service.yml
+              containers: '$(containerRegistry)/$(imageRepository):$(tag)'
+ 
+ 
+          #- task: PostBuildCleanup@3

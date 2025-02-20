@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+  <g id="Group_11443" data-name="Group 11443" transform="translate(-23 -33.5)">
+    <g id="Home" transform="translate(23 33.5)">
+      <g id="dashboard" transform="translate(726 18)">
+        <g id="Layer_2" data-name="Layer 2" transform="translate(-726 -18)">
+          <g id="Rectangle_3126" data-name="Rectangle 3126" transform="translate(10.843)" fill="none" stroke="#6c757d" stroke-width="1.5">
+            <rect width="9.157" height="9.157" rx="2" stroke="none"/>
+            <rect x="0.75" y="0.75" width="7.657" height="7.657" rx="1.25" fill="none"/>
+          </g>
+          <g id="Rectangle_3127" data-name="Rectangle 3127" fill="none" stroke="#6c757d" stroke-width="1.5">
+            <rect width="9.157" height="9.157" rx="2" stroke="none"/>
+            <rect x="0.75" y="0.75" width="7.657" height="7.657" rx="1.25" fill="none"/>
+          </g>
+          <g id="Rectangle_3128" data-name="Rectangle 3128" transform="translate(10.843 10.843)" fill="none" stroke="#6c757d" stroke-width="1.5">
+            <rect width="9.157" height="9.157" rx="2" stroke="none"/>
+            <rect x="0.75" y="0.75" width="7.657" height="7.657" rx="1.25" fill="none"/>
+          </g>
+          <g id="Rectangle_3129" data-name="Rectangle 3129" transform="translate(0 10.843)" fill="none" stroke="#6c757d" stroke-width="1.5">
+            <rect width="9.157" height="9.157" rx="2" stroke="none"/>
+            <rect x="0.75" y="0.75" width="7.657" height="7.657" rx="1.25" fill="none"/>
+          </g>
+        </g>
+      </g>
+    </g>
+  </g>
+</svg>
