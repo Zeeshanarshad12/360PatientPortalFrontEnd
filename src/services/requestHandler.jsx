@@ -87,7 +87,18 @@ const GetGeneralLookup = (data) =>
               feature: featureConstants.static,
               ApiVersion2Req: flag
             }
-          );    
+          );  
+          
+          const CreateAuthorizedUser = (data,flag) =>
+    
+            post(
+             
+              SERVICE_URLSV2.CreateAuthorizedUser, data,
+              {
+                feature: featureConstants.static,
+                ApiVersion2Req: flag
+              }
+            );   
           
        const ShareDocument = (data) =>
    
@@ -110,6 +121,7 @@ const apiServicesV2 = {
   GetPatientCCDADetailCCDF,
   GetPatientCCDAActivityLog,
   InsertActivityLog,
+  CreateAuthorizedUser,
   ShareDocument
   
 };

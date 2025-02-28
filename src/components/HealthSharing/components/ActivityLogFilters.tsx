@@ -12,6 +12,7 @@ import {
 import { useActivityLoadState } from '@/components/HealthSharing/contexts/activityLoadStates';
 import { useDispatch, useSelector } from "@/store/index";
 import { GetPatientCCDAActivityLog } from '@/slices/patientprofileslice';
+import moment from 'moment';
 
 function ActivityLogFilter () {
    const dispatch = useDispatch();

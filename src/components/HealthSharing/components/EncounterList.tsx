@@ -52,9 +52,9 @@ function EncounterListData() {
       </Typography>
 
       {PatientEncounterData?.map((visit) => (
-        <React.Fragment key={visit.encounterTypeId}>
+        <React.Fragment key={visit.id}>
           <Grid
-            key={visit.encounterTypeId}
+            key={visit.id}
             container
             alignItems="center"
             justifyContent="space-between"
@@ -73,7 +73,7 @@ function EncounterListData() {
                 variant="outlined"
                 size="small"
                 sx={{ borderRadius: '5px' }}
-                onClick={() => handleViewEncounterDoc(visit.encounterTypeId)}
+                onClick={() => handleViewEncounterDoc(visit.id)}
               >
                 View
               </Button>

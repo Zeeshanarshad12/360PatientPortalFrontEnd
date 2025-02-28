@@ -27,6 +27,8 @@ function EncounterDetailsReport() {
  const [email, setEmail] = useState('andrew_doe@email.com');
  const [message, setMessage] = useState('');
  const [openSnackbar, setOpenSnackbar] = useState(false);
+ const [isTouched, setIsTouched] = useState(false);  // Track if user has clicked Send
+
     //Save ActivityLog Obj 
   const Logobj = {
     PatientId: localStorage.getItem('patientID'),
@@ -40,13 +42,18 @@ function EncounterDetailsReport() {
   const handleClickOpen = () =>{ 
     setOpen(true);
     setMessage('');
+    setIsTouched(false);
   }
   const handleClose = () => setOpen(false);
   const handleSendEmail  = () => {
-    setOpenSnackbar(true);
+    setIsTouched(true);
+    if (message.trim() === '') {
+      return; // Don't proceed if the message is empty
+    }
     dispatch(ShareDocument(Emailobj));
    if(ShareDocumentData==true){
     handleClose();
+    setOpenSnackbar(true);
     const LogEmailobj = {
       PatientId: localStorage.getItem('patientID'),
       ActivityTypeId: '4'
@@ -177,31 +184,19 @@ function EncounterDetailsReport() {
               disabled
               
             />
-
-            {/* <TextField
-              fullWidth
-              label="Message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              margin="dense"
-              variant="outlined"
-              multiline
-              rows={3}
-            />
-             */}
-            <TextField
-              fullWidth
-              label="Message"
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              margin="dense"
-              variant="outlined"
-              multiline
-              rows={3}
-              required
-              error={!message} // Show error if message is empty
-              helperText={message ? '' : 'Message cannot be empty'} // Custom helper text
-            />
+             <TextField
+          fullWidth
+          label="Message"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          margin="dense"
+          variant="outlined"
+          multiline
+          rows={3}
+          required
+          error={isTouched && !message} // Show error if message is empty and Send button is clicked
+          helperText={isTouched && !message ? 'Message cannot be empty' : ''} // Custom helper text when Send is clicked
+        />
 
           </Box>
         </DialogContent>

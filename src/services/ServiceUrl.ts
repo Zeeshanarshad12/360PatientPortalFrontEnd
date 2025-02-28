@@ -8,5 +8,6 @@ export const SERVICE_URLSV2 = {
   DownloadDocument: 'ccda/download',
   GetPatientCCDAActivityLog: 'patientportal/getpatientccdaactivitylog',
   InsertActivityLog: 'patientportal/insertactivitylog',
+  CreateAuthorizedUser: 'patientportal/createauthorizeduser',
   Share: '/ccda/share'
 };

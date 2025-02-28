@@ -21,7 +21,9 @@ const initialState = {
   clearcache: false,
   EncounterId:null,
   ShareDocumentData: null,
-  ShareDocumentLoader: false
+  ShareDocumentLoader: false,
+  CreateAuthorizedUserData: null,
+  CreateAuthorizedUserLoader: false,
 };
 
 export const ClearCahceNLogout: any = createAsyncThunk(
@@ -150,10 +152,25 @@ export const InsertActivityLog: any = createAsyncThunk(
     }
   }
 );
+export const CreateAuthorizedUser: any = createAsyncThunk(
+  'CreateAuthorizedUser',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.CreateAuthorizedUser(data, 'ApiVersion2Req'); 
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data.result;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+);
 export const ShareDocument: any = createAsyncThunk(
   'ShareDocument',
   async (data, thunkAPI) => {
-    debugger;
     const res = await apiServicesV2.ShareDocument(data);
     try {
       if (res?.status === 200 || res?.status === 201) {
@@ -202,6 +219,7 @@ const patientProfileSlice = createSlice({
       state.PatientEncounterLoader = true;
     },
     [GetPatientEncounterDetails.fulfilled]: (state: any, { payload }: any) => {
+      state.PatientEncounterData = [];
       state.PatientEncounterData = payload;
       state.PatientEncounterLoader = false;
     },
@@ -254,6 +272,16 @@ const patientProfileSlice = createSlice({
       state.InsertActivityLogLoader = false;
     },
 
+    [CreateAuthorizedUser.pending]: (state: any) => {
+      state.CreateAuthorizedUserLoader = true;
+    },
+    [CreateAuthorizedUser.fulfilled]: (state: any, { payload }: any) => {
+      state.CreateAuthorizedUserData = payload;
+      state.CreateAuthorizedUserLoader = false;
+    },
+    [CreateAuthorizedUser.rejected]: (state: any) => {
+      state.CreateAuthorizedUserLoader = false;
+    },
     
     [ShareDocument.pending]: (state: any) => {
       state.ShareDocumentLoader = true;

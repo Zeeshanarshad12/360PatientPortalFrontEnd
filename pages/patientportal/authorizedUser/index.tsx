@@ -1,7 +1,12 @@
-import React from "react";
+import React from 'react';
+import AuthorizedUserData from '@/components/AuthorizedUsers/index';
 
-const page = () => {
-  return <div>Patient Portal Authorized Users</div>;
+const AuthorizedUsers = () => {
+  return (
+    <>
+     <AuthorizedUserData /> {/* main page component */}
+    </>
+  );
 };
 
-export default page;
+export default AuthorizedUsers;

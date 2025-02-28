@@ -34,7 +34,7 @@ function ActivityLogData ()  {
     <>
       <Card
         sx={{
-          height: '60vh',
+          height: '65vh',
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'center',
@@ -47,7 +47,7 @@ function ActivityLogData ()  {
               rows={activityData.rows}
               columns={activityData.columns}
               autoPageSize
-              pageSize={5}
+              pageSize={10}
               sx={{
                 '.MuiDataGrid-columnSeparator': {
                   display: 'none'

@@ -38,6 +38,7 @@ function HealthRecordFilter() {
   };
 
   const getPatientencountersClick = () => {
+
     setIsEncounterLoad(false);
     setIsHealthRecordLoad(true);
 
@@ -46,6 +47,9 @@ function HealthRecordFilter() {
     } else {
       obj.dateflag = false;
     }
+    // // Convert fromDate and toDate to UTC with time
+    // obj.datefrom = moment.utc(fromDate).startOf('day').format('YYYY-MM-DD HH:mm:ss.SSSSSSSS');
+    // obj.dateto = moment.utc(toDate).startOf('day').format('YYYY-MM-DD HH:mm:ss.SSSSSSSS');
     dispatch(GetPatientEncounterDetails(obj));
   };
   return (
