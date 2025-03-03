@@ -15,7 +15,8 @@ import { useHealthRecordLoadState } from '@/components/HealthSharing/contexts/he
 import { useEncounterLoadState } from '@/components/HealthSharing/contexts/encounterLoadStates';
 import { GetPatientEncounterDetails } from '@/slices/patientprofileslice';
 import { useDispatch, useSelector } from '@/store/index';
-import moment from 'moment';
+// import moment from 'moment';
+import moment from 'moment-timezone';
 
 function HealthRecordFilter() {
   const dispatch = useDispatch();
@@ -47,7 +48,13 @@ function HealthRecordFilter() {
     } else {
       obj.dateflag = false;
     }
+    debugger;
     // // Convert fromDate and toDate to UTC with time
+      
+
+
+    obj.datefrom = moment(fromDate).tz('America/New_York').format('YYYY-MM-DD HH:mm:ss');
+    obj.dateto = moment(toDate).tz('America/New_York').format('YYYY-MM-DD HH:mm:ss');
     // obj.datefrom = moment.utc(fromDate).startOf('day').format('YYYY-MM-DD HH:mm:ss.SSSSSSSS');
     // obj.dateto = moment.utc(toDate).startOf('day').format('YYYY-MM-DD HH:mm:ss.SSSSSSSS');
     dispatch(GetPatientEncounterDetails(obj));
@@ -119,7 +126,7 @@ function HealthRecordFilter() {
                 sx={{ borderRadius: '5px' }}
                 onClick={getPatientencountersClick}
               >
-                Apply
+                Applyss
               </Button>
             </Grid>
           </Grid>
