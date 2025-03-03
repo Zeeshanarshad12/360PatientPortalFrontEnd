@@ -47,23 +47,26 @@ function EncounterDetailsReport() {
   }
   const handleClose = () => setOpen(false);
   const handleSendEmail  = () => {
+    debugger;
     setIsTouched(true);
     if (message.trim() === '') {
       return; // Don't proceed if the message is empty
     }
     dispatch(ShareDocument(Emailobj));
-  //  if(ShareDocumentData==true){
-  //   handleClose();
-  //   setOpenSnackbar(true);
-  //   const LogEmailobj = {
-  //     PatientId: localStorage.getItem('patientID'),
-  //     ActivityTypeId: '4'
-  //   };
-  //   dispatch(InsertActivityLog(LogEmailobj));
+   if(ShareDocumentData==true){
+    handleClose();
+    setOpenSnackbar(true);
+    const LogEmailobj = {
+      PatientId: localStorage.getItem('patientID'),
+      ActivityTypeId: '4'
+    };
+    dispatch(InsertActivityLog(LogEmailobj));
    
-  // }
+  }
 
   }
+
+
   useEffect(() => {
     // Check if ShareDocumentData is true
     if (ShareDocumentData === true) {
