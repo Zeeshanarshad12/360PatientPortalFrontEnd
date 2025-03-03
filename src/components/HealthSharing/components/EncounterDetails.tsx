@@ -18,6 +18,7 @@ import CloseIcon from '@mui/icons-material/Close';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { useDispatch,useSelector } from '@/store/index';
 import { InsertActivityLog, ShareDocument,} from '@/slices/patientprofileslice';
+import { useEffect } from 'react';
 
 function EncounterDetailsReport() {
 
@@ -51,17 +52,34 @@ function EncounterDetailsReport() {
       return; // Don't proceed if the message is empty
     }
     dispatch(ShareDocument(Emailobj));
-   if(ShareDocumentData==true){
-    handleClose();
-    setOpenSnackbar(true);
-    const LogEmailobj = {
-      PatientId: localStorage.getItem('patientID'),
-      ActivityTypeId: '4'
-    };
-    dispatch(InsertActivityLog(LogEmailobj));
+  //  if(ShareDocumentData==true){
+  //   handleClose();
+  //   setOpenSnackbar(true);
+  //   const LogEmailobj = {
+  //     PatientId: localStorage.getItem('patientID'),
+  //     ActivityTypeId: '4'
+  //   };
+  //   dispatch(InsertActivityLog(LogEmailobj));
    
+  // }
+
   }
-  }
+  useEffect(() => {
+    // Check if ShareDocumentData is true
+    if (ShareDocumentData === true) {
+      // Execute your logic when ShareDocumentData is updated
+      handleClose();
+      setOpenSnackbar(true);
+
+      const LogEmailobj = {
+        PatientId: localStorage.getItem('patientID'),
+        ActivityTypeId: '4',
+      };
+      dispatch(InsertActivityLog(LogEmailobj));
+    }
+  }, [ShareDocumentData, dispatch]); // Dependency on ShareDocumentData so the effect runs when it changes
+
+
   const { PatientCCDADetail } = useSelector(
     (state) => state.patientprofileslice
   );
