@@ -126,7 +126,7 @@ function HealthRecordFilter() {
                 sx={{ borderRadius: '5px' }}
                 onClick={getPatientencountersClick}
               >
-                Applyss
+                Apply
               </Button>
             </Grid>
           </Grid>
