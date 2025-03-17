@@ -1,9 +1,10 @@
 import { ReactElement } from 'react';
 import BaseLayout from 'src/layouts/BaseLayout';
-import LoginCover from './auth/login/cover';
+import Login from './auth/signin';
+// import LoginCover from './auth/login/cover';
 
 function Overview() {
-  return <LoginCover />;
+  return <Login/>;
 }
 
 export default Overview;

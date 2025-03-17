@@ -200,9 +200,14 @@ export const getisAuthenticated = () => {
       : null;
   }
 };
-export const setToken = (token) => {
+export const setToken = (token,Email?,FirstName?,LastName?,UserAccessType?) => {
   if (typeof window !== "undefined") {
-    return localStorage.setItem("token", token);
+     localStorage.setItem("token", token);
+     localStorage.setItem("Email", Email);
+     localStorage.setItem("FirstName", FirstName);
+     localStorage.setItem("LastName", LastName);
+     localStorage.setItem("UserAccessType", UserAccessType);
+     return;
   }
 };
 

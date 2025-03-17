@@ -15,6 +15,8 @@ import { IsParsable, stringAvatar } from "@/utils/functions";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Icons } from "@/icons/themeicons";
 import Image from "next/image";
+import { useRouter } from "next/router";
+
 
 const UserBoxButton = styled(Button)(
   ({ theme }) => `
@@ -54,16 +56,18 @@ const UserBoxDescription = styled(Typography)(
 );
 
 function HeaderUserbox() {
+  const router = useRouter();
   let userDetails: string;
   const { user } = useAuth0();
-  const userName: string = user?.email;
+  // const userName: string = user?.email;
+  const userName: string = localStorage.getItem("Email");
   if (typeof window !== "undefined") {
     userDetails = IsParsable(localStorage.getItem("user"))
       ? JSON.parse(localStorage.getItem("user"))
       : false;
   }
 
-  const Role = "Admin";
+  const Role = localStorage.getItem("UserAccessType");
   const ref = useRef<HTMLInputElement>(null);
   const [isOpen, setOpen] = useState<boolean>(false);
 
@@ -165,8 +169,11 @@ function HeaderUserbox() {
               <Button
                 sx={{ color: "gray" }}
                 fullWidth
-                onClick={async () =>
-                  logout({ returnTo: process.env.NEXT_PUBLIC_ORIGIN_URI })
+                onClick={async () =>{
+                  // logout({ returnTo: process.env.NEXT_PUBLIC_ORIGIN_URI })
+                  localStorage.clear()
+                  router.push(process.env.NEXT_PUBLIC_ORIGIN_URI)
+                }
                 }
               >
                 <span style={{ marginRight: "5px", marginTop: "5px" }}>

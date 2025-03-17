@@ -33,6 +33,7 @@ function EncounterDetailsReport() {
     //Save ActivityLog Obj 
   const Logobj = {
     PatientId: localStorage.getItem('patientID'),
+    Email : localStorage.getItem('Email'), 
     ActivityTypeId: '3'
   };
   const Emailobj ={
@@ -47,7 +48,7 @@ function EncounterDetailsReport() {
   }
   const handleClose = () => setOpen(false);
   const handleSendEmail  = () => {
-    debugger;
+    
     setIsTouched(true);
     if (message.trim() === '') {
       return; // Don't proceed if the message is empty
@@ -58,6 +59,7 @@ function EncounterDetailsReport() {
     setOpenSnackbar(true);
     const LogEmailobj = {
       PatientId: localStorage.getItem('patientID'),
+      Email : localStorage.getItem('Email'), 
       ActivityTypeId: '4'
     };
     dispatch(InsertActivityLog(LogEmailobj));
@@ -67,20 +69,21 @@ function EncounterDetailsReport() {
   }
 
 
-  useEffect(() => {
-    // Check if ShareDocumentData is true
-    if (ShareDocumentData === true) {
-      // Execute your logic when ShareDocumentData is updated
-      handleClose();
-      setOpenSnackbar(true);
+  // useEffect(() => {
+  //   // Check if ShareDocumentData is true
+  //   if (ShareDocumentData === true) {
+  //     // Execute your logic when ShareDocumentData is updated
+  //     handleClose();
+  //     // setOpenSnackbar(true);
 
-      const LogEmailobj = {
-        PatientId: localStorage.getItem('patientID'),
-        ActivityTypeId: '4',
-      };
-      dispatch(InsertActivityLog(LogEmailobj));
-    }
-  }, [ShareDocumentData, dispatch]); // Dependency on ShareDocumentData so the effect runs when it changes
+  //     const LogEmailobj = {
+  //       PatientId: localStorage.getItem('patientID'),
+  //       Email : localStorage.getItem('Email'), 
+  //       ActivityTypeId: '4',
+  //     };
+  //     dispatch(InsertActivityLog(LogEmailobj));
+  //   }
+  // }, [ShareDocumentData, dispatch]); // Dependency on ShareDocumentData so the effect runs when it changes
 
 
   const { PatientCCDADetail } = useSelector(
@@ -217,6 +220,27 @@ function EncounterDetailsReport() {
           required
           error={isTouched && !message} // Show error if message is empty and Send button is clicked
           helperText={isTouched && !message ? 'Message cannot be empty' : ''} // Custom helper text when Send is clicked
+          FormHelperTextProps={{
+                    sx: {
+                      fontWeight: 'normal', // Ensures the helper text is not bold
+                    },
+                  }}
+                  sx={{
+                    // Remove red outline when there's an error
+                    '& .MuiOutlinedInput-root': {
+                      '&.Mui-error': {
+                        borderColor: 'transparent', // Make the error border transparent
+                      },
+                    },
+                    // Change placeholder color to be normal even when error is present
+                    '& .MuiInputBase-input::placeholder': {
+                      color: 'gray', // Placeholder color when there is an error
+                    },
+                    // Optional: Style the label when there is an error
+                    '& .MuiInputLabel-root.Mui-error': {
+                      color: 'gray', // You can change this to any color you want for the label
+                    },
+                  }}
         />
 
           </Box>

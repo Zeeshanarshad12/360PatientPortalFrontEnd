@@ -8,6 +8,12 @@ export const SERVICE_URLSV2 = {
   DownloadDocument: 'ccda/download',
   GetPatientCCDAActivityLog: 'patientportal/getpatientccdaactivitylog',
   InsertActivityLog: 'patientportal/insertactivitylog',
-  CreateAuthorizedUser: 'patientportal/createauthorizeduser',
-  Share: '/ccda/share'
+  CreateAuthorizedUser: 'patientuser/authorizepatientuserrequest',
+  Share: '/ccda/share',
+  GetPatientAuthorizedUser: 'patientportal/getpatientauthorizeduser',
+  UpdatePatientAuthorizedUserAccess: 'patientportal/updatepatientauthorizeduseraccess',
+  GetPatientUserRequestByCode: 'patientuser/getpatientuserrequestbycode',
+  GenerateOtp: 'patientuser/generateotp',
+  AddPatientUser: 'patientuser/addpatientuser',
+  GetToken: 'patientuser/gettoken'
 };

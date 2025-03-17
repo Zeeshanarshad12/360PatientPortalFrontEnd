@@ -10,11 +10,12 @@ interface CollapsedSidebarLayoutProps {
   children?: ReactNode;
 }
 const SharedLayout: FC<CollapsedSidebarLayoutProps> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth0();
-  if (isLoading) {
-    return <ThemeLoader loader={isLoading} />;
-  }
-  if (isAuthenticated) {
+  // const { isAuthenticated, isLoading } = useAuth0();
+  const token = localStorage.getItem("token");
+  // if (token) {
+  //   return <ThemeLoader loader={isLoading} />;
+  // }
+  if (token) {
     return (
       <>
         <Box

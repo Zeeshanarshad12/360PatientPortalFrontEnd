@@ -7,7 +7,8 @@ import { useRouter } from 'next/router';
 const Dashboard = () => {
   const dispatch = useDispatch();
   const router = useRouter();
-  const types = `john.doe@gmail.com`;
+  const types = localStorage.getItem("Email");
+  // john.doe@gmail.com
   const { PatientByEmailData } = useSelector((state) => state.patientprofileslice);
 
   useEffect(() => {
@@ -15,10 +16,10 @@ const Dashboard = () => {
   }, [dispatch]);
 
 
-  useEffect(() => {
-    // Redirect to /patientportal/profile when the component mounts
-    router.push('/patientportal/profile');
-  }, [router]);
+  // useEffect(() => {
+  //   // Redirect to /patientportal/profile when the component mounts
+  //   router.push('/patientportal/profile');
+  // }, [router]);
 
 
 
@@ -27,12 +28,13 @@ const Dashboard = () => {
   useEffect(() => {
     if (patient?.patientID) {
       localStorage.setItem('patientID', patient?.patientID);
+      localStorage.setItem('PracticeId', patient?.practiceId);
     }
   }, [patient?.patientID]);
 
   return (
     <>
-      <GetToken />
+      {/* <GetToken /> */}
       Patient Portal Dashboard
     </>
   );

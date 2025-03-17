@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -20,7 +20,7 @@ import moment from 'moment-timezone';
 
 function HealthRecordFilter() {
   const dispatch = useDispatch();
-  const [filterType, setFilterType] = useState('dateRange');
+  const [filterType, setFilterType] = useState('allData');
   const [fromDate, setFromDate] = useState(moment().format('YYYY-MM-DD'));
   const [toDate, setToDate] = useState(moment().format('YYYY-MM-DD'));
 
@@ -38,6 +38,13 @@ function HealthRecordFilter() {
     dateto: toDate
   };
 
+   useEffect(() => {
+        if (localStorage.getItem('patientID') != null) {
+         
+          getPatientencountersClick();
+        }
+      }, [dispatch]);
+
   const getPatientencountersClick = () => {
 
     setIsEncounterLoad(false);
@@ -48,15 +55,9 @@ function HealthRecordFilter() {
     } else {
       obj.dateflag = false;
     }
-    debugger;
-    // // Convert fromDate and toDate to UTC with time
-      
-
 
     obj.datefrom = moment(fromDate).tz('America/New_York').format('YYYY-MM-DD HH:mm:ss');
     obj.dateto = moment(toDate).tz('America/New_York').format('YYYY-MM-DD HH:mm:ss');
-    // obj.datefrom = moment.utc(fromDate).startOf('day').format('YYYY-MM-DD HH:mm:ss.SSSSSSSS');
-    // obj.dateto = moment.utc(toDate).startOf('day').format('YYYY-MM-DD HH:mm:ss.SSSSSSSS');
     dispatch(GetPatientEncounterDetails(obj));
   };
   return (

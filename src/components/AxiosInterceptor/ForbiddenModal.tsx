@@ -65,7 +65,7 @@ const ForbiddenModal = (props) => {
       >
         <ThemeButton
           onClick={() => {
-            dispatch(ClearCahceNLogout());
+            // dispatch(ClearCahceNLogout());
             setTimeout(() => {
               localStorage.clear();
               logout({

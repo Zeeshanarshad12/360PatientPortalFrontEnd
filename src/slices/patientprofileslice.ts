@@ -2,6 +2,8 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import apiServicesV2 from '@/services/requestHandler';
 import SnackbarUtils from '../content/snackbar';
+import { setToken } from "@/utils/functions";
+import Router from 'next/router';
 
 const initialState = {
   PatientByEmailData: null,
@@ -24,6 +26,16 @@ const initialState = {
   ShareDocumentLoader: false,
   CreateAuthorizedUserData: null,
   CreateAuthorizedUserLoader: false,
+  GetPatientAuthorizedUserData: null,
+  GetPatientAuthorizedUserLoader: false,
+  GetPatientUserRequestByCodeData: null,
+  GetPatientUserRequestByCodeLoader: false,
+  GenerateOtpData: null,
+  GenerateOtpLoader: false,
+  GetTokenData: null,
+  GetTokenLoader: false
+  
+
 };
 
 export const ClearCahceNLogout: any = createAsyncThunk(
@@ -43,6 +55,7 @@ export const GetPatientByEmail: any = createAsyncThunk(
     const res = await apiServicesV2.GetPatientByEmail(data, 'ApiVersion2Req');
     try {
       if (res?.status === 200 || res?.status === 201) {
+        Router.push('/patientportal/profile');
         return res?.data?.result;
       }
     } catch (error) {
@@ -155,7 +168,7 @@ export const InsertActivityLog: any = createAsyncThunk(
 export const CreateAuthorizedUser: any = createAsyncThunk(
   'CreateAuthorizedUser',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.CreateAuthorizedUser(data, 'ApiVersion2Req'); 
+    const res = await apiServicesV2.CreateAuthorizedUser(data); 
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data.result;
@@ -168,6 +181,119 @@ export const CreateAuthorizedUser: any = createAsyncThunk(
     }
   }
 );
+export const GetPatientAuthorizedUser: any = createAsyncThunk(
+  'GetPatientAuthorizedUser',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.GetPatientAuthorizedUser(data, 'ApiVersion2Req');
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+) ;
+export const UpdatePatientAuthorizedUserAccess: any = createAsyncThunk(
+  'UpdatePatientAuthorizedUserAccess',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.UpdatePatientAuthorizedUserAccess(data, 'ApiVersion2Req');
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+) ;
+
+export const GetPatientUserRequestByCode: any = createAsyncThunk(
+  'GetPatientUserRequestByCode',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.GetPatientUserRequestByCode(data);
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+) ;
+
+export const GenerateOtp: any = createAsyncThunk(
+  'GenerateOtp',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.GenerateOtp(data);
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+) ;
+
+export const AddPatientUser: any = createAsyncThunk(
+  'AddPatientUser',
+  async (data, thunkAPI) => {
+
+    const res = await apiServicesV2.AddPatientUser(data); 
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data.result;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+);
+
+export const GetToken: any = createAsyncThunk(
+  'GetToken',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.GetToken(data); 
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        setToken(res?.data?.result?.access_token,res?.data?.result?.Email,res?.data?.result?.FirstName,res?.data?.result?.LastName,res?.data?.result?.UserAccessType);
+        if(res?.data?.result?.access_token)
+        {
+        Router.push('/patientportal/dashboard');
+        return res?.data.result;
+        }
+        return res?.data.result;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+);
+
+
 export const ShareDocument: any = createAsyncThunk(
   'ShareDocument',
   async (data, thunkAPI) => {
@@ -287,12 +413,60 @@ const patientProfileSlice = createSlice({
       state.ShareDocumentLoader = true;
     },
     [ShareDocument.fulfilled]: (state: any, { payload }: any) => {
+      state.ShareDocumentData = null;
       state.ShareDocumentData = payload;
       state.ShareDocumentLoader = false;
     },
     [ShareDocument.rejected]: (state: any) => {
       state.ShareDocumentLoader = false;
     },
+
+    [GetPatientAuthorizedUser.pending]: (state: any) => {
+      state.GetPatientAuthorizedUserLoader = true;
+    },
+    [GetPatientAuthorizedUser.fulfilled]: (state: any, { payload }: any) => {
+      state.GetPatientAuthorizedUserData = payload;
+      state.GetPatientAuthorizedUserLoader = false;
+    },
+    [GetPatientAuthorizedUser.rejected]: (state: any) => {
+      state.GetPatientAuthorizedUserLoader = false;
+    },
+    
+    [GetPatientUserRequestByCode.pending]: (state: any) => {
+      state.GetPatientUserRequestByCodeLoader = true;
+    },
+    [GetPatientUserRequestByCode.fulfilled]: (state: any, { payload }: any) => {
+      state.GetPatientUserRequestByCodeData = payload;
+      state.GetPatientUserRequestByCodeLoader = false;
+    },
+    [GetPatientUserRequestByCode.rejected]: (state: any) => {
+      state.GetPatientUserRequestByCodeLoader = false;
+    },
+    
+
+    [GenerateOtp.pending]: (state: any) => {
+      state.GenerateOtpLoader = true;
+    },
+    [GenerateOtp.fulfilled]: (state: any, { payload }: any) => {
+      state.GenerateOtpData = payload;
+      state.GenerateOtpLoader = false;
+    },
+    [GenerateOtp.rejected]: (state: any) => {
+      state.GenerateOtpLoader = false;
+    },
+      
+    [GetToken.pending]: (state: any) => {
+      state.GetTokenLoader = true;
+    },
+    [GetToken.fulfilled]: (state: any, { payload }: any) => {
+      state.GetTokenData = payload;
+      state.GetTokenLoader = false;
+    },
+    [GetToken.rejected]: (state: any) => {
+      state.GetTokenLoader = false;
+    },
+
+    
 
     [ClearCahceNLogout.pending]: (state: any) => {
       state.clearcache = true;

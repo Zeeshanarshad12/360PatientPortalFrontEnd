@@ -20,6 +20,13 @@ export async function getApiRequestHeader() {
   };
 }
 
+export async function getApiRequestHeaderWithoutToken() {
+  return {
+    Accept: 'application/json',
+    'Content-Type': 'application/json'
+  };
+}
+
 export const instance = axios.create({
   baseURL: BASEURL
   // timeout: 160000
@@ -42,6 +49,17 @@ export const instanceEligibility = axios.create({
 
 export async function updateHeaders() {
   const header = await getApiRequestHeader();
+
+  instance.defaults.headers = header;
+  instanceV2.defaults.headers = header;
+  PPSERVICEInstance.defaults.headers = header;
+  instanceEligibility.defaults.headers = header;
+  // axios.defaults.withCredentials = true;
+  // For HTTP ONly Cookies Set Credential To True
+}
+
+export async function updateHeadersWithoutToken() {
+  const header = await getApiRequestHeaderWithoutToken();
 
   instance.defaults.headers = header;
   instanceV2.defaults.headers = header;
@@ -115,11 +133,57 @@ export async function newRequest({ method, url, data, headers }) {
   }
 }
 
+export async function requestWithoutToken({ method, url, data, headers, flag }) {
+
+  if (headers === undefined) {
+    await updateHeadersWithoutToken();
+  }
+  let ptportalrequest =
+    flag?.ptportalrequest || data?.featureAndAction?.ptportalrequest;
+  let ApiVersion2Req =
+    flag?.ApiVersion2Req || data?.featureAndAction?.ApiVersion2Req;
+
+  // const promise =  instance[method](url, data);
+  const promise = ptportalrequest
+    ? PPSERVICEInstance[method](url, data)
+    : ApiVersion2Req
+    ? instanceV2[method](url, data)
+    : instance[method](url, data);
+
+  let response;
+  try {
+    response = await promise;
+  } catch (error) {
+    if (error.response) {
+      Check_Authentication(error.response);
+    } else {
+      // Comment out Something Went Wrong Because of when BE get deployed for split sec api not responding when api get deployed it will recall all something went wrong api's
+      SnackbarUtils.error('Something Went Wrong', false);
+    }
+    throw error.response;
+  }
+
+  return response;
+}
+
 export async function get(url, params, flag, featureAndAction, config) {
   for (var key in params) {
     url = url + '' + params[key];
   }
   return request({
+    method: 'get',
+    url,
+    data: { featureAndAction },
+    ...config,
+    flag
+  });
+}
+
+export async function getWithoutToken(url, params, flag, featureAndAction, config) {
+  for (var key in params) {
+    url = url + '' + params[key];
+  }
+  return requestWithoutToken({
     method: 'get',
     url,
     data: { featureAndAction },
@@ -137,6 +201,9 @@ export async function delbody(url, config) {
 
 export async function post(url, data, flag, featureAndAction, config) {
   return request({ method: 'post', url, data, ...config, flag });
+}
+export async function postWithoutToken(url, data, flag, featureAndAction, config) {
+  return requestWithoutToken({ method: 'post', url, data, ...config, flag });
 }
 
 export async function put(url, data, flag, featureAndAction, config) {

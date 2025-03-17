@@ -1,4 +1,4 @@
-import { get, post } from './HttpProvider';
+import { get, getWithoutToken, post, postWithoutToken } from './HttpProvider';
 import featureConstants from './features-constants';
 import { SERVICE_URLSV2 } from './ServiceUrl';
 import { getPatientId } from '../utils/functions';
@@ -89,14 +89,13 @@ const GetGeneralLookup = (data) =>
             }
           );  
           
-          const CreateAuthorizedUser = (data,flag) =>
+          const CreateAuthorizedUser = (data) =>
     
             post(
              
               SERVICE_URLSV2.CreateAuthorizedUser, data,
               {
-                feature: featureConstants.static,
-                ApiVersion2Req: flag
+                feature: featureConstants.static
               }
             );   
           
@@ -110,6 +109,74 @@ const GetGeneralLookup = (data) =>
              feature: featureConstants.static
            }
          );
+
+         const GetPatientAuthorizedUser = (data,flag) =>
+    
+          get(
+            
+            `${SERVICE_URLSV2.GetPatientAuthorizedUser}?PatientId=${data}`,
+            {},
+            {
+              feature: featureConstants.static,
+              ApiVersion2Req: flag
+            }
+          );
+        
+          const GetPatientUserRequestByCode = (data) =>
+    
+            getWithoutToken(
+              
+             `${SERVICE_URLSV2.GetPatientUserRequestByCode}?&code=${data}` ,
+              {},
+              {
+                feature: featureConstants.static
+              }
+            );
+
+            const GenerateOtp = (data) =>
+    
+              getWithoutToken(
+                
+               `${SERVICE_URLSV2.GenerateOtp}?&code=${data}` ,
+                {},
+                {
+                  feature: featureConstants.static
+                }
+              );
+
+              
+          const UpdatePatientAuthorizedUserAccess = (data,flag) =>
+    
+            postWithoutToken(
+             
+              SERVICE_URLSV2.UpdatePatientAuthorizedUserAccess, data,
+              {
+                feature: featureConstants.static,
+                ApiVersion2Req: flag
+              }
+            ); 
+
+            const AddPatientUser = (data) =>
+    
+              postWithoutToken(
+               
+                SERVICE_URLSV2.AddPatientUser, data,
+                {
+                  feature: featureConstants.static
+                }
+              ); 
+              
+              const GetToken = (data) =>
+    
+                getWithoutToken(
+                  
+                 `${SERVICE_URLSV2.GetToken}?&username=${data?.username}&password=${data?.password}` ,
+                  {},
+                  {
+                    feature: featureConstants.static
+                  }
+                );
+              
           
 const apiServicesV2 = {
   GetGeneralLookup,
@@ -122,7 +189,13 @@ const apiServicesV2 = {
   GetPatientCCDAActivityLog,
   InsertActivityLog,
   CreateAuthorizedUser,
-  ShareDocument
+  ShareDocument,
+  GetPatientAuthorizedUser,
+  UpdatePatientAuthorizedUserAccess,
+  GetPatientUserRequestByCode,
+  GenerateOtp,
+  AddPatientUser,
+  GetToken
   
 };
 export default apiServicesV2;

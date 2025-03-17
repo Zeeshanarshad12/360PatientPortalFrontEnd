@@ -14,10 +14,11 @@ function PracticeBox() {
   // Dummy data for users and locations
   const users = [
     {
-      name: "John Doe",
-      locationNames: ["Peach Tree Road", "River Side Clinic"],
+      name: "",
+      // locationNames: ["Peach Tree Road", "River Side Clinic"],
+      locationNames: [""],
     },
-    { name: "Alissa Doe", locationNames: ["Peach Tree Road"] },
+    // { name: "Alissa Doe", locationNames: ["Peach Tree Road"] },
   ];
 
   const groupedLocations: Record<string, string[]> = users.reduce(
@@ -95,7 +96,7 @@ function PracticeBox() {
           }}
         >
           <Image
-            src={Icons.locarrow}
+            src={Icons.pafill}
             alt="Location arrow"
             width={20}
             height={20}
@@ -114,7 +115,7 @@ function PracticeBox() {
             }}
             title="Practice Name"
           >
-            {`John Doe`}
+            {localStorage.getItem("FirstName") + " "+localStorage.getItem("LastName") }
           </Typography>
           <Typography
             className="ellipsis-text"
@@ -128,12 +129,13 @@ function PracticeBox() {
             }}
             title="Location Name"
           >
-            {`Peach Tree Road`}
+            {/* {`Peach Tree Road`} */}
+            {``}
           </Typography>
         </Box>
       </Box>
 
-      <Popover
+      {/* <Popover
         disableScrollLock
         anchorEl={ref.current}
         onClose={handleClose}
@@ -227,7 +229,7 @@ function PracticeBox() {
             ))}
           </Scrollbar>
         </Box>
-      </Popover>
+      </Popover> */}
     </>
   );
 }

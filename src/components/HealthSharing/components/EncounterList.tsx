@@ -11,6 +11,7 @@ import {
 } from '@/slices/patientprofileslice';
 import EncounterDetailsReport from  '@/components/HealthSharing/components/EncounterDetails';
 import { debug } from 'console';
+import { Email } from '@mui/icons-material';
 
 function EncounterListData() {
   const dispatch = useDispatch();
@@ -38,6 +39,7 @@ function EncounterListData() {
     //Save ActivityLog on View
     const Logobj = {
       PatientId: localStorage.getItem('patientID'),
+      Email : localStorage.getItem('Email'), 
       ActivityTypeId: '2'
     };
     dispatch(InsertActivityLog(Logobj));

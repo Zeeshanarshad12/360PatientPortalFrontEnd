@@ -37,6 +37,7 @@ const AxiosInterceptor = ({ children }) => {
         if (error.response.status === 401 && !originalRequest._retry) {
           originalRequest._retry = true;
           try {
+            
             const accessToken = await getAccessTokenSilently({
               ignoreCache: true,
             });
@@ -44,10 +45,10 @@ const AxiosInterceptor = ({ children }) => {
             originalRequest.headers.Authorization = `Bearer ${accessToken}`;
             return instance(originalRequest);
           } catch {
-            dispatch(ClearCahceNLogout());
+            // dispatch(ClearCahceNLogout());
             setTimeout(() => {
-              localStorage.clear();
-              logout({ returnTo: process.env.NEXT_PUBLIC_ORIGIN_URI });
+              // localStorage.clear();
+              // logout({ returnTo: process.env.NEXT_PUBLIC_ORIGIN_URI });
             }, 500);
           }
         }
@@ -55,7 +56,7 @@ const AxiosInterceptor = ({ children }) => {
         throw error;
       }
     );
-  }, [dispatch, getAccessTokenSilently, logout]);
+  }, [dispatch]);
 
   if (ShowModal) {
     return <ForbiddenModal logout={logout} />;

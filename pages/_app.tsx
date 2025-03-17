@@ -2,7 +2,7 @@ import { ReactElement, ReactNode } from 'react';
 import type { NextPage } from 'next';
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
-import Router from 'next/router';
+import Router, { useRouter } from 'next/router';
 import nProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 import ThemeProvider from 'src/theme/ThemeProvider';
@@ -41,6 +41,7 @@ function MyApp(props: MyAppProps) {
   let persistor = persistStore(store);
 
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
+  const router = useRouter();
 
   useScrollTop();
 
@@ -54,6 +55,9 @@ function MyApp(props: MyAppProps) {
     console.debug = () => {};
   }
 
+  const authPages = ['/auth/signup', '/auth/signin', '/'];
+  const isAuthPage = authPages.includes(router.pathname);
+
   return (
     <CacheProvider value={emotionCache}>
       <Head>
@@ -66,31 +70,38 @@ function MyApp(props: MyAppProps) {
       </Head>
       <ReduxProvider store={store}>
         <PersistGate loading={null} persistor={persistor}>
-          <SidebarProvider>
+          {isAuthPage ? (
             <ThemeProvider>
-              <LocalizationProvider dateAdapter={AdapterDateFns}>
-                <AuthProvider>
-                  <AxiosInterceptor>
-                    <SnackbarProvider
-                      maxSnack={6}
-                      anchorOrigin={{
-                        vertical: 'bottom',
-                        horizontal: 'right'
-                      }}
-                      action={(key) => <SnackbarCloseButton key={key} />}
-                    >
-                      <SnackbarUtilsConfigurator />
-                      <CssBaseline />
-                      {/* <CustomScript /> */}
-                      <SharedLayout>
-                        <Component {...pageProps} />
-                      </SharedLayout>
-                    </SnackbarProvider>
-                  </AxiosInterceptor>
-                </AuthProvider>
-              </LocalizationProvider>
+              <CssBaseline />
+              <Component {...pageProps} />
             </ThemeProvider>
-          </SidebarProvider>
+          ) : (
+            <SidebarProvider>
+              <ThemeProvider>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  {/* <AuthProvider> */}
+                    <AxiosInterceptor>
+                      <SnackbarProvider
+                        maxSnack={6}
+                        anchorOrigin={{
+                          vertical: 'bottom',
+                          horizontal: 'right'
+                        }}
+                        action={(key) => <SnackbarCloseButton key={key} />}
+                      >
+                        <SnackbarUtilsConfigurator />
+                        <CssBaseline />
+                        {/* <CustomScript /> */}
+                        <SharedLayout>
+                          <Component {...pageProps} />
+                        </SharedLayout>
+                      </SnackbarProvider>
+                    </AxiosInterceptor>
+                  {/* </AuthProvider> */}
+                </LocalizationProvider>
+              </ThemeProvider>
+            </SidebarProvider>
+          )}
         </PersistGate>
       </ReduxProvider>
     </CacheProvider>

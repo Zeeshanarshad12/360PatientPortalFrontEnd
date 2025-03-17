@@ -98,7 +98,7 @@ function Header() {
         </Box>
         <Box display="flex" alignItems="center" justifyContent={"end"}>
           <PracticeBox />
-          <ShareHealthInfo />
+          {/* <ShareHealthInfo /> */}
           <HeaderButtons />
           <HeaderUserbox />
           <Box
