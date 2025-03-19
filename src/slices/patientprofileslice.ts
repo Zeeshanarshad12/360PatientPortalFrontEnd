@@ -279,7 +279,7 @@ export const GetToken: any = createAsyncThunk(
         setToken(res?.data?.result?.access_token,res?.data?.result?.Email,res?.data?.result?.FirstName,res?.data?.result?.LastName,res?.data?.result?.UserAccessType);
         if(res?.data?.result?.access_token)
         {
-        Router.push('/patientportal/dashboard');
+        Router.push('/patientportal/profile');
         return res?.data.result;
         }
         return res?.data.result;
