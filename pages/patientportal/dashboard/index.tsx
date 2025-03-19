@@ -35,7 +35,7 @@ const Dashboard = () => {
   return (
     <>
       {/* <GetToken /> */}
-      Patient Portal Dashboard
+      {/* Patient Portal Dashboard */}
     </>
   );
 };
