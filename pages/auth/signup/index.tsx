@@ -7,6 +7,8 @@ import {
   Box,
   Grid,
   IconButton,
+  Snackbar,
+  Alert,
   CircularProgress
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
@@ -34,6 +36,7 @@ function SignUp  ()  {
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
   useEffect(() => {
     debugger;
@@ -113,7 +116,8 @@ function SignUp  ()  {
       }
       else
       {
-        alert('Invalid OTP');
+        // alert('Invalid OTP');
+        setOpenSnackbar(true);
         return;
       }
     setLoading(true); // Show loading indicator
@@ -350,6 +354,19 @@ function SignUp  ()  {
           © {new Date().getFullYear()} All rights reserved.
         </Typography>
       </Box>
+
+      {/* Snackbar for Danger Message of invalid OTP */}
+            <Snackbar
+              open={openSnackbar}
+              autoHideDuration={3000}
+              onClose={() => setOpenSnackbar(false)}
+              anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+            >
+              <Alert onClose={() => setOpenSnackbar(false)} severity="error" variant="filled">
+                Invalid OTP!
+              </Alert>
+            </Snackbar>
+
     </Container>
   );
 };
