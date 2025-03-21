@@ -66,52 +66,52 @@ function SidebarMenu() {
         : "/statics/paout.svg",
       right: true,
     },
-    // {
-    //   name: "Find A Doctor",
-    //   link: "/patientportal/findAdoc",
-    //   key: key,
-    //   active: pathname.includes("findAdoc"),
-    //   badge: undefined,
-    //   icon: pathname.includes("findAdoc")
-    //     ? "/statics/docfill.svg"
-    //     : "/statics/docout.svg",
-    //   right: true,
-    // },
-    // {
-    //   name: "Patient Visits",
-    //   link: "/patientportal/patientvisits",
-    //   key: key,
-    //   active: pathname.includes("patientvisits"),
-    //   badge: undefined,
-    //   icon: pathname.includes("patientvisits")
-    //     ? "/statics/pvfill.svg"
-    //     : "/statics/pvout.svg",
-    //   right: true,
-    // },
-    // {
-    //   name: "Documents",
-    //   link: "/patientportal/documents",
-    //   key: key,
-    //   active: pathname === "/patientportal/documents",
-    //   badge: undefined,
-    //   icon:
-    //     pathname === "/patientportal/documents"
-    //       ? "/statics/docufill.svg"
-    //       : "/statics/docuout.svg",
-    //   right: true,
-    // },
-    // {
-    //   name: "Education and Resources",
-    //   link: "/patientportal/educationAndresources",
-    //   key: key,
-    //   active: pathname === "/patientportal/educationAndresources",
-    //   badge: undefined,
-    //   icon:
-    //     pathname === "/patientportal/educationAndresources"
-    //       ? "/statics/edufill.svg"
-    //       : "/statics/eduout.svg",
-    //   right: true,
-    // },
+    {
+      name: "Find A Doctor",
+      link: "/patientportal/findAdoc",
+      key: key,
+      active: pathname.includes("findAdoc"),
+      badge: undefined,
+      icon: pathname.includes("findAdoc")
+        ? "/statics/docfill.svg"
+        : "/statics/docout.svg",
+      right: true,
+    },
+    {
+      name: "Patient Visits",
+      link: "/patientportal/patientvisits",
+      key: key,
+      active: pathname.includes("patientvisits"),
+      badge: undefined,
+      icon: pathname.includes("patientvisits")
+        ? "/statics/pvfill.svg"
+        : "/statics/pvout.svg",
+      right: true,
+    },
+    {
+      name: "Documents",
+      link: "/patientportal/documents",
+      key: key,
+      active: pathname === "/patientportal/documents",
+      badge: undefined,
+      icon:
+        pathname === "/patientportal/documents"
+          ? "/statics/docufill.svg"
+          : "/statics/docuout.svg",
+      right: true,
+    },
+    {
+      name: "Education and Resources",
+      link: "/patientportal/educationAndresources",
+      key: key,
+      active: pathname === "/patientportal/educationAndresources",
+      badge: undefined,
+      icon:
+        pathname === "/patientportal/educationAndresources"
+          ? "/statics/edufill.svg"
+          : "/statics/eduout.svg",
+      right: true,
+    },
     {
       name: "Authorized Users",
       link: "/patientportal/authorizedUser",
