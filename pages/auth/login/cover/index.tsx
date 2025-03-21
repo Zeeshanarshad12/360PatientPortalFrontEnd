@@ -12,7 +12,7 @@ function LoginCover() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      router.push('/patientportal/dashboard');
+      router.push('/patientportal/profile');
     } else {
       loginWithRedirect();
     }

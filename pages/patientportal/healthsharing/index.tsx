@@ -4,11 +4,13 @@ import { ActivityLogStateCheck } from '@/components/HealthSharing/contexts/activ
 import { ActivityLoadStateCheck } from '@/components/HealthSharing/contexts/activityLoadStates';
 import { HealthRecordLoadStateCheck } from '@/components/HealthSharing/contexts/healthRecordLoadStates';
 import { EncounterLoadStateCheck } from '@/components/HealthSharing/contexts/encounterLoadStates';
+import { ProtectedRoute } from '@/contexts/protectedRoute';
 
 const HealthSharing = () => {
   return (
     <>
-      <ActivityLogStateCheck>
+    <ProtectedRoute>
+    <ActivityLogStateCheck>
         <HealthRecordLoadStateCheck>
           <ActivityLoadStateCheck>
             <EncounterLoadStateCheck>
@@ -17,6 +19,8 @@ const HealthSharing = () => {
           </ActivityLoadStateCheck>
         </HealthRecordLoadStateCheck>
       </ActivityLogStateCheck>
+    </ProtectedRoute>
+   
     </>
   );
 };

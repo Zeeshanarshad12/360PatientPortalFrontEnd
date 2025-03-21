@@ -69,21 +69,21 @@ function EncounterDetailsReport() {
   }
 
 
-  // useEffect(() => {
-  //   // Check if ShareDocumentData is true
-  //   if (ShareDocumentData === true) {
-  //     // Execute your logic when ShareDocumentData is updated
-  //     handleClose();
-  //     // setOpenSnackbar(true);
+  useEffect(() => {
+    // Check if ShareDocumentData is true
+    if (ShareDocumentData === true) {
+      // Execute your logic when ShareDocumentData is updated
+      handleClose();
+      // setOpenSnackbar(true);
 
-  //     const LogEmailobj = {
-  //       PatientId: localStorage.getItem('patientID'),
-  //       Email : localStorage.getItem('Email'), 
-  //       ActivityTypeId: '4',
-  //     };
-  //     dispatch(InsertActivityLog(LogEmailobj));
-  //   }
-  // }, [ShareDocumentData, dispatch]); // Dependency on ShareDocumentData so the effect runs when it changes
+      const LogEmailobj = {
+        PatientId: localStorage.getItem('patientID'),
+        Email : localStorage.getItem('Email'), 
+        ActivityTypeId: '4',
+      };
+      dispatch(InsertActivityLog(LogEmailobj));
+    }
+  }, [ShareDocumentData, dispatch]); // Dependency on ShareDocumentData so the effect runs when it changes
 
 
   const { PatientCCDADetail } = useSelector(

@@ -75,12 +75,12 @@ function Header() {
         alignItems="center"
         style={{
           borderBottom: "1px solid #d3d9e3",
-          boxShadow: "0px 1px 2px #00000029",
+          boxShadow: "0px 1px 2px #00000029",  
           height: "60px",
         }}
       >
         <Box display={"flex"} alignItems="center">
-          <Link href="/patientportal/dashboard" legacyBehavior>
+          <Link href="/patientportal/profile" legacyBehavior>
             <a>
               <Image
                 src="/statics/Logo.svg"

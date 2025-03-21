@@ -3,6 +3,7 @@ import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "@/store/index";
 import { GetPatientByEmail } from "@/slices/patientprofileslice";
 import { useRouter } from 'next/router';
+import { ProtectedRoute } from '@/contexts/protectedRoute';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
@@ -34,6 +35,9 @@ const Dashboard = () => {
 
   return (
     <>
+    <ProtectedRoute>
+      <></>
+    </ProtectedRoute>
       {/* <GetToken /> */}
       {/* Patient Portal Dashboard */}
     </>
