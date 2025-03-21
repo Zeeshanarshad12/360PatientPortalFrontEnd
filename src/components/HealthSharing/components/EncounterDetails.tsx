@@ -74,7 +74,7 @@ function EncounterDetailsReport() {
     if (ShareDocumentData === true) {
       // Execute your logic when ShareDocumentData is updated
       handleClose();
-      // setOpenSnackbar(true);
+       setOpenSnackbar(true);
 
       const LogEmailobj = {
         PatientId: localStorage.getItem('patientID'),
