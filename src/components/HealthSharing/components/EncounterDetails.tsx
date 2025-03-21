@@ -83,7 +83,7 @@ function EncounterDetailsReport() {
       };
       dispatch(InsertActivityLog(LogEmailobj));
     }
-  }, [ShareDocumentData, dispatch]); // Dependency on ShareDocumentData so the effect runs when it changes
+  }, [ShareDocumentData]); // Dependency on ShareDocumentData so the effect runs when it changes
 
 
   const { PatientCCDADetail } = useSelector(
