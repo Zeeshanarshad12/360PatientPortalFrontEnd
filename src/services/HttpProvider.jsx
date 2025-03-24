@@ -7,6 +7,7 @@ export const PPSERVICE = process.env.NEXT_PUBLIC_APP_API_PATH_PPSERVICE;
 export const ELIGIBILTYSERVICE = process.env.NEXT_PUBLIC_RCM_ELIGIBILITY;
 import SnackbarUtils from '@/content/snackbar';
 let token;
+let exptoken = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IktfbDhKWWxOQXFyZlVEWksxWFZpWSJ9.eyJpc3MiOiJodHRwczovL3dpc2VtYW5pbm5vdmF0aW9ucy51cy5hdXRoMC5jb20vIiwic3ViIjoiYXV0aDB8NjdkMjk3MGFmMDBhY2IwZWFlZTg3NjgwIiwiYXVkIjpbImh0dHBzOi8vZWhyLXBhdGllbnQtcG9ydGFsLmRhdGFxaGVhbHRoLmNvbSIsImh0dHBzOi8vd2lzZW1hbmlubm92YXRpb25zLnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE3NDI3OTk3NzAsImV4cCI6MTc0MjgwMDM3MCwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCBhZGRyZXNzIHBob25lIiwiZ3R5IjoicGFzc3dvcmQiLCJhenAiOiJxYUQ5WjdGNEs5UU0yWDU0UU5BYkxCYlQ4ZHYwalFPaSIsInBlcm1pc3Npb25zIjpbXX0.hafqytFA8wO8hbPV1Go7ZRIiXq8lYzuT1rjJ9mdh34BgMjZsyAz9bH251rHAMd0sq0vuYiQIdwX-KiqKy5Ztn4FnW4M8XoD4VXHDDypQ_w3FUmRXqmF5yw-Q9CIigrqeBOiPI9_42qjtXhtRmjk94BujnbvGTmHq_OHxSe9BKuVEDnAbuC1R2HR7LHXNBGZzGNYXMNg9ZsU4N5hXuOIP-QzDOx-sFPDGj1BCX7oluWLETMrUkQQabyD7DSb2Zm2TXssQEqUf9dIbl-IdBp38W0qsNhmadKWFFyIAZXMtMXSVnRrG8JQW1Z6csm2Yn0diwX65l03VZrulwFHnojqN8w';
 if (typeof window !== 'undefined') {
   token = localStorage.getItem('token');
 }
@@ -16,6 +17,7 @@ export async function getApiRequestHeader() {
   return {
     Accept: 'application/json',
     Authorization: `Bearer ${getToken()}`,
+    // Authorization: `Bearer ${exptoken}`,
     'Content-Type': 'application/json'
   };
 }

@@ -6,15 +6,17 @@ import { setToken } from "@/utils/functions";
 import ForbiddenModal from "./ForbiddenModal";
 import { ClearCahceNLogout } from "@/slices/static";
 import { useDispatch } from "@/store";
+import { useRouter } from "next/navigation";
+import { log } from "console";
 
 const AxiosInterceptor = ({ children }) => {
   const { getAccessTokenSilently, logout } = useAuth0();
   const [ShowModal, setShowModal] = useState(false);
   const dispatch = useDispatch();
+  const router = useRouter();
 
   useEffect(() => {
     const excludedAPIs = ["activitylogs/getactivitylog"];
-
     let apiURL = "";
 
     instance.interceptors.response.use(
@@ -34,16 +36,19 @@ const AxiosInterceptor = ({ children }) => {
             setShowModal(true);
           }
         }
-        if (error.response.status === 401 && !originalRequest._retry) {
+        debugger;
+        if (error.response.status == 401) {
           originalRequest._retry = true;
           try {
             
-            const accessToken = await getAccessTokenSilently({
-              ignoreCache: true,
-            });
-            setToken(accessToken);
-            originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-            return instance(originalRequest);
+            // alert(originalRequest._retry +" "+error.response.status);
+            // const accessToken = await getAccessTokenSilently({
+            //   ignoreCache: true,
+            // });
+            // setToken(accessToken);
+            // originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+            // return instance(originalRequest);
+            // router.push("/");
           } catch {
             // dispatch(ClearCahceNLogout());
             setTimeout(() => {

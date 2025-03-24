@@ -147,7 +147,7 @@ const GetGeneralLookup = (data) =>
               
           const UpdatePatientAuthorizedUserAccess = (data,flag) =>
     
-            postWithoutToken(
+            post(
              
               SERVICE_URLSV2.UpdatePatientAuthorizedUserAccess, data,
               {

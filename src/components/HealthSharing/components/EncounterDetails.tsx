@@ -47,57 +47,43 @@ function EncounterDetailsReport() {
     setIsTouched(false);
   }
   const handleClose = () => setOpen(false);
-  const handleSendEmail = async () => {
-    setIsTouched(true);
+  const handleSendEmail  = () => {
     
+    setIsTouched(true);
     if (message.trim() === '') {
       return; // Don't proceed if the message is empty
     }
-  
-    try {
-      // Dispatch ShareDocument and wait for it to complete
-      const resultAction = await dispatch(ShareDocument(Emailobj));
-  
-      // Check if the ShareDocument dispatch was successful (adjust based on how you handle the result in your Redux slice)
-      if (resultAction.payload === true) {
-        // If the dispatch was successful, proceed to close and show snackbar
-        handleClose();
-        setOpenSnackbar(true);
-  
-        const LogEmailobj = {
-          PatientId: localStorage.getItem('patientID'),
-          Email: localStorage.getItem('Email'),
-          ActivityTypeId: '4'
-        };
-  
-        // Dispatch InsertActivityLog and wait for it to complete
-        await dispatch(InsertActivityLog(LogEmailobj));
-  
-        // You can also handle any other actions or state updates after the insert
-      }
-    } catch (error) {
-      console.error('Error sending email or inserting activity log:', error);
-      // You can optionally handle errors here (e.g., show an error snackbar)
+    dispatch(ShareDocument(Emailobj));
+   if(ShareDocumentData==true){
+    handleClose();
+    setOpenSnackbar(true);
+    const LogEmailobj = {
+      PatientId: localStorage.getItem('patientID'),
+      Email : localStorage.getItem('Email'), 
+      ActivityTypeId: '4'
+    };
+    dispatch(InsertActivityLog(LogEmailobj));
+   
+  }
+
+  }
+
+
+  useEffect(() => {
+    // Check if ShareDocumentData is true
+    if (ShareDocumentData === true) {
+      // Execute your logic when ShareDocumentData is updated
+      handleClose();
+      // setOpenSnackbar(true);
+
+      const LogEmailobj = {
+        PatientId: localStorage.getItem('patientID'),
+        Email : localStorage.getItem('Email'), 
+        ActivityTypeId: '4',
+      };
+      dispatch(InsertActivityLog(LogEmailobj));
     }
-  };
-  
-
-
-  // useEffect(() => {
-  //   // Check if ShareDocumentData is true
-  //   if (ShareDocumentData === true) {
-  //     // Execute your logic when ShareDocumentData is updated
-  //     handleClose();
-  //      setOpenSnackbar(true);
-
-  //     const LogEmailobj = {
-  //       PatientId: localStorage.getItem('patientID'),
-  //       Email : localStorage.getItem('Email'), 
-  //       ActivityTypeId: '4',
-  //     };
-  //     dispatch(InsertActivityLog(LogEmailobj));
-  //   }
-  // }, [ShareDocumentData]); // Dependency on ShareDocumentData so the effect runs when it changes
+  }, [ShareDocumentData, dispatch]); // Dependency on ShareDocumentData so the effect runs when it changes
 
 
   const { PatientCCDADetail } = useSelector(

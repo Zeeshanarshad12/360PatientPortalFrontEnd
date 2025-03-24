@@ -47,7 +47,7 @@ function Header() {
     }
   };
   React.useLayoutEffect(() => {
-    dispatch(GetGeneralLookup(types));
+    //  dispatch(GetGeneralLookup(types));
   }, [GeneralLookupData?.length, types]);
 
   useEffect(() => {

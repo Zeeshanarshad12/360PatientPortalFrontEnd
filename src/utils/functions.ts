@@ -1,5 +1,5 @@
 /* eslint-disable */
-
+import Router from 'next/router';
 import SnackbarUtils from "../content/snackbar";
 
 export const Check_Authentication = async (response) => {
@@ -31,7 +31,12 @@ export const Check_Authentication = async (response) => {
     }
 
     localStorage.setItem("isAuthenticated", "false");
-  } else if (response?.status === 400) {
+  } 
+  else if (response?.status === 401){
+    localStorage.clear();
+    Router.push(process.env.NEXT_PUBLIC_ORIGIN_URI);
+  }
+  else if (response?.status === 400) {
     const resp = response;
     if (resp?.data?.responseException) {
       let errorMessage;

@@ -33,8 +33,8 @@ const handleToggle = async (index, rowid) => {
   const isActive = updatedStates[rowid] ? 'Active' : 'Inactive';
 
   const AccessObj = {
-    PatientId: localStorage.getItem('patientID'),
     index: index, // use index for backend identification if needed
+    PatientId: localStorage.getItem('patientID'),
     isActive: isActive, // Updated status
   };
 
