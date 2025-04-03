@@ -66,7 +66,7 @@ function HealthRecordFilter() {
         <CardContent>
           <Grid container alignItems="center" spacing={2}>
             <Grid item xs={12} sm={6} md={3}>
-              <Typography variant="subtitle2">{'\u00A0'}</Typography>
+              {/* <Typography variant="subtitle2">{'\u00A0'}</Typography> */}
               <RadioGroup
                 row
                 value={filterType}
@@ -88,6 +88,7 @@ function HealthRecordFilter() {
             {filterType === 'dateRange' && (
               <>
                 <Grid item xs={12} sm={6} md={2}>
+                   {/* <Typography variant="subtitle2">{'\u00A0'}</Typography> */}
                   <Typography variant="subtitle2" fontWeight="bold">
                     From Date {'\u00A0'}
                   </Typography>
@@ -104,6 +105,7 @@ function HealthRecordFilter() {
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={2}>
+                {/* <Typography variant="subtitle2">{'\u00A0'}</Typography> */}
                   <Typography variant="subtitle2" fontWeight="bold">
                     To Date {'\u00A0'}
                   </Typography>
@@ -121,7 +123,7 @@ function HealthRecordFilter() {
             )}
 
             <Grid item xs={12} sm={6} md={2}>
-              <Typography variant="subtitle2">{'\u00A0'}</Typography>
+              {/* <Typography variant="subtitle2">{'\u00A0'}</Typography> */}
               <Button
                 variant="contained"
                 sx={{ borderRadius: '5px' }}

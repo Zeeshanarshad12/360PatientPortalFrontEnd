@@ -13,8 +13,8 @@ const Page = () => {
       <Image 
         src={Icons.comingsoon} 
         alt="Find a Doctor"
-        width={1000}  
-        height={300}  
+        width={700}  
+        height={200}   
         priority  
       />
     </div>

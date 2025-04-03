@@ -14,8 +14,8 @@ const pages = () => {
       <Image 
         src={Icons.comingsoon} 
         alt="Patient Portal Patient Visits"
-        width={1000}  
-        height={300}  
+        width={700}  
+          height={200}   
         priority  
       />
     </div>

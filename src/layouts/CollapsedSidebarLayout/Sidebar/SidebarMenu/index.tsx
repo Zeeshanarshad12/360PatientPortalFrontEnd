@@ -67,6 +67,30 @@ function SidebarMenu() {
       right: true,
     },
     {
+      name: "Health Sharing",
+      link: "/patientportal/healthsharing",
+      key: key,
+      active: pathname === "/patientportal/healthsharing",
+      badge: undefined,
+      icon:
+        pathname === "/patientportal/healthsharing"
+          ? "/statics/hsf.svg"
+          : "/statics/hso.svg",
+      right: true,
+    },
+    {
+      name: "Authorized Users",
+      link: "/patientportal/authorizedUser",
+      key: key,
+      active: pathname === "/patientportal/authorizedUser",
+      badge: undefined,
+      icon:
+        pathname === "/patientportal/authorizedUser"
+          ? "/statics/aufill.svg"
+          : "/statics/auout.svg",
+      right: true,
+    },
+    {
       name: "Find A Doctor",
       link: "/patientportal/findAdoc",
       key: key,
@@ -112,30 +136,7 @@ function SidebarMenu() {
           : "/statics/eduout.svg",
       right: true,
     },
-    {
-      name: "Authorized Users",
-      link: "/patientportal/authorizedUser",
-      key: key,
-      active: pathname === "/patientportal/authorizedUser",
-      badge: undefined,
-      icon:
-        pathname === "/patientportal/authorizedUser"
-          ? "/statics/aufill.svg"
-          : "/statics/auout.svg",
-      right: true,
-    },
-    {
-      name: "Health Sharing",
-      link: "/patientportal/healthsharing",
-      key: key,
-      active: pathname === "/patientportal/healthsharing",
-      badge: undefined,
-      icon:
-        pathname === "/patientportal/healthsharing"
-          ? "/statics/hsf.svg"
-          : "/statics/hso.svg",
-      right: true,
-    },
+    
   ];
 
   return (

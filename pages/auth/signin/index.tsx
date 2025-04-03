@@ -123,6 +123,7 @@ const Login = () => {
           variant="outlined"
           margin="normal"
           label="Email"
+          autoComplete="email"
           value={email}
           onChange={handleEmailChange}
           error={!!error} // Show error if email or password is empty
@@ -131,6 +132,7 @@ const Login = () => {
           fullWidth
           variant="outlined"
           margin="normal"
+          autoComplete="current-password"
           label="Password"
           type={showPassword ? 'text' : 'password'}
           value={password}
