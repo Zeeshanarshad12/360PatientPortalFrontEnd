@@ -18,7 +18,7 @@ const AxiosInterceptor = ({ children }) => {
   useEffect(() => {
     const excludedAPIs = ["activitylogs/getactivitylog"];
     let apiURL = "";
-
+debugger;
     instance.interceptors.response.use(
       async (response) => {
         return response;

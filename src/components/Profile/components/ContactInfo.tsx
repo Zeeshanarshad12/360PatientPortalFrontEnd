@@ -15,7 +15,7 @@ function ContactInfo() {
   return (
     <CardContent>
       <Typography variant="h3" fontWeight="bold">
-        Contact Info
+      Profile
       </Typography>
       <Divider sx={{ marginY: 2 }} />
 

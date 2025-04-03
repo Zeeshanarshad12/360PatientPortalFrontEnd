@@ -40,6 +40,7 @@ const handleToggle = async (index, rowid) => {
 
   try {
     // Dispatch the action to update the backend with the AccessObj data
+    debugger;
     const response = await dispatch(UpdatePatientAuthorizedUserAccess(AccessObj)).unwrap();
 
     // Optionally refetch the updated user data after toggling the status
@@ -114,7 +115,7 @@ const activityData = {
         <CardContent>
           <Typography variant="h6" fontWeight="bold">
             Allow a trust family member, caregiver, or another person to help manage your health information through the patient portal.
-            When you add someone, they will receive an invitation by email or text message.
+            When you add someone, they will receive an invitation by email.
           </Typography>
         </CardContent>
       </Card>

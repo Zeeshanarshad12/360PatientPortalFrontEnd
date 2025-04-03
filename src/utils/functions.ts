@@ -241,12 +241,25 @@ export function stringToColor(string: string) {
 }
 
 export function stringAvatar(
-  name1: string,
+  name: string,
   width: string = "40px",
   height: string = "40px",
   bgcolor: string = "#a0aaba"
 ) {
-  name1 = name1?.replace(/\s/g, "");
+  if (!name) return { children: "U" }; // Default "U" for unknown user
+
+  // Extract name before @ if it's an email
+  const namePart = name.includes("@") ? name.split("@")[0] : name;
+
+  // Split by spaces or dots
+  const nameParts = namePart.split(/[.\s]/);
+
+  // Get first letter of each name part (max 2 characters)
+  const initials = nameParts
+    .filter((part) => part.length > 0)
+    .slice(0, 2) // Max 2 initials
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
 
   return {
     sx: {
@@ -255,7 +268,7 @@ export function stringAvatar(
       height: height,
       width: width,
     },
-    children: `${name1?.[0]?.toUpperCase()}`,
+    children: initials || "U", // Ensures at least one letter
   };
 }
 

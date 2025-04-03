@@ -71,6 +71,14 @@ function HeaderUserbox() {
   const ref = useRef<HTMLInputElement>(null);
   const [isOpen, setOpen] = useState<boolean>(false);
 
+  const namePart = userName.split("@")[0]; 
+  const nameParts = namePart.split("."); 
+
+  // Get first letter of each part (uppercase)
+  const initials = nameParts
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+
   const handleOpen = (): void => {
     setOpen(true);
   };
@@ -87,10 +95,10 @@ function HeaderUserbox() {
   } else {
     return (
       <>
-        <UserBoxButton color="secondary" ref={ref} onClick={handleOpen}>
+        <UserBoxButton color="secondary"  onClick={handleOpen}>
           <Avatar
             variant="rounded"
-            alt={userName}
+          alt={userName}
             {...stringAvatar(userName)}
           />
           <Box

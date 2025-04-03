@@ -48,10 +48,11 @@ function EncounterListData() {
   };
   return (
     <>
-      <Typography variant="body1" fontWeight="bold" sx={{ marginBottom: 2 }}>
-        {PatientEncounterData?.length} visits found, Please select a visit to
-        see details.
-      </Typography>
+   <Typography variant="body1" fontWeight="bold" sx={{ marginBottom: 2 }}>
+  {PatientEncounterData?.length}{" "}
+  {PatientEncounterData?.length === 1 ? "visit found" : "visits found"}, 
+  please select a visit to see details.
+  </Typography>
 
       {PatientEncounterData?.map((visit) => (
         <React.Fragment key={visit.id}>
