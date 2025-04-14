@@ -33,11 +33,11 @@ function EncounterDetailsReport() {
   //Save ActivityLog Obj 
   const Logobj = {
     PatientId: localStorage.getItem('patientID'),
-    Email: localStorage.getItem('Email'),
+    Email: email,// localStorage.getItem('Email'),
     ActivityTypeId: '3'
   };
   const Emailobj = {
-    PatientEmail: localStorage.getItem('patientEmail'),
+    PatientEmail: email,// localStorage.getItem('patientEmail'),
     EncounterId: EncounterId
   }
 
@@ -107,7 +107,7 @@ function EncounterDetailsReport() {
 
       const LogEmailobj = {
         PatientId: localStorage.getItem('patientID'),
-        Email: localStorage.getItem('Email'),
+        Email:  email, // localStorage.getItem('Email'),
         ActivityTypeId: '4',
       };
       dispatch(InsertActivityLog(LogEmailobj));

@@ -38,15 +38,13 @@ function HealthRecordFilter() {
     dateto: toDate
   };
 
-   useEffect(() => {
-        if (localStorage.getItem('patientID') != null) {
-         
-          getPatientencountersClick();
-        }
-      }, [dispatch]);
+  useEffect(() => {
+    if (localStorage.getItem('patientID') != null) {
+      getPatientencountersClick();
+    }
+  }, [dispatch]);
 
   const getPatientencountersClick = () => {
-
     setIsEncounterLoad(false);
     setIsHealthRecordLoad(true);
 
@@ -56,17 +54,25 @@ function HealthRecordFilter() {
       obj.dateflag = false;
     }
 
-    obj.datefrom = moment(fromDate).tz('America/New_York').format('YYYY-MM-DD HH:mm:ss');
-    obj.dateto = moment(toDate).tz('America/New_York').format('YYYY-MM-DD HH:mm:ss');
+    obj.datefrom = moment(fromDate)
+      .tz('America/New_York')
+      .format('YYYY-MM-DD HH:mm:ss');
+    obj.dateto = moment(toDate)
+      .tz('America/New_York')
+      .format('YYYY-MM-DD HH:mm:ss');
     dispatch(GetPatientEncounterDetails(obj));
   };
   return (
     <>
       <Card sx={{ marginY: 2 }}>
-      <CardContent sx={{ paddingTop: 2, paddingLeft: 2, paddingRight: 2, paddingBottom: 0 }}>
-          <Grid container alignItems="center" spacing={2}>
+        <CardContent
+          sx={{
+            py: 3,
+            px: 2,
+          }}
+        >
+          <Grid container alignItems="center" justifyContent="left" spacing={2}>
             <Grid item xs={12} sm={6} md={3}>
-              {/* <Typography variant="subtitle2">{'\u00A0'}</Typography> */}
               <RadioGroup
                 row
                 value={filterType}
@@ -85,13 +91,9 @@ function HealthRecordFilter() {
               </RadioGroup>
             </Grid>
 
-            {filterType === 'dateRange' && (
+            {filterType === 'dateRange' ? (
               <>
                 <Grid item xs={12} sm={6} md={2}>
-                   {/* <Typography variant="subtitle2">{'\u00A0'}</Typography> */}
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    From Date {'\u00A0'}
-                  </Typography>
                   <DatePicker
                     value={fromDate}
                     onChange={(newValue) =>
@@ -100,38 +102,44 @@ function HealthRecordFilter() {
                       )
                     }
                     renderInput={(params) => (
-                      <TextField {...params} size="small" />
+                      <TextField {...params} size="small" fullWidth variant="outlined" margin="normal" label="From Date" />
                     )}
                   />
                 </Grid>
                 <Grid item xs={12} sm={6} md={2}>
-                {/* <Typography variant="subtitle2">{'\u00A0'}</Typography> */}
-                  <Typography variant="subtitle2" fontWeight="bold">
-                    To Date {'\u00A0'}
-                  </Typography>
                   <DatePicker
                     value={toDate}
                     onChange={(newValue) =>
                       setToDate(moment(new Date(newValue)).format('YYYY-MM-DD'))
                     }
                     renderInput={(params) => (
-                      <TextField {...params} size="small" />
+                      <TextField {...params} size="small" fullWidth variant="outlined" margin="normal" label="To Date" />
                     )}
                   />
                 </Grid>
+                <Grid item xs={12} sm={6} md={2}>
+                  <Button
+                    variant="contained"
+                    sx={{ borderRadius: '5px' }}
+                    onClick={getPatientencountersClick}
+                  >
+                    Apply
+                  </Button>
+                </Grid>
+              </>
+            ) : (
+              <>
+                <Grid item xs={12} sm={6} md={2}>
+                  <Button
+                    variant="contained"
+                    sx={{ borderRadius: '5px' }}
+                    onClick={getPatientencountersClick}
+                  >
+                    Apply
+                  </Button>
+                </Grid>
               </>
             )}
-
-            <Grid item xs={12} sm={6} md={2}>
-              {/* <Typography variant="subtitle2">{'\u00A0'}</Typography> */}
-              <Button
-                variant="contained"
-                sx={{ borderRadius: '5px' }}
-                onClick={getPatientencountersClick}
-              >
-                Apply
-              </Button>
-            </Grid>
           </Grid>
         </CardContent>
       </Card>
