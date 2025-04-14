@@ -15,5 +15,7 @@ export const SERVICE_URLSV2 = {
   GetPatientUserRequestByCode: 'patientuser/getpatientuserrequestbycode',
   GenerateOtp: 'patientuser/generateotp',
   AddPatientUser: 'patientuser/addpatientuser',
-  GetToken: 'patientuser/gettoken'
+  GetToken: 'patientuser/gettoken',
+  GetSharingModulesData : 'patientportal/getsharingmodulesdata',
+  UpdateSharingModulesData : 'patientportal/updatesharingmodulesdata'
 };

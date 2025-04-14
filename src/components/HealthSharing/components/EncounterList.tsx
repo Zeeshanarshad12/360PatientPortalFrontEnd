@@ -68,7 +68,8 @@ function EncounterListData() {
                 {moment(visit.encounterDateTime).format('MM/DD/YYYY')}
               </Typography>
               <Typography variant="body2">
-                {visit.provider} | Location: {visit.locationName}
+                {/* {visit.provider} | Location: {visit.locationName} */}
+                {(visit.provider || "").replace(/,\s*$/, "")} | Location: {visit.locationName}
               </Typography>
             </Grid>
             <Grid item>

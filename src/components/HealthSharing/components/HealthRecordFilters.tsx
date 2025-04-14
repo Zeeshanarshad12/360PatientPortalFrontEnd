@@ -63,7 +63,7 @@ function HealthRecordFilter() {
   return (
     <>
       <Card sx={{ marginY: 2 }}>
-        <CardContent>
+      <CardContent sx={{ paddingTop: 2, paddingLeft: 2, paddingRight: 2, paddingBottom: 0 }}>
           <Grid container alignItems="center" spacing={2}>
             <Grid item xs={12} sm={6} md={3}>
               {/* <Typography variant="subtitle2">{'\u00A0'}</Typography> */}

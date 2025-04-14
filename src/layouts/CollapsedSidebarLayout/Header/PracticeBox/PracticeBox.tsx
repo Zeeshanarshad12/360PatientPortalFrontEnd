@@ -63,6 +63,9 @@ function PracticeBox() {
     };
   }, []);
 
+
+  const practiceName = "AUDREY SCANLON Practice for EMR (Private Practice)";
+
   return (
     <>
       <Box
@@ -113,25 +116,27 @@ function PracticeBox() {
               color: "black",
               pr: 1,
             }}
-            title="Practice Name"
+            title="Name"
           >
-            {localStorage.getItem("FirstName") + " "+localStorage.getItem("LastName") }
+            {localStorage.getItem("FirstName") + " " + localStorage.getItem("LastName")}
           </Typography>
-          <Typography
-            className="ellipsis-text"
-            color="primary"
-            sx={{
-              width: "max-content",
-              maxWidth: "450px",
-              lineHeight: 1.3,
-              fontSize: "13px",
-              fontWeight: "600",
-            }}
-            title="Location Name"
-          >
-            {/* {`Peach Tree Road`} */}
-            {``}
-          </Typography>
+          <Tooltip title={practiceName}>
+            <Typography
+              color="primary"
+              sx={{
+                maxWidth: "200px",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                fontSize: "13px",
+                fontWeight: 600,
+                lineHeight: 1.3,
+                display: "block", // <== this is important for ellipsis to work!
+              }}
+            >
+              {practiceName}
+            </Typography>
+          </Tooltip>
         </Box>
       </Box>
 

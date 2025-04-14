@@ -1,23 +1,46 @@
 import React, { useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
-import { CircularProgress,Card, CardContent, Box, Button, Grid, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typography, TextField, Divider, Snackbar, Alert, Switch, FormControl, Select, MenuItem, InputLabel } from '@mui/material';
+import {
+  CircularProgress, Card, CardContent, Box, Button, Grid, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typography, TextField, Divider, Snackbar, Alert, Switch, FormControl, Select, MenuItem, InputLabel,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow
+} from '@mui/material';
 import { useDispatch, useSelector } from '@/store/index';
-import { CreateAuthorizedUser, GetPatientAuthorizedUser } from '@/slices/patientprofileslice';
+import { CreateAuthorizedUser, GetPatientAuthorizedUser, GetSharingModulesData,UpdateSharingModulesData } from '@/slices/patientprofileslice';
 import { useEffect } from 'react';
 import { debug } from 'console';
 import { format } from 'path';
 
 function AuthorizedUserHeader() {
-  const { CreateAuthorizedUserData } = useSelector((state) => state.patientprofileslice);
+  const { CreateAuthorizedUserData, GetSharingModulesDataList } = useSelector((state) => state.patientprofileslice);
+  const GetSharingModulesList = GetSharingModulesDataList?.result;
   const dispatch = useDispatch();
-  const handleSwitchViewClick = () => {};
+  const handleSwitchViewClick = () => { };
 
   const [open, setOpen] = useState(false);
+  const [openCDS, setOpenCDS] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const handleClose = () => setOpen(false);
+  const handleCloseCDS = () => setOpenCDS(false);
   const [isTouched, setIsTouched] = useState(false); // Tracks whether the user has interacted with the form
   const [loading, setLoading] = useState(false);
+  const [snackbarmsg, setsnackbarmsg] = useState("");
+
+  const handleSaveCDS = async () => {
+    const response = await dispatch(UpdateSharingModulesData(togglesJson)).unwrap();
+    console.log(response.result);
+    if (response.result === "Success") {
+      setOpenSnackbar(true);
+      setsnackbarmsg ("Changes Saved.");
+      handleCloseCDS();
+    }
+  }
+
 
   const handleAuthorisedUserSend = async () => {
     try {
@@ -25,7 +48,7 @@ function AuthorizedUserHeader() {
         return; // Don't proceed if form is invalid
       }
       setLoading(true);
-      formData.Name = formData.firstName+' '+formData.lastName;
+      formData.Name = formData.firstName + ' ' + formData.lastName;
       // Dispatch the CreateAuthorizedUser action and wait for it to complete
       const response = await dispatch(CreateAuthorizedUser(formData)).unwrap();
       // Now that the dispatch is complete, check the result of CreateAuthorizedUserData
@@ -34,6 +57,8 @@ function AuthorizedUserHeader() {
         setLoading(false);
         handleClose();
         setOpenSnackbar(true);
+        setsnackbarmsg ("User created Successfully!");
+        
         await dispatch(GetPatientAuthorizedUser(localStorage.getItem('patientID')));
       } else {
         // Handle failure or other cases here
@@ -43,6 +68,8 @@ function AuthorizedUserHeader() {
       console.error("Error while creating authorized user:", error);
     }
   };
+
+
 
   // Email validation regex function
   const isValidEmail = (email) => {
@@ -75,23 +102,32 @@ function AuthorizedUserHeader() {
     // Reset formData to initial state
     setFormData({
       PatientId: localStorage.getItem('patientID'),
-      PracticeId:localStorage.getItem('PracticeId'),
+      PracticeId: localStorage.getItem('PracticeId'),
       firstName: '',
       lastName: '',
       EmailAddress: '',
       Relation: '',
-      Name : ''
+      Name: ''
     });
   };
 
+
+  const handleClickOpenControlDataSharing = () => {
+    setOpenCDS(true);
+    dispatch(GetSharingModulesData(localStorage.getItem('patientID')));
+
+
+
+  }
+
   const [formData, setFormData] = useState({
     PatientId: localStorage.getItem('patientID'),
-    PracticeId:localStorage.getItem('PracticeId'),
+    PracticeId: localStorage.getItem('PracticeId'),
     firstName: '',
     lastName: '',
     EmailAddress: '',
     Relation: '',
-    Name : ''
+    Name: ''
   });
 
   // Handle change for each input field
@@ -103,6 +139,48 @@ function AuthorizedUserHeader() {
     });
   };
 
+  const [toggles, setToggles] = useState({});
+  const [togglesJson, setTogglesJson] = useState("");
+
+
+  useEffect(() => {
+    const patientId = localStorage.getItem("patientID");
+  
+    const modulesArray = Object.entries(toggles).map(([moduleName, moduleAccess]) => ({
+      moduleName,
+      moduleAccess
+    }));
+  
+    const newJson = JSON.stringify({
+      PatientId: patientId,
+      Modules: modulesArray,
+    });
+  
+    setTogglesJson(newJson);
+  }, [toggles]); // runs whenever toggles changes
+
+  const handleToggleChange = (item) => {
+    const updatedToggles = {
+      ...toggles,
+      [item.moduleName]: !toggles[item.moduleName],
+    };
+    setToggles(updatedToggles); // triggers useEffect, which updates togglesJson
+  };
+    
+  
+
+  useEffect(() => {
+    if (GetSharingModulesList) {
+      const initialToggles = {};
+      GetSharingModulesList.forEach(item => {
+        initialToggles[item.moduleName] = item.moduleAccess ?? false;
+      });
+      setToggles(initialToggles);
+    }
+  }, [GetSharingModulesList]);
+
+
+
   return (
     <>
       <Grid container justifyContent="space-between" alignItems="center">
@@ -110,24 +188,24 @@ function AuthorizedUserHeader() {
           {'Authorised User'}
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>  {/* This Box will handle the buttons next to each other */}
-        {localStorage.getItem("UserAccessType")  === "Self" && (
-          <Button
-            variant={'outlined'}
-            sx={{ textTransform: 'none', borderRadius: '5px' }}
-            onClick={handleSwitchViewClick}
-          >
-            {'Control Data Sharing'}
-          </Button>
+          {localStorage.getItem("UserAccessType") === "Self" && (
+            <Button
+              variant={'outlined'}
+              sx={{ textTransform: 'none', borderRadius: '5px' }}
+              onClick={handleClickOpenControlDataSharing}
+            >
+              {'Control Data Sharing'}
+            </Button>
           )}
-      {localStorage.getItem("UserAccessType")  === "Self" && (
-      <Button
-        variant="contained"
-        sx={{ borderRadius: '5px' }}
-        onClick={handleClickOpenAuthorisedUser}
-      >
-        Add User
-      </Button>
-    )}
+          {localStorage.getItem("UserAccessType") === "Self" && (
+            <Button
+              variant="contained"
+              sx={{ borderRadius: '5px' }}
+              onClick={handleClickOpenAuthorisedUser}
+            >
+              Add User
+            </Button>
+          )}
         </Box>
       </Grid>
 
@@ -214,7 +292,7 @@ function AuthorizedUserHeader() {
                       color: 'gray', // You can change this to any color you want for the label
                     },
                   }}
-                  />
+                />
               </Grid>
 
               {/* Email Address field */}
@@ -233,8 +311,8 @@ function AuthorizedUserHeader() {
                     isTouched && !formData.EmailAddress
                       ? 'Email Address is required'
                       : isTouched && !isValidEmail(formData.EmailAddress)
-                      ? 'Invalid email address'
-                      : ''
+                        ? 'Invalid email address'
+                        : ''
                   }
                   FormHelperTextProps={{
                     sx: {
@@ -303,14 +381,114 @@ function AuthorizedUserHeader() {
             sx={{ borderRadius: '5px' }}
             onClick={handleAuthorisedUserSend}
           >
-           {loading ? (
-                <CircularProgress size={24} sx={{ color: 'white' }} />
-              ) : (
-                'Send'
-              )}
+            {loading ? (
+              <CircularProgress size={24} sx={{ color: 'white' }} />
+            ) : (
+              'Send'
+            )}
           </Button>
         </DialogActions>
       </Dialog>
+
+
+      <Dialog open={openCDS} onClose={handleCloseCDS} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontWeight: 'bold' }}>
+          Control Data Sharing
+          <IconButton
+            aria-label="close"
+            onClick={handleCloseCDS}
+            sx={{ position: 'absolute', right: 8, top: 8 }}
+          >
+            <CloseIcon />
+          </IconButton>
+          <Divider sx={{ marginY: 1 }} />
+        </DialogTitle>
+
+        {/* DialogContent */}
+        <DialogContent>
+          {/* Info Card */}
+          <Card sx={{ backgroundColor: 'rgba(96, 148, 185, 0.16)', mb: 2, borderRadius: 2 }}>
+            <CardContent sx={{ padding: 2 }}>
+              <Typography variant="body1" fontWeight="bold">
+                Toggle settings to request a restriction on specific health data, for treatment, payment, or health care operations.
+              </Typography>
+            </CardContent>
+          </Card>
+
+          {/* Scrollable Table with Sticky Header */}
+          <TableContainer sx={{ maxHeight: '300px', overflowY: 'auto' }}>
+            <Table stickyHeader sx={{ borderCollapse: 'separate', borderSpacing: '0 5px' }}>
+              <TableHead>
+                <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+                  <TableCell
+                    sx={{
+                      fontWeight: 'bold',
+                      color: 'black',
+                      backgroundColor: '#f5f5f5',
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 1,
+                    }}
+                  >
+                    Information
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      fontWeight: 'bold',
+                      color: 'black',
+                      backgroundColor: '#f5f5f5',
+                      position: 'sticky',
+                      top: 0,
+                      zIndex: 1,
+                      textAlign: 'right',
+                    }}
+                  >
+                    <div style={{ marginRight: '20%' }}>Access Status</div>
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {GetSharingModulesList?.map((item, index) => (
+                  <TableRow key={index} sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                    <TableCell>{item.moduleName}</TableCell>
+                    <TableCell sx={{ textAlign: 'right' }}>
+                      <div style={{ marginRight: '25%' }}>
+                        <Switch
+                          checked={toggles[item.moduleName] ?? false}
+                          onChange={() => handleToggleChange(item)}
+                          color="primary"
+                        />
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+
+        {/* Actions */}
+        <DialogActions sx={{ justifyContent: 'flex-end', px: 2, pb: 2 }}>
+          <Button variant="outlined" color="primary" sx={{ borderRadius: '5px' }} onClick={handleCloseCDS}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            sx={{ borderRadius: '5px' }}
+            // onClick={() => {
+            //   console.log('Selected options:', togglesJson);
+            //   const response = dispatch(UpdateSharingModulesData(togglesJson)).unwrap();
+            // }}
+
+            onClick={handleSaveCDS}
+          >
+            Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+
 
       {/* Snackbar for Success Message of Create User */}
       <Snackbar
@@ -320,7 +498,7 @@ function AuthorizedUserHeader() {
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
         <Alert onClose={() => setOpenSnackbar(false)} severity="success" variant="filled">
-          User created Successfully!
+          {snackbarmsg}
         </Alert>
       </Snackbar>
     </>

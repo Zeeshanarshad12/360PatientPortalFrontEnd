@@ -33,8 +33,9 @@ const initialState = {
   GenerateOtpData: null,
   GenerateOtpLoader: false,
   GetTokenData: null,
-  GetTokenLoader: false
-  
+  GetTokenLoader: false,
+  GetSharingModulesDataList: null,
+  GetSharingModulesDataLoader: false,  
 
 };
 
@@ -312,6 +313,41 @@ export const ShareDocument: any = createAsyncThunk(
   }
 );
 
+export const GetSharingModulesData: any = createAsyncThunk(
+  'GetSharingModulesData',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.GetSharingModulesData(data, 'ApiVersion2Req');
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+) ;
+
+export const UpdateSharingModulesData: any = createAsyncThunk(
+  'UpdateSharingModulesData',
+  async (data, thunkAPI) => {
+    debugger;
+    const res = await apiServicesV2.UpdateSharingModulesData(data, 'ApiVersion2Req');
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+) ;
+
 const patientProfileSlice = createSlice({
   name: 'Patient Profile Slice',
   initialState: initialState,
@@ -466,6 +502,17 @@ const patientProfileSlice = createSlice({
       state.GetTokenLoader = false;
     },
 
+          
+    [GetSharingModulesData.pending]: (state: any) => {
+      state.GetSharingModulesDataLoader = true;
+    },
+    [GetSharingModulesData.fulfilled]: (state: any, { payload }: any) => {
+      state.GetSharingModulesDataList = payload;
+      state.GetSharingModulesDataLoader = false;
+    },
+    [GetSharingModulesData.rejected]: (state: any) => {
+      state.GetSharingModulesDataLoader = false;
+    },
     
 
     [ClearCahceNLogout.pending]: (state: any) => {

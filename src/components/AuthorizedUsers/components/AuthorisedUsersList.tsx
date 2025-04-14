@@ -3,7 +3,7 @@ import { Card, CardContent, Box, Typography, Switch } from '@mui/material';
 import Report from '@mui/icons-material/Report';
 import { DataGrid } from '@mui/x-data-grid';
 import { useSelector, useDispatch } from '@/store/index';
-import {  UpdatePatientAuthorizedUserAccess,GetPatientAuthorizedUser } from '@/slices/patientprofileslice';
+import { UpdatePatientAuthorizedUserAccess, GetPatientAuthorizedUser } from '@/slices/patientprofileslice';
 
 function AuthorisedUsersList() {
   const dispatch = useDispatch();
@@ -23,89 +23,89 @@ function AuthorisedUsersList() {
   }, [activityDatarows]);
 
   // Handle toggle switch changes
-const handleToggle = async (index, rowid) => {
-  const updatedStates = [...toggleStates];
-  // Toggle the state for this particular row
-  updatedStates[rowid] = !updatedStates[rowid];
-  setToggleStates(updatedStates);
+  const handleToggle = async (index, rowid) => {
+    const updatedStates = [...toggleStates];
+    // Toggle the state for this particular row
+    updatedStates[rowid] = !updatedStates[rowid];
+    setToggleStates(updatedStates);
 
-  // Set the AccessObj with the correct isActive value
-  const isActive = updatedStates[rowid] ? 'Active' : 'Inactive';
+    // Set the AccessObj with the correct isActive value
+    const isActive = updatedStates[rowid] ? 'Active' : 'Inactive';
 
-  const AccessObj = {
-    index: index, // use index for backend identification if needed
-    PatientId: localStorage.getItem('patientID'),
-    isActive: isActive, // Updated status
+    const AccessObj = {
+      index: index, // use index for backend identification if needed
+      PatientId: localStorage.getItem('patientID'),
+      isActive: isActive, // Updated status
+    };
+
+    try {
+      // Dispatch the action to update the backend with the AccessObj data
+      debugger;
+      const response = await dispatch(UpdatePatientAuthorizedUserAccess(AccessObj)).unwrap();
+
+      // Optionally refetch the updated user data after toggling the status
+      if (localStorage.getItem('patientID') != null) {
+        dispatch(GetPatientAuthorizedUser(localStorage.getItem('patientID')));
+      }
+    } catch (error) {
+      console.error("Error updating the user's access status:", error);
+    }
   };
 
-  try {
-    // Dispatch the action to update the backend with the AccessObj data
-    debugger;
-    const response = await dispatch(UpdatePatientAuthorizedUserAccess(AccessObj)).unwrap();
-
-    // Optionally refetch the updated user data after toggling the status
+  useEffect(() => {
     if (localStorage.getItem('patientID') != null) {
       dispatch(GetPatientAuthorizedUser(localStorage.getItem('patientID')));
     }
-  } catch (error) {
-    console.error("Error updating the user's access status:", error);
-  }
-};
+  }, [dispatch]);
 
-useEffect(() => {
-  if (localStorage.getItem('patientID') != null) {
-    dispatch(GetPatientAuthorizedUser(localStorage.getItem('patientID')));
-  }
-}, [dispatch]);
+  const activityData = {
+    columns: [
+      { field: 'Name', headerName: 'Name', flex: 1 },
+      { field: 'EmailAddress', headerName: 'Email Address', flex: 1 },
+      { field: 'Relationship', headerName: 'Relationship', flex: 1 },
+      { field: 'AccessProvidedOn', headerName: 'Access Provided On', flex: 1 },
+      {
+        field: 'AccessStatus',
+        headerName: 'Access Status',
+        flex: 1,
+        renderCell: (params) => {
+          const rowid = params.row.rowid; // Use rowid from the row data
+          const isActive = toggleStates[rowid]; // Fetch the correct state for this row
+          const isDisabled = localStorage.getItem("UserAccessType") !== "Self"; // condition for disabling switch
 
-const activityData = {
-  columns: [
-    { field: 'Name', headerName: 'Name', flex: 1 },
-    { field: 'EmailAddress', headerName: 'Email Address', flex: 1 },
-    { field: 'Relationship', headerName: 'Relationship', flex: 1 },
-    { field: 'AccessProvidedOn', headerName: 'Access Provided On', flex: 1 },
-    {
-      field: 'AccessStatus',
-      headerName: 'Access Status',
-      flex: 1,
-      renderCell: (params) => {
-        const rowid = params.row.rowid; // Use rowid from the row data
-        const isActive = toggleStates[rowid]; // Fetch the correct state for this row
-        const isDisabled = localStorage.getItem("UserAccessType") !== "Self"; // condition for disabling switch
-
-        return (
-          <Switch
-            checked={isActive}
-            onChange={() => handleToggle(params.row.id, rowid)} // Pass correct indices to handleToggle
-            disabled={isDisabled} 
-            sx={{
-              '& .MuiSwitch-thumb': {
-                backgroundColor: isDisabled ? 'rgba(0, 0, 0, 0.38)' : '', // Dim the thumb color when disabled
-              },
-              '& .MuiSwitch-track': {
-                backgroundColor: isDisabled ? 'rgba(0, 0, 0, 0.12)' : '', // Dim the track color when disabled
-              },
-              // When the switch is disabled, apply the custom opacity and color
-              '&.Mui-disabled': {
-                opacity: 0.5, // Dim the opacity when disabled
-                color: 'rgba(0, 0, 0, 0.38)', // Dim the main color of the switch
-              },
-            }}
-          />
-        );
+          return (
+            <Switch
+              checked={isActive}
+              onChange={() => handleToggle(params.row.id, rowid)} // Pass correct indices to handleToggle
+              disabled={isDisabled}
+              sx={{
+                '& .MuiSwitch-thumb': {
+                  backgroundColor: isDisabled ? 'rgba(0, 0, 0, 0.38)' : '', // Dim the thumb color when disabled
+                },
+                '& .MuiSwitch-track': {
+                  backgroundColor: isDisabled ? 'rgba(0, 0, 0, 0.12)' : '', // Dim the track color when disabled
+                },
+                // When the switch is disabled, apply the custom opacity and color
+                '&.Mui-disabled': {
+                  opacity: 0.5, // Dim the opacity when disabled
+                  color: 'rgba(0, 0, 0, 0.38)', // Dim the main color of the switch
+                },
+              }}
+            />
+          );
+        }
       }
-    }
-  ],
-  rows: activityDatarows ? activityDatarows.map((item, index) => ({
-    rowid: index, // Use rowid as the index to identify rows uniquely
-    id: item.id,  // The actual ID for backend or unique row identification
-    Name: item.authUserName,
-    EmailAddress: item.emailAddress,
-    Relationship: item.relationship,
-    AccessProvidedOn: item.accessProvidedOn,
-    AccessStatus: item.accessStatus, // This can be used to show the initial status if needed
-  })) : []
-};
+    ],
+    rows: activityDatarows ? activityDatarows.map((item, index) => ({
+      rowid: index, // Use rowid as the index to identify rows uniquely
+      id: item.id,  // The actual ID for backend or unique row identification
+      Name: item.authUserName,
+      EmailAddress: item.emailAddress,
+      Relationship: item.relationship,
+      AccessProvidedOn: item.accessProvidedOn,
+      AccessStatus: item.accessStatus, // This can be used to show the initial status if needed
+    })) : []
+  };
 
 
 

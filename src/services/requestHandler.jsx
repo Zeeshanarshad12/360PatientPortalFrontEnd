@@ -176,6 +176,31 @@ const GetGeneralLookup = (data) =>
                     feature: featureConstants.static
                   }
                 );
+
+                const GetSharingModulesData = (data,flag) =>
+    
+                  get(
+                    
+                    `${SERVICE_URLSV2.GetSharingModulesData}?PatientId=${data}`,
+                    {},
+                    {
+                      feature: featureConstants.static,
+                      ApiVersion2Req: flag
+                    }
+                  );
+
+                  const UpdateSharingModulesData = (data,flag) =>
+    
+                    get(
+                      
+                      `${SERVICE_URLSV2.UpdateSharingModulesData}?Data=${data}`,
+                      {},
+                      {
+                        feature: featureConstants.static,
+                        ApiVersion2Req: flag
+                      }
+                    );
+  
               
           
 const apiServicesV2 = {
@@ -195,7 +220,9 @@ const apiServicesV2 = {
   GetPatientUserRequestByCode,
   GenerateOtp,
   AddPatientUser,
-  GetToken
+  GetToken,
+  GetSharingModulesData,
+  UpdateSharingModulesData
   
 };
 export default apiServicesV2;

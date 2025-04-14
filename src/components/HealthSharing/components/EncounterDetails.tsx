@@ -16,57 +16,86 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
-import { useDispatch,useSelector } from '@/store/index';
-import { InsertActivityLog, ShareDocument,} from '@/slices/patientprofileslice';
+import { useDispatch, useSelector } from '@/store/index';
+import { InsertActivityLog, ShareDocument, } from '@/slices/patientprofileslice';
 import { useEffect } from 'react';
 
 function EncounterDetailsReport() {
 
- const {EncounterId,ShareDocumentData} = useSelector((state) => state.patientprofileslice);
- const dispatch = useDispatch();
- const [open, setOpen] = useState(false);
- const [email, setEmail] = useState('andrew_doe@email.com');
- const [message, setMessage] = useState('');
- const [openSnackbar, setOpenSnackbar] = useState(false);
- const [isTouched, setIsTouched] = useState(false);  // Track if user has clicked Send
-
-    //Save ActivityLog Obj 
+  const { EncounterId, ShareDocumentData } = useSelector((state) => state.patientprofileslice);
+  const dispatch = useDispatch();
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [isTouched, setIsTouched] = useState(false);  // Track if user has clicked Send
+  const [emailError, setEmailError] = useState(false);
+  //Save ActivityLog Obj 
   const Logobj = {
     PatientId: localStorage.getItem('patientID'),
-    Email : localStorage.getItem('Email'), 
+    Email: localStorage.getItem('Email'),
     ActivityTypeId: '3'
   };
-  const Emailobj ={
-    PatientEmail : localStorage.getItem('patientEmail'),
-    EncounterId : EncounterId
+  const Emailobj = {
+    PatientEmail: localStorage.getItem('patientEmail'),
+    EncounterId: EncounterId
   }
-  
-  const handleClickOpen = () =>{ 
+
+  const handleClickOpen = () => {
     setOpen(true);
     setMessage('');
     setIsTouched(false);
+    setEmail('');
   }
   const handleClose = () => setOpen(false);
-  const handleSendEmail  = () => {
-    
-    setIsTouched(true);
-    if (message.trim() === '') {
-      return; // Don't proceed if the message is empty
-    }
-    dispatch(ShareDocument(Emailobj));
-   if(ShareDocumentData==true){
-    handleClose();
-    setOpenSnackbar(true);
-    const LogEmailobj = {
-      PatientId: localStorage.getItem('patientID'),
-      Email : localStorage.getItem('Email'), 
-      ActivityTypeId: '4'
-    };
-    dispatch(InsertActivityLog(LogEmailobj));
-   
-  }
+  // const handleSendEmail  = () => {
 
-  }
+  //   setIsTouched(true);
+  //   if (message.trim() === '') {
+  //     return; // Don't proceed if the message is empty
+  //   }
+  //   dispatch(ShareDocument(Emailobj));
+  //  if(ShareDocumentData==true){
+  //   handleClose();
+  //   setOpenSnackbar(true);
+  //   const LogEmailobj = {
+  //     PatientId: localStorage.getItem('patientID'),
+  //     Email : localStorage.getItem('Email'), 
+  //     ActivityTypeId: '4'
+  //   };
+  //   dispatch(InsertActivityLog(LogEmailobj));
+
+  // }
+
+  // }
+
+
+
+  const handleSendEmail = () => {
+    setIsTouched(true);
+
+    const isEmailValid = email.trim() !== '' && /\S+@\S+\.\S+/.test(email);
+    const isMessageValid = message.trim() !== '';
+
+    setEmailError(!isEmailValid);
+
+    if (!isEmailValid || !isMessageValid) {
+      return; // stop here if any field is invalid
+    }
+
+    dispatch(ShareDocument(Emailobj));
+
+    if (ShareDocumentData === true) {
+      handleClose();
+      setOpenSnackbar(true);
+      const LogEmailobj = {
+        PatientId: localStorage.getItem('patientID'),
+        Email: localStorage.getItem('Email'),
+        ActivityTypeId: '4'
+      };
+      dispatch(InsertActivityLog(LogEmailobj));
+    }
+  };
 
 
   useEffect(() => {
@@ -78,7 +107,7 @@ function EncounterDetailsReport() {
 
       const LogEmailobj = {
         PatientId: localStorage.getItem('patientID'),
-        Email : localStorage.getItem('Email'), 
+        Email: localStorage.getItem('Email'),
         ActivityTypeId: '4',
       };
       dispatch(InsertActivityLog(LogEmailobj));
@@ -131,7 +160,7 @@ function EncounterDetailsReport() {
       <Box
         sx={{
           width: '100%',
-          height: 'calc(80vh - 100px)',
+          height: 'calc(64vh - 100px)',
           backgroundColor: '#fff'
         }}
       >
@@ -192,56 +221,96 @@ function EncounterDetailsReport() {
         <DialogContent>
           <Box display="flex" flexDirection="column" gap={2}>
             <Box display="flex" alignItems="center">
-            <AttachFileIcon color="action" />
-            <Typography variant="body2" fontWeight="bold">
-              CCD document will be automatically attached to this message
-            </Typography>
+              <AttachFileIcon color="action" />
+              <Typography variant="body2" fontWeight="bold">
+                CCD document will be automatically attached to this message
+              </Typography>
             </Box>
 
-            <TextField
+            {/* <TextField
               fullWidth
               label="Email Address"
               value={Emailobj.PatientEmail}
               onChange={(e) => setEmail(e.target.value)}
               margin="dense"
               variant="outlined"
-              disabled
-              
+
+
+            /> */}
+
+
+            <TextField
+              fullWidth
+              label="Email Address"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                if (isTouched) {
+                  const isValid = /\S+@\S+\.\S+/.test(e.target.value);
+                  setEmailError(!isValid);
+                }
+              }}
+              margin="dense"
+              variant="outlined"
+              required
+              error={isTouched && emailError}
+              helperText={
+                isTouched && emailError ? 'Enter a valid email address' : ''
+              }
+              FormHelperTextProps={{
+                sx: {
+                  fontWeight: 'normal'
+                }
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  '&.Mui-error': {
+                    borderColor: 'transparent'
+                  }
+                },
+                '& .MuiInputBase-input::placeholder': {
+                  color: 'gray'
+                },
+                '& .MuiInputLabel-root.Mui-error': {
+                  color: 'gray'
+                }
+              }}
             />
-             <TextField
-          fullWidth
-          label="Message"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          margin="dense"
-          variant="outlined"
-          multiline
-          rows={3}
-          required
-          error={isTouched && !message} // Show error if message is empty and Send button is clicked
-          helperText={isTouched && !message ? 'Message cannot be empty' : ''} // Custom helper text when Send is clicked
-          FormHelperTextProps={{
-                    sx: {
-                      fontWeight: 'normal', // Ensures the helper text is not bold
-                    },
-                  }}
-                  sx={{
-                    // Remove red outline when there's an error
-                    '& .MuiOutlinedInput-root': {
-                      '&.Mui-error': {
-                        borderColor: 'transparent', // Make the error border transparent
-                      },
-                    },
-                    // Change placeholder color to be normal even when error is present
-                    '& .MuiInputBase-input::placeholder': {
-                      color: 'gray', // Placeholder color when there is an error
-                    },
-                    // Optional: Style the label when there is an error
-                    '& .MuiInputLabel-root.Mui-error': {
-                      color: 'gray', // You can change this to any color you want for the label
-                    },
-                  }}
-        />
+
+            <TextField
+              fullWidth
+              label="Message"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              margin="dense"
+              variant="outlined"
+              multiline
+              rows={3}
+              required
+              error={isTouched && !message} // Show error if message is empty and Send button is clicked
+              helperText={isTouched && !message ? 'Message cannot be empty' : ''} // Custom helper text when Send is clicked
+              FormHelperTextProps={{
+                sx: {
+                  fontWeight: 'normal', // Ensures the helper text is not bold
+                },
+              }}
+              sx={{
+                // Remove red outline when there's an error
+                '& .MuiOutlinedInput-root': {
+                  '&.Mui-error': {
+                    borderColor: 'transparent', // Make the error border transparent
+                  },
+                },
+                // Change placeholder color to be normal even when error is present
+                '& .MuiInputBase-input::placeholder': {
+                  color: 'gray', // Placeholder color when there is an error
+                },
+                // Optional: Style the label when there is an error
+                '& .MuiInputLabel-root.Mui-error': {
+                  color: 'gray', // You can change this to any color you want for the label
+                },
+              }}
+            />
 
           </Box>
         </DialogContent>
