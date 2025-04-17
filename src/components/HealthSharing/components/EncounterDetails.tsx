@@ -12,7 +12,9 @@ import {
   TextField,
   Divider,
   Snackbar,
-  Alert
+  Alert,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
@@ -30,6 +32,8 @@ function EncounterDetailsReport() {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [isTouched, setIsTouched] = useState(false);  // Track if user has clicked Send
   const [emailError, setEmailError] = useState(false);
+  const [includeCCD, setIncludeCCD] = useState(true);
+
   //Save ActivityLog Obj 
   const Logobj = {
     PatientId: localStorage.getItem('patientID'),
@@ -107,7 +111,7 @@ function EncounterDetailsReport() {
 
       const LogEmailobj = {
         PatientId: localStorage.getItem('patientID'),
-        Email:  email, // localStorage.getItem('Email'),
+        Email: email, // localStorage.getItem('Email'),
         ActivityTypeId: '4',
       };
       dispatch(InsertActivityLog(LogEmailobj));
@@ -227,55 +231,57 @@ function EncounterDetailsReport() {
               </Typography>
             </Box>
 
-            {/* <TextField
-              fullWidth
-              label="Email Address"
-              value={Emailobj.PatientEmail}
-              onChange={(e) => setEmail(e.target.value)}
-              margin="dense"
-              variant="outlined"
-
-
-            /> */}
-
-
-            <TextField
-              fullWidth
-              label="Email Address"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                if (isTouched) {
-                  const isValid = /\S+@\S+\.\S+/.test(e.target.value);
-                  setEmailError(!isValid);
-                }
-              }}
-              margin="dense"
-              variant="outlined"
-              required
-              error={isTouched && emailError}
-              helperText={
-                isTouched && emailError ? 'Enter a valid email address' : ''
-              }
-              FormHelperTextProps={{
-                sx: {
-                  fontWeight: 'normal'
-                }
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  '&.Mui-error': {
-                    borderColor: 'transparent'
-                  }
-                },
-                '& .MuiInputBase-input::placeholder': {
-                  color: 'gray'
-                },
-                '& .MuiInputLabel-root.Mui-error': {
-                  color: 'gray'
-                }
-              }}
-            />
+            <Box display="flex" alignItems="center" gap={2}>
+  <TextField
+    fullWidth
+    label="Email Address"
+    value={email}
+    onChange={(e) => {
+      setEmail(e.target.value);
+      if (isTouched) {
+        const isValid = /\S+@\S+\.\S+/.test(e.target.value);
+        setEmailError(!isValid);
+      }
+    }}
+    margin="dense"
+    variant="outlined"
+    required
+    error={isTouched && emailError}
+    helperText={
+      isTouched && emailError ? 'Enter a valid email address' : ''
+    }
+    FormHelperTextProps={{
+      sx: {
+        fontWeight: 'normal'
+      }
+    }}
+    sx={{
+      flexGrow: 1,
+      '& .MuiOutlinedInput-root': {
+        '&.Mui-error': {
+          borderColor: 'transparent'
+        }
+      },
+      '& .MuiInputBase-input::placeholder': {
+        color: 'gray'
+      },
+      '& .MuiInputLabel-root.Mui-error': {
+        color: 'gray'
+      }
+    }}
+  />
+  <FormControlLabel
+    control={
+      <Checkbox
+        checked={includeCCD}
+        onChange={(e) => setIncludeCCD(e.target.checked)}
+        color="primary"
+      />
+    }
+    label="Secure"
+    sx={{ whiteSpace: 'nowrap' }}
+  />
+</Box>
 
             <TextField
               fullWidth
