@@ -7,7 +7,7 @@ const Profile = () => {
     <>
     <ProtectedRoute>
       <PatientDataLoadStateCheck>
-        <PatientProfile /> {/* main page component */}
+        <PatientProfile/> {/* main page component */}
       </PatientDataLoadStateCheck>
       </ProtectedRoute>
     </>

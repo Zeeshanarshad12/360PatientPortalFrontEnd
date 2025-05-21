@@ -41,12 +41,13 @@ const PatientProfile = () => {
             overflowY: 'auto',
             height: 'calc(100vh - 100px)'
           }}
+          tabIndex={0} 
         >
           <Card sx={{ marginBottom: 1 }}>
             <ContactInfo></ContactInfo>
           </Card>
 
-          <Card sx={{ marginBottom: 1 }}>
+          <Card sx={{ marginBottom: 1 }} >
             <Contacts></Contacts>
 
             <Insurance></Insurance>

@@ -12,7 +12,7 @@ import {
 import Image from 'next/image';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
 import { useDispatch, useSelector } from "@/store/index";
-import { GetToken} from "@/slices/patientprofileslice";
+import { GetToken } from "@/slices/patientprofileslice";
 import { useRouter } from 'next/router';
 
 
@@ -26,7 +26,7 @@ const Login = () => {
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
   const { GetTokenData } = useSelector((state) => state.patientprofileslice);
   const [loading, setLoading] = useState(false);
-  const handleLogin  = async () => {
+  const handleLogin = async () => {
     // Check if both fields are filled
     if (!email || !password) {
       setError('Both fields are required!');
@@ -35,19 +35,18 @@ const Login = () => {
     setLoading(true);
     // Clear error message and perform login logic
     setError('');
-    const loginobj ={
-      username : email ,
-      password : password
-    } 
+    const loginobj = {
+      username: email,
+      password: password
+    }
 
-   const response = await dispatch(GetToken(loginobj)).unwrap();
-   debugger
-   if(!response || !response.access_token || response.error_description)
-   {
-    // setError('Invalid Credentials');
-    setError(response.error_description);
-    setLoading(false);
-   }
+    const response = await dispatch(GetToken(loginobj)).unwrap();
+    debugger
+    if (!response || !response.access_token || response.error_description) {
+      // setError('Invalid Credentials');
+      setError(response.error_description);
+      setLoading(false);
+    }
   };
 
   const handleEmailChange = (e) => {
@@ -119,6 +118,7 @@ const Login = () => {
         )}
 
         <TextField
+          id="email"
           fullWidth
           variant="outlined"
           margin="normal"
@@ -128,7 +128,10 @@ const Login = () => {
           onChange={handleEmailChange}
           error={!!error} // Show error if email or password is empty
         />
+
+
         <TextField
+          id="password"
           fullWidth
           variant="outlined"
           margin="normal"
@@ -139,28 +142,34 @@ const Login = () => {
           onChange={handlePasswordChange}
           InputProps={{
             endAdornment: (
-              <IconButton onClick={togglePasswordVisibility}>
+              <IconButton
+                onClick={togglePasswordVisibility}
+                id="LoginEyeIcon"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
                 {showPassword ? <VisibilityOff /> : <Visibility />}
               </IconButton>
+
             )
           }}
           error={!!error} // Show error if email or password is empty
         />
-       <Button
-              fullWidth
-              variant="contained"
-              color="primary"
-             sx={{ mt: 2, borderRadius: '5px' }}
-              onClick={handleLogin}
-              disabled={loading}
-            >
-             {loading ? (
-                <CircularProgress size={24} sx={{ color: 'white' }} />
-              ) : (
-                'Login'
-              )}
-            </Button>
-        
+        <Button
+          fullWidth
+          variant="contained"
+          color="primary"
+          sx={{ mt: 2, borderRadius: '5px' }}
+          onClick={handleLogin}
+          disabled={loading}
+        >
+          {loading ? (
+            <CircularProgress size={24} sx={{ color: 'white' }} />
+          ) : (
+            'Login'
+          )}
+        </Button>
+
         <Typography
           variant="subtitle2"
           sx={{ mt: 3, textAlign: 'left', mb: 2 }}

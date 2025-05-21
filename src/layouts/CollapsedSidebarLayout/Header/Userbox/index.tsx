@@ -95,7 +95,7 @@ function HeaderUserbox() {
   } else {
     return (
       <>
-        <UserBoxButton color="secondary"  onClick={handleOpen}>
+        <UserBoxButton color="secondary"  onClick={handleOpen} >
           <Avatar
             variant="rounded"
           alt={userName}
@@ -108,7 +108,7 @@ function HeaderUserbox() {
             }}
           >
             <UserBoxText>
-              <UserBoxLabel variant="body1">
+              <UserBoxLabel variant="body1"  id="userbox" sx={{ color: (theme) => theme.palette.text.primary }}>
                 {userName ? userName : ""}
               </UserBoxLabel>
               <UserBoxDescription variant="body2">{Role} </UserBoxDescription>

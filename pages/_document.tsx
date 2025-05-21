@@ -20,7 +20,9 @@ export default class MyDocument extends Document {
           />
         </Head>
         <body>
-          <Main />
+          <main id="main-content" role="main">
+            <Main />
+          </main>
           <NextScript />
         </body>
       </Html>
