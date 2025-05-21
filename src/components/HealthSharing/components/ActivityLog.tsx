@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, Typography, Box } from '@mui/material';
 import Report from '@mui/icons-material/Report';
 import { DataGrid } from '@mui/x-data-grid';
 import { useActivityLoadState } from '@/components/HealthSharing/contexts/activityLoadStates';
 import { useSelector } from '@/store/index';
 
-function ActivityLogData ()  {
+function ActivityLogData() {
   const { PatientCCDAActivityLog } = useSelector((state) => state.patientprofileslice);
   const activityDatarows = PatientCCDAActivityLog?.result.item3;
   const { isActivityLoad, setIsActivityLoad } = useActivityLoadState();
@@ -18,17 +18,25 @@ function ActivityLogData ()  {
       { field: 'activityType', headerName: 'Activity (Action Performed)', flex: 1 },
       { field: 'userEmail', headerName: 'Email Address', flex: 1 }
     ],
-   // Dynamically populate rows from the activityDatarows
-   rows: activityDatarows ? activityDatarows.map((item, index) => ({
-    id: index + 1, // Unique ID for each row, using index + 1
-    activityDate: new Date(item.activityDate).toLocaleString(), // Convert activityDate to local string format
-    userName: item.userName,
-    module: item.module,
-    activityType: item.activityType,
-    userEmail: item.userEmail
-  })) : [] // Fallback to empty array if activityDatarows is null or undefined
- 
+    // Dynamically populate rows from the activityDatarows
+    rows: activityDatarows ? activityDatarows.map((item, index) => ({
+      id: index + 1, // Unique ID for each row, using index + 1
+      activityDate: new Date(item.activityDate).toLocaleString(), // Convert activityDate to local string format
+      userName: item.userName,
+      module: item.module,
+      activityType: item.activityType,
+      userEmail: item.userEmail
+    })) : [] // Fallback to empty array if activityDatarows is null or undefined
+
   };
+
+  // Accessibility fix: set tabIndex=0 on the virtual scroller
+  useEffect(() => {
+    const scroller = document.querySelector('.MuiDataGrid-virtualScroller');
+    if (scroller) {
+      scroller.setAttribute('tabindex', '0');
+    }
+  }, [isActivityLoad, activityData.rows.length]);
 
   return (
     <>
