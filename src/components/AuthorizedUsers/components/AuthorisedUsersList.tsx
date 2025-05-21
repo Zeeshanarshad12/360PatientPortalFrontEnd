@@ -40,7 +40,7 @@ function AuthorisedUsersList() {
 
     try {
       // Dispatch the action to update the backend with the AccessObj data
-      debugger;
+      // debugger;
       const response = await dispatch(UpdatePatientAuthorizedUserAccess(AccessObj)).unwrap();
 
       // Optionally refetch the updated user data after toggling the status
@@ -72,12 +72,16 @@ function AuthorisedUsersList() {
           const rowid = params.row.rowid; // Use rowid from the row data
           const isActive = toggleStates[rowid]; // Fetch the correct state for this row
           const isDisabled = localStorage.getItem("UserAccessType") !== "Self"; // condition for disabling switch
+          const userName = params.row.Name || "user"; // Fallback to "user" if Name is not available
 
           return (
             <Switch
               checked={isActive}
               onChange={() => handleToggle(params.row.id, rowid)} // Pass correct indices to handleToggle
               disabled={isDisabled}
+              inputProps={{
+                'aria-label': `${userName}`,
+              }}
               sx={{
                 '& .MuiSwitch-thumb': {
                   backgroundColor: isDisabled ? 'rgba(0, 0, 0, 0.38)' : '', // Dim the thumb color when disabled
