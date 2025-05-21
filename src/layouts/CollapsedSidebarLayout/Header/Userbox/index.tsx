@@ -16,6 +16,7 @@ import { useAuth0 } from "@auth0/auth0-react";
 import { Icons } from "@/icons/themeicons";
 import Image from "next/image";
 import { useRouter } from "next/router";
+import { color } from "@mui/system";
 
 
 const UserBoxButton = styled(Button)(
@@ -71,8 +72,8 @@ function HeaderUserbox() {
   const ref = useRef<HTMLInputElement>(null);
   const [isOpen, setOpen] = useState<boolean>(false);
 
-  const namePart = userName.split("@")[0]; 
-  const nameParts = namePart.split("."); 
+  const namePart = userName.split("@")[0];
+  const nameParts = namePart.split(".");
 
   // Get first letter of each part (uppercase)
   const initials = nameParts
@@ -95,10 +96,10 @@ function HeaderUserbox() {
   } else {
     return (
       <>
-        <UserBoxButton color="secondary"  onClick={handleOpen} >
+        <UserBoxButton color="secondary" onClick={handleOpen} >
           <Avatar
             variant="rounded"
-          alt={userName}
+            alt={userName}
             {...stringAvatar(userName)}
           />
           <Box
@@ -108,10 +109,10 @@ function HeaderUserbox() {
             }}
           >
             <UserBoxText>
-              <UserBoxLabel variant="body1"  id="userbox" sx={{ color: (theme) => theme.palette.text.primary }}>
+              <UserBoxLabel variant="body1" id="userbox" sx={{ color: (theme) => theme.palette.text.primary }}>
                 {userName ? userName : ""}
               </UserBoxLabel>
-              <UserBoxDescription variant="body2">{Role} </UserBoxDescription>
+              <UserBoxDescription variant="body2" style={{ color: '#000000' }}>{Role} </UserBoxDescription>
             </UserBoxText>
           </Box>
           <Box
@@ -177,7 +178,7 @@ function HeaderUserbox() {
               <Button
                 sx={{ color: "gray" }}
                 fullWidth
-                onClick={async () =>{
+                onClick={async () => {
                   // logout({ returnTo: process.env.NEXT_PUBLIC_ORIGIN_URI })
                   localStorage.clear()
                   router.push(process.env.NEXT_PUBLIC_ORIGIN_URI)
