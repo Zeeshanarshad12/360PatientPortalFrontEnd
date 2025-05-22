@@ -333,7 +333,6 @@ export const GetSharingModulesData: any = createAsyncThunk(
 export const UpdateSharingModulesData: any = createAsyncThunk(
   'UpdateSharingModulesData',
   async (data, thunkAPI) => {
-    debugger;
     const res = await apiServicesV2.UpdateSharingModulesData(data, 'ApiVersion2Req');
     try {
       if (res?.status === 200 || res?.status === 201) {

@@ -18,7 +18,6 @@ const AxiosInterceptor = ({ children }) => {
   useEffect(() => {
     const excludedAPIs = ["activitylogs/getactivitylog"];
     let apiURL = "";
-debugger;
     instance.interceptors.response.use(
       async (response) => {
         return response;
@@ -36,7 +35,6 @@ debugger;
             setShowModal(true);
           }
         }
-        debugger;
         if (error.response.status == 401) {
           originalRequest._retry = true;
           try {

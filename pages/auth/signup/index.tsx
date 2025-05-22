@@ -14,17 +14,22 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Image from 'next/image';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import React, { useEffect } from "react";
-import { GetPatientUserRequestByCode, GenerateOtp, AddPatientUser} from "@/slices/patientprofileslice";
-import { useDispatch, useSelector } from "@/store/index";
+import React, { useEffect } from 'react';
+import {
+  GetPatientUserRequestByCode,
+  GenerateOtp,
+  AddPatientUser
+} from '@/slices/patientprofileslice';
+import { useDispatch, useSelector } from '@/store/index';
 import { useRouter } from 'next/router';
 
 function SignUp  ()  {
-  debugger;
   const dispatch = useDispatch();
   const router = useRouter();
   const [code, setCode] = useState(null);
-  const { GetPatientUserRequestByCodeData,GenerateOtpData } = useSelector((state) => state.patientprofileslice);
+  const { GetPatientUserRequestByCodeData, GenerateOtpData } = useSelector(
+    (state) => state.patientprofileslice
+  );
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -39,21 +44,19 @@ function SignUp  ()  {
   const [openSnackbar, setOpenSnackbar] = useState(false);
 
   useEffect(() => {
-    debugger;
     //if (router.asPath) {
-      const queryString = router.asPath.split('?')[1];
-      if (queryString) {
-        const urlParams = new URLSearchParams(queryString);
-        const newCode = urlParams.get('code');
+    const queryString = router.asPath.split('?')[1];
+    if (queryString) {
+      const urlParams = new URLSearchParams(queryString);
+      const newCode = urlParams.get('code');
 
-        // Only update if the new code is different from the current code
-        if (newCode && (newCode !== code || code === null)) {
-          setCode(newCode);
-        }
+      // Only update if the new code is different from the current code
+      if (newCode && (newCode !== code || code === null)) {
+        setCode(newCode);
       }
+    }
     //}
   }, []); // This will run when router.asPath changes
-
 
   useEffect(() => {
     if (code) {
@@ -64,16 +67,13 @@ function SignUp  ()  {
 
   useEffect(() => {
     if (GetPatientUserRequestByCodeData) {
-     setEmail(GetPatientUserRequestByCodeData?.result.emailAddress);
+      setEmail(GetPatientUserRequestByCodeData?.result.emailAddress);
     }
   }, [GetPatientUserRequestByCodeData]); // This will run when the API response changes
 
- 
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
   const toggleConfirmPasswordVisibility = () =>
     setShowConfirmPassword((prev) => !prev);
-
-
 
   const handleOtpChange = (index, value) => {
     if (/^\d?$/.test(value)) {
@@ -104,22 +104,18 @@ function SignUp  ()  {
 
   // Handle Verify Button Click
   const handleVerifyOtp = () => {
-
     if (otp.some((digit) => digit === '')) {
       setError(true);
       return;
     }
 
-    const joinotp=otp.join("");
-;
-      if(joinotp == GenerateOtpData?.result){
-      }
-      else
-      {
-        // alert('Invalid OTP');
-        setOpenSnackbar(true);
-        return;
-      }
+    const joinotp = otp.join('');
+    if (joinotp == GenerateOtpData?.result) {
+    } else {
+      // alert('Invalid OTP');
+      setOpenSnackbar(true);
+      return;
+    }
     setLoading(true); // Show loading indicator
     setTimeout(() => {
       setLoading(false);
@@ -127,13 +123,14 @@ function SignUp  ()  {
     }, 2000); // 2-second delay before proceeding
   };
 
-  const handleSendCode = () =>{
+  const handleSendCode = () => {
     setStep(2);
     dispatch(GenerateOtp(GetPatientUserRequestByCodeData?.result.code));
-  }
+  };
 
-   // Regex to validate password
-  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^*])(?!.*(.)\1\1).{10,20}$/;
+  // Regex to validate password
+  const passwordRegex =
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^*])(?!.*(.)\1\1).{10,20}$/;
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
@@ -144,7 +141,9 @@ function SignUp  ()  {
 
     // Check if the password matches the regex
     if (!passwordRegex.test(password)) {
-      setPasswordError('Password must be between 10 to 20 characters, contain at least one lowercase letter, one uppercase letter, one digit, one special character, and no three consecutive identical characters.');
+      setPasswordError(
+        'Password must be between 10 to 20 characters, contain at least one lowercase letter, one uppercase letter, one digit, one special character, and no three consecutive identical characters.'
+      );
       return;
     }
 
@@ -154,11 +153,11 @@ function SignUp  ()  {
       return;
     }
     const signupobj = {
-      Code : code,
-      Otp : GenerateOtpData?.result.toString() ,
-      Password : password.toString(),
-      CreatedBy : "System"
-    }
+      Code: code,
+      Otp: GenerateOtpData?.result.toString(),
+      Password: password.toString(),
+      CreatedBy: 'System'
+    };
     dispatch(AddPatientUser(signupobj));
     router.push('/auth/signin');
   };
@@ -188,6 +187,7 @@ function SignUp  ()  {
           <IconButton
             onClick={() => setStep(1)}
             sx={{ position: 'absolute', top: 10, left: 10 }}
+            aria-label='Back to previous step'
           >
             <ArrowBackIcon />
           </IconButton>
@@ -215,18 +215,20 @@ function SignUp  ()  {
               Sign Up
             </Typography>
             <Typography
-              sx={{ color: 'gray', mt: 1, textAlign: 'justify', mb: 2 }}
+              sx={{ color: '#4a4a4a', mt: 1, textAlign: 'justify', mb: 2 }}
             >
               Click ‘Get Code’ to receive a one-time verification code on your
               registered email.
             </Typography>
             <TextField
+              id="email"
               fullWidth
               variant="outlined"
               margin="normal"
               label="Email"
               value={email}
               disabled
+              inputProps={{ 'aria-label': 'Email' }}
             />
             <Button
               fullWidth
@@ -247,7 +249,7 @@ function SignUp  ()  {
             >
               Verification Code
             </Typography>
-            <Typography sx={{ color: 'gray', mt: 1, textAlign: 'justify' }}>
+            <Typography sx={{ color: '#4a4a4a', mt: 1, textAlign: 'justify' }}>
               Enter the code from your email to continue.
             </Typography>
             <Grid container spacing={1} justifyContent="center" sx={{ mt: 2 }}>
@@ -260,7 +262,8 @@ function SignUp  ()  {
                     onPaste={handlePaste}
                     inputProps={{
                       maxLength: 1,
-                      style: { textAlign: 'center' }
+                      style: { textAlign: 'center' },
+                      'aria-label': 'OTP Digit'
                     }}
                     sx={{ width: 40 }}
                     error={error && digit === ''}
@@ -297,54 +300,69 @@ function SignUp  ()  {
         )}
         {step === 3 && (
           <>
-            <Typography variant="h4" sx={{ fontWeight: 'bold', mt: 2, textAlign: 'left' }}>
-        Create Password
-      </Typography>
-      <TextField
-        fullWidth
-        variant="outlined"
-        margin="normal"
-        label="Create Password"
-        type={showPassword ? 'text' : 'password'}
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        error={!!passwordError}
-        helperText={passwordError}
-        InputProps={{
-          endAdornment: (
-            <IconButton onClick={togglePasswordVisibility}>
-              {showPassword ? <VisibilityOff /> : <Visibility />}
-            </IconButton>
-          )
-        }}
-      />
-      <TextField
-        fullWidth
-        variant="outlined"
-        margin="normal"
-        label="Confirm Password"
-        type={showConfirmPassword ? 'text' : 'password'}
-        value={confirmPassword}
-        onChange={(e) => setConfirmPassword(e.target.value)}
-        error={!!confirmPasswordError}
-        helperText={confirmPasswordError}
-        InputProps={{
-          endAdornment: (
-            <IconButton onClick={toggleConfirmPasswordVisibility}>
-              {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-            </IconButton>
-          )
-        }}
-      />
-      <Button
-        fullWidth
-        variant="contained"
-        color="primary"
-        sx={{ mt: 2, borderRadius: '5px' }}
-        onClick={handleSignUp}
-      >
-        Sign Up & Login
-      </Button>
+            <Typography
+              variant="h4"
+              sx={{ fontWeight: 'bold', mt: 2, textAlign: 'left' }}
+            >
+              Create Password
+            </Typography>
+            <TextField
+              fullWidth
+              variant="outlined"
+              margin="normal"
+              label="Create Password"
+              type={showPassword ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              error={!!passwordError}
+              helperText={passwordError}
+              InputProps={{
+                endAdornment: (
+                  <IconButton
+                    onClick={togglePasswordVisibility}
+                    aria-label={
+                      showPassword ? 'Hide password' : 'Show password'
+                    }
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                )
+              }}
+              inputProps={{ 'aria-label': 'Email' }}
+            />
+            <TextField
+              fullWidth
+              variant="outlined"
+              margin="normal"
+              label="Confirm Password"
+              type={showConfirmPassword ? 'text' : 'password'}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              error={!!confirmPasswordError}
+              helperText={confirmPasswordError}
+              InputProps={{
+                endAdornment: (
+                  <IconButton
+                    onClick={toggleConfirmPasswordVisibility}
+                    aria-label={
+                      showConfirmPassword ? 'Hide password' : 'Show password'
+                    }
+                  >
+                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                )
+              }}
+              inputProps={{ 'aria-label': 'Email' }}
+            />
+            <Button
+              fullWidth
+              variant="contained"
+              color="primary"
+              sx={{ mt: 2, borderRadius: '5px' }}
+              onClick={handleSignUp}
+            >
+              Sign Up & Login
+            </Button>
           </>
         )}
         <Typography
@@ -356,19 +374,22 @@ function SignUp  ()  {
       </Box>
 
       {/* Snackbar for Danger Message of invalid OTP */}
-            <Snackbar
-              open={openSnackbar}
-              autoHideDuration={3000}
-              onClose={() => setOpenSnackbar(false)}
-              anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-            >
-              <Alert onClose={() => setOpenSnackbar(false)} severity="error" variant="filled">
-                Invalid OTP!
-              </Alert>
-            </Snackbar>
-
+      <Snackbar
+        open={openSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setOpenSnackbar(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setOpenSnackbar(false)}
+          severity="error"
+          variant="filled"
+        >
+          Invalid OTP!
+        </Alert>
+      </Snackbar>
     </Container>
   );
-};
+}
 
 export default SignUp;

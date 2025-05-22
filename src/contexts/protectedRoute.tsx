@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 export const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const token  = localStorage.getItem("token");
   const router = useRouter();
- debugger;
   useEffect(() => {
     if (!token) {
       // Redirect to login if not authenticated

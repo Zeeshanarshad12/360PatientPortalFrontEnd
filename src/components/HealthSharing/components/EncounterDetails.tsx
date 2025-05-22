@@ -21,6 +21,7 @@ import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { useDispatch, useSelector } from '@/store/index';
 import { InsertActivityLog, ShareDocument, } from '@/slices/patientprofileslice';
 import { useEffect } from 'react';
+import { useAriaHiddenFixOnDialog } from '@/hooks/useAriaHiddenFixOnDialog';
 
 function EncounterDetailsReport() {
 
@@ -154,6 +155,8 @@ function EncounterDetailsReport() {
     dispatch(InsertActivityLog(Logobj));
   };
 
+  useAriaHiddenFixOnDialog(open);
+  
   return (
     <Box
       sx={{

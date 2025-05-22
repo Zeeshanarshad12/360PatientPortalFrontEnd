@@ -72,16 +72,13 @@ function AuthorisedUsersList() {
           const rowid = params.row.rowid; // Use rowid from the row data
           const isActive = toggleStates[rowid]; // Fetch the correct state for this row
           const isDisabled = localStorage.getItem("UserAccessType") !== "Self"; // condition for disabling switch
-          const userName = params.row.Name || "user"; // Fallback to "user" if Name is not available
 
           return (
             <Switch
+              id={`switchAuth-${params.row.id}`} // Unique ID for the switch""
               checked={isActive}
               onChange={() => handleToggle(params.row.id, rowid)} // Pass correct indices to handleToggle
               disabled={isDisabled}
-              inputProps={{
-                'aria-label': `${userName}`,
-              }}
               sx={{
                 '& .MuiSwitch-thumb': {
                   backgroundColor: isDisabled ? 'rgba(0, 0, 0, 0.38)' : '', // Dim the thumb color when disabled
@@ -95,6 +92,7 @@ function AuthorisedUsersList() {
                   color: 'rgba(0, 0, 0, 0.38)', // Dim the main color of the switch
                 },
               }}
+              inputProps={{ 'aria-label': 'Enable/Disable Access' }}
             />
           );
         }

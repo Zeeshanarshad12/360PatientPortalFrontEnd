@@ -15,6 +15,7 @@ import { CreateAuthorizedUser, GetPatientAuthorizedUser, GetSharingModulesData,U
 import { useEffect } from 'react';
 import { debug } from 'console';
 import { format } from 'path';
+import { useAriaHiddenFixOnDialog } from '@/hooks/useAriaHiddenFixOnDialog';
 
 function AuthorizedUserHeader() {
   const { CreateAuthorizedUserData, GetSharingModulesDataList } = useSelector((state) => state.patientprofileslice);
@@ -40,7 +41,6 @@ function AuthorizedUserHeader() {
       handleCloseCDS();
     }
   }
-
 
   const handleAuthorisedUserSend = async () => {
     try {
@@ -68,8 +68,6 @@ function AuthorizedUserHeader() {
       console.error("Error while creating authorized user:", error);
     }
   };
-
-
 
   // Email validation regex function
   const isValidEmail = (email) => {
@@ -111,13 +109,9 @@ function AuthorizedUserHeader() {
     });
   };
 
-
   const handleClickOpenControlDataSharing = () => {
     setOpenCDS(true);
     dispatch(GetSharingModulesData(localStorage.getItem('patientID')));
-
-
-
   }
 
   const [formData, setFormData] = useState({
@@ -141,7 +135,6 @@ function AuthorizedUserHeader() {
 
   const [toggles, setToggles] = useState({});
   const [togglesJson, setTogglesJson] = useState("");
-
 
   useEffect(() => {
     const patientId = localStorage.getItem("patientID");
@@ -167,8 +160,6 @@ function AuthorizedUserHeader() {
     setToggles(updatedToggles); // triggers useEffect, which updates togglesJson
   };
     
-  
-
   useEffect(() => {
     if (GetSharingModulesList) {
       const initialToggles = {};
@@ -179,7 +170,8 @@ function AuthorizedUserHeader() {
     }
   }, [GetSharingModulesList]);
 
-
+  useAriaHiddenFixOnDialog(open);
+  useAriaHiddenFixOnDialog(openCDS);
 
   return (
     <>
@@ -228,6 +220,7 @@ function AuthorizedUserHeader() {
               {/* First Name and Last Name fields side by side */}
               <Grid item xs={6}>
                 <TextField
+                  id="firstName"
                   label="Enter First Name"
                   variant="outlined"
                   fullWidth
@@ -262,6 +255,7 @@ function AuthorizedUserHeader() {
               </Grid>
               <Grid item xs={6}>
                 <TextField
+                  id="lastName"
                   label="Enter Last Name"
                   variant="outlined"
                   fullWidth
@@ -298,6 +292,7 @@ function AuthorizedUserHeader() {
               {/* Email Address field */}
               <Grid item xs={6}>
                 <TextField
+                  id="emailAddress"
                   label="Enter Email Address"
                   variant="outlined"
                   fullWidth
@@ -343,6 +338,7 @@ function AuthorizedUserHeader() {
                 <FormControl fullWidth required>
                   <InputLabel id="relationship-label">Relationship</InputLabel>
                   <Select
+                    id="relation"
                     labelId="relationship-label"
                     label="Relationship"
                     name="Relation"
@@ -454,9 +450,11 @@ function AuthorizedUserHeader() {
                     <TableCell sx={{ textAlign: 'right' }}>
                       <div style={{ marginRight: '25%' }}>
                         <Switch
+                          id={`switchControl-${index}`} // Unique ID for the switch
                           checked={toggles[item.moduleName] ?? false}
                           onChange={() => handleToggleChange(item)}
                           color="primary"
+                          inputProps={{ 'aria-label': 'Enable/Disable Control Sharing' }}
                         />
                       </div>
                     </TableCell>

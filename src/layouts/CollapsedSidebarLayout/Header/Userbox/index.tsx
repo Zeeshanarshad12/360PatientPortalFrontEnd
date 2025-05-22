@@ -17,7 +17,7 @@ import { Icons } from "@/icons/themeicons";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { color } from "@mui/system";
-
+import { useAriaHiddenFixOnDialog } from '@/hooks/useAriaHiddenFixOnDialog';
 
 const UserBoxButton = styled(Button)(
   ({ theme }) => `
@@ -90,7 +90,7 @@ function HeaderUserbox() {
 
   const { logout } = useAuth0();
   const theme = useTheme();
-
+  useAriaHiddenFixOnDialog(isOpen);
   if (userDetails === undefined) {
     return <>Loading..</>;
   } else {
@@ -155,7 +155,7 @@ function HeaderUserbox() {
               {...stringAvatar(userName)}
             />
             <UserBoxText>
-              <UserBoxLabel variant="body1">{userName}</UserBoxLabel>
+              <UserBoxLabel variant="body1" sx={{ color: (theme) => theme.palette.text.primary }}>{userName}</UserBoxLabel>
               <div
                 style={{
                   display: "flex",
@@ -163,7 +163,7 @@ function HeaderUserbox() {
                   color: `${theme.palette.secondary.light}`,
                 }}
               >
-                <span>{Role}</span>
+                <span style={{ color: '#000000' }}>{Role}</span>
               </div>
             </UserBoxText>
           </MenuUserBox>
