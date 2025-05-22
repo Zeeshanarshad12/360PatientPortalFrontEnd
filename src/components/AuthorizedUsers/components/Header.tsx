@@ -359,7 +359,7 @@ function AuthorizedUserHeader() {
                     <MenuItem value="Other">Other</MenuItem>
                   </Select>
                   {isTouched && !formData.Relation && (
-                    <span style={{ color: 'red', fontSize: '12px' }}>Relationship is required</span>
+                    <Typography variant="subtitle1" color="error">  Relationship is required </Typography>
                   )}
                 </FormControl>
               </Grid>
