@@ -63,8 +63,7 @@ function PracticeBox() {
     };
   }, []);
 
-
-  const practiceName = "AUDREY SCANLON Practice for EMR (Private Practice)";
+ const practiceName = localStorage.getItem("PracticeName");
 
   return (
     <>
@@ -128,7 +127,7 @@ function PracticeBox() {
                 whiteSpace: "nowrap",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
-                fontSize: "13px",
+                fontSize: "12px",
                 fontWeight: 600,
                 lineHeight: 1.3,
                 display: "block", // <== this is important for ellipsis to work!

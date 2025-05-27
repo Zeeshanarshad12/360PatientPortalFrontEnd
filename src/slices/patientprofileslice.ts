@@ -272,12 +272,13 @@ export const AddPatientUser: any = createAsyncThunk(
 );
 
 export const GetToken: any = createAsyncThunk(
+  
   'GetToken',
   async (data, thunkAPI) => {
     const res = await apiServicesV2.GetToken(data); 
     try {
       if (res?.status === 200 || res?.status === 201) {
-        setToken(res?.data?.result?.access_token,res?.data?.result?.Email,res?.data?.result?.FirstName,res?.data?.result?.LastName,res?.data?.result?.UserAccessType);
+        setToken(res?.data?.result?.access_token,res?.data?.result?.Email,res?.data?.result?.FirstName,res?.data?.result?.LastName,res?.data?.result?.UserAccessType,res?.data?.result?.PracticeName);
         if(res?.data?.result?.access_token)
         {
         Router.push('/patientportal/dashboard');
