@@ -38,8 +38,8 @@ function EncounterDetailsReport() {
   //Save ActivityLog Obj 
   const Logobj = {
     PatientId: localStorage.getItem('patientID'),
-    Email: email,// localStorage.getItem('Email'),
-    ActivityTypeId: '3'
+     Email: localStorage.getItem('Email'), //email
+    ActivityTypeId: '3'  
   };
   const Emailobj = {
     PatientEmail: email,// localStorage.getItem('patientEmail'),
