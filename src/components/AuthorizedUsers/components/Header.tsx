@@ -505,13 +505,31 @@ function AuthorizedUserHeader() {
 
         {/* Actions */}
         <DialogActions sx={{ justifyContent: 'flex-end', px: 2, pb: 2 }}>
-          <Button variant="outlined" color="primary" sx={{ borderRadius: '5px' }} onClick={handleCloseCDS}>
+          <Button variant="outlined" color="primary" sx={{
+            borderRadius: '5px', '&:focus': {
+              outline: '2px solid #1976d2',
+              outlineOffset: '2px'
+            },
+            '&:focus-visible': {
+              outline: '2px solid #1976d2',
+              outlineOffset: '2px'
+            }
+          }} onClick={handleCloseCDS}>
             Cancel
           </Button>
           <Button
             variant="contained"
             color="primary"
-            sx={{ borderRadius: '5px' }}
+            sx={{
+              borderRadius: '5px', '&:focus': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              },
+              '&:focus-visible': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              }
+            }}
             // onClick={() => {
             //   console.log('Selected options:', togglesJson);
             //   const response = dispatch(UpdateSharingModulesData(togglesJson)).unwrap();
