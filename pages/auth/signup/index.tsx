@@ -23,7 +23,7 @@ import {
 import { useDispatch, useSelector } from '@/store/index';
 import { useRouter } from 'next/router';
 
-function SignUp  ()  {
+function SignUp() {
   const dispatch = useDispatch();
   const router = useRouter();
   const [code, setCode] = useState(null);
@@ -186,10 +186,34 @@ function SignUp  ()  {
         {step === 2 && (
           <IconButton
             onClick={() => setStep(1)}
-            sx={{ position: 'absolute', top: 10, left: 10 }}
-            aria-label='Back to previous step'
+            sx={{
+              position: 'absolute',
+              top: 10,
+              left: 10,
+              '&:focus': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              },
+              '&:focus-visible': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              }
+            }}
+            aria-label="Back to previous step"
           >
             <ArrowBackIcon />
+            <span
+              style={{
+                position: 'absolute',
+                width: 1,
+                height: 1,
+                overflow: 'hidden',
+                clip: 'rect(0 0 0 0)',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              Go Back
+            </span>
           </IconButton>
         )}
         <Box
@@ -202,7 +226,7 @@ function SignUp  ()  {
           }}
         >
           <Image src="/statics/Logo.svg" alt="Logo" width={50} height={50} />
-          <Typography variant="h3" sx={{ fontWeight: 'bold' }}>
+          <Typography variant="h3" component="h3" sx={{ fontWeight: 'bold' }}>
             Patient Portal
           </Typography>
         </Box>
@@ -210,11 +234,13 @@ function SignUp  ()  {
           <>
             <Typography
               variant="h4"
+              component="h4"
               sx={{ fontWeight: 'bold', mt: 2, textAlign: 'left' }}
             >
               Sign Up
             </Typography>
             <Typography
+              component="h6"
               sx={{ color: '#4a4a4a', mt: 1, textAlign: 'justify', mb: 2 }}
             >
               Click ‘Get Code’ to receive a one-time verification code on your
@@ -234,7 +260,18 @@ function SignUp  ()  {
               fullWidth
               variant="contained"
               color="primary"
-              sx={{ mt: 2, borderRadius: '5px' }}
+              sx={{
+                mt: 2,
+                borderRadius: '5px',
+                '&:focus': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                },
+                '&:focus-visible': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                }
+              }}
               onClick={handleSendCode}
             >
               Get Code
@@ -245,16 +282,37 @@ function SignUp  ()  {
           <>
             <Typography
               variant="h4"
+              component="h4"
               sx={{ fontWeight: 'bold', mt: 2, textAlign: 'left' }}
             >
               Verification Code
             </Typography>
-            <Typography sx={{ color: '#4a4a4a', mt: 1, textAlign: 'justify' }}>
+            <Typography
+              component="h6"
+              sx={{ color: '#4a4a4a', mt: 1, textAlign: 'justify' }}
+            >
               Enter the code from your email to continue.
             </Typography>
             <Grid container spacing={1} justifyContent="center" sx={{ mt: 2 }}>
               {otp.map((digit, index) => (
                 <Grid item key={index}>
+                  <Typography
+                    component="label"
+                    htmlFor={`otp-${index}`}
+                    sx={{
+                      position: 'absolute',
+                      width: '1px',
+                      height: '1px',
+                      padding: 0,
+                      margin: '-1px',
+                      overflow: 'hidden',
+                      clip: 'rect(0 0 0 0)',
+                      whiteSpace: 'nowrap',
+                      border: 0
+                    }}
+                  >
+                    Enter OTP digit {index} of 6
+                  </Typography>
                   <TextField
                     id={`otp-${index}`}
                     value={digit}
@@ -262,8 +320,7 @@ function SignUp  ()  {
                     onPaste={handlePaste}
                     inputProps={{
                       maxLength: 1,
-                      style: { textAlign: 'center' },
-                      'aria-label': 'OTP Digit'
+                      style: { textAlign: 'center' }
                     }}
                     sx={{ width: 40 }}
                     error={error && digit === ''}
@@ -276,7 +333,17 @@ function SignUp  ()  {
               fullWidth
               variant="contained"
               color="primary"
-              sx={{ mt: 2 }}
+              sx={{
+                mt: 2,
+                '&:focus': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                },
+                '&:focus-visible': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                }
+              }}
               onClick={handleVerifyOtp}
               disabled={loading || otp.some((digit) => digit === '')}
             >
@@ -291,7 +358,18 @@ function SignUp  ()  {
               fullWidth
               variant="outlined"
               color="primary"
-              sx={{ mt: 1, borderRadius: '5px' }}
+              sx={{
+                mt: 1,
+                borderRadius: '5px',
+                '&:focus': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                },
+                '&:focus-visible': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                }
+              }}
               onClick={handleSendCode}
             >
               Resend Code
@@ -301,7 +379,7 @@ function SignUp  ()  {
         {step === 3 && (
           <>
             <Typography
-              variant="h4"
+              variant="h4" component="h4"
               sx={{ fontWeight: 'bold', mt: 2, textAlign: 'left' }}
             >
               Create Password
@@ -323,8 +401,21 @@ function SignUp  ()  {
                     aria-label={
                       showPassword ? 'Hide password' : 'Show password'
                     }
+                    sx={{
+                      '&:focus': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      },
+                      '&:focus-visible': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      }
+                    }}
                   >
                     {showPassword ? <VisibilityOff /> : <Visibility />}
+                    <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>
+                      {showPassword ? 'Hide' : 'Show'}
+                    </span>
                   </IconButton>
                 )
               }}
@@ -347,8 +438,21 @@ function SignUp  ()  {
                     aria-label={
                       showConfirmPassword ? 'Hide password' : 'Show password'
                     }
+                    sx={{
+                      '&:focus': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      },
+                      '&:focus-visible': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      }
+                    }}
                   >
                     {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                    <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>
+                      {showPassword ? 'Hide' : 'Show'}
+                    </span>
                   </IconButton>
                 )
               }}
@@ -358,7 +462,18 @@ function SignUp  ()  {
               fullWidth
               variant="contained"
               color="primary"
-              sx={{ mt: 2, borderRadius: '5px' }}
+              sx={{
+                mt: 2,
+                borderRadius: '5px',
+                '&:focus': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                },
+                '&:focus-visible': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                }
+              }}
               onClick={handleSignUp}
             >
               Sign Up & Login

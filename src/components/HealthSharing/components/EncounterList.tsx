@@ -9,7 +9,7 @@ import {
   InsertActivityLog,
   setEncounterId
 } from '@/slices/patientprofileslice';
-import EncounterDetailsReport from  '@/components/HealthSharing/components/EncounterDetails';
+import EncounterDetailsReport from '@/components/HealthSharing/components/EncounterDetails';
 import { debug } from 'console';
 import { Email } from '@mui/icons-material';
 
@@ -19,7 +19,7 @@ function EncounterListData() {
   const { isEncounterLoad, setIsEncounterLoad } = useEncounterLoadState();
   const [encounterID, setEncounterID] = useState(null);
   const [loader, setLoader] = useState(true);
-  const { PatientEncounterData,InsertActivityLogData } = useSelector(
+  const { PatientEncounterData, InsertActivityLogData } = useSelector(
     (state) => state.patientprofileslice
   );
 
@@ -39,7 +39,7 @@ function EncounterListData() {
     //Save ActivityLog on View
     const Logobj = {
       PatientId: localStorage.getItem('patientID'),
-      Email : localStorage.getItem('Email'), 
+      Email: localStorage.getItem('Email'),
       ActivityTypeId: '2'
     };
     dispatch(InsertActivityLog(Logobj));
@@ -48,11 +48,11 @@ function EncounterListData() {
   };
   return (
     <>
-   <Typography variant="body1" fontWeight="bold" sx={{ marginBottom: 2 }}>
-  {PatientEncounterData?.length}{" "}
-  {PatientEncounterData?.length === 1 ? "visit found" : "visits found"}, 
-  please select a visit to see details.
-  </Typography>
+      <Typography variant="body1" fontWeight="bold" sx={{ marginBottom: 2 }}>
+        {PatientEncounterData?.length}{" "}
+        {PatientEncounterData?.length === 1 ? "visit found" : "visits found"},
+        please select a visit to see details.
+      </Typography>
 
       {PatientEncounterData?.map((visit) => (
         <React.Fragment key={visit.id}>
@@ -76,7 +76,16 @@ function EncounterListData() {
               <Button
                 variant="outlined"
                 size="small"
-                sx={{ borderRadius: '5px' }}
+                sx={{
+                  borderRadius: '5px', '&:focus': {
+                    outline: '2px solid #1976d2',
+                    outlineOffset: '2px'
+                  },
+                  '&:focus-visible': {
+                    outline: '2px solid #1976d2',                                                                                               
+                    outlineOffset: '2px'
+                  }
+                }}
                 onClick={() => handleViewEncounterDoc(visit.id)}
               >
                 View

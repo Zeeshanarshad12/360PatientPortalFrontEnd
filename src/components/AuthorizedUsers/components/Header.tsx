@@ -11,7 +11,7 @@ import {
   TableRow
 } from '@mui/material';
 import { useDispatch, useSelector } from '@/store/index';
-import { CreateAuthorizedUser, GetPatientAuthorizedUser, GetSharingModulesData,UpdateSharingModulesData } from '@/slices/patientprofileslice';
+import { CreateAuthorizedUser, GetPatientAuthorizedUser, GetSharingModulesData, UpdateSharingModulesData } from '@/slices/patientprofileslice';
 import { useEffect } from 'react';
 import { debug } from 'console';
 import { format } from 'path';
@@ -37,7 +37,7 @@ function AuthorizedUserHeader() {
     console.log(response.result);
     if (response.result === "Success") {
       setOpenSnackbar(true);
-      setsnackbarmsg ("Changes Saved.");
+      setsnackbarmsg("Changes Saved.");
       handleCloseCDS();
     }
   }
@@ -57,8 +57,8 @@ function AuthorizedUserHeader() {
         setLoading(false);
         handleClose();
         setOpenSnackbar(true);
-        setsnackbarmsg ("User created Successfully!");
-        
+        setsnackbarmsg("User created Successfully!");
+
         await dispatch(GetPatientAuthorizedUser(localStorage.getItem('patientID')));
       } else {
         // Handle failure or other cases here
@@ -138,17 +138,17 @@ function AuthorizedUserHeader() {
 
   useEffect(() => {
     const patientId = localStorage.getItem("patientID");
-  
+
     const modulesArray = Object.entries(toggles).map(([moduleName, moduleAccess]) => ({
       moduleName,
       moduleAccess
     }));
-  
+
     const newJson = JSON.stringify({
       PatientId: patientId,
       Modules: modulesArray,
     });
-  
+
     setTogglesJson(newJson);
   }, [toggles]); // runs whenever toggles changes
 
@@ -159,7 +159,7 @@ function AuthorizedUserHeader() {
     };
     setToggles(updatedToggles); // triggers useEffect, which updates togglesJson
   };
-    
+
   useEffect(() => {
     if (GetSharingModulesList) {
       const initialToggles = {};
@@ -183,7 +183,16 @@ function AuthorizedUserHeader() {
           {localStorage.getItem("UserAccessType") === "Self" && (
             <Button
               variant={'outlined'}
-              sx={{ textTransform: 'none', borderRadius: '5px' }}
+              sx={{
+                textTransform: 'none', borderRadius: '5px', '&:focus': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                },
+                '&:focus-visible': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                }
+              }}
               onClick={handleClickOpenControlDataSharing}
             >
               {'Control Data Sharing'}
@@ -192,7 +201,16 @@ function AuthorizedUserHeader() {
           {localStorage.getItem("UserAccessType") === "Self" && (
             <Button
               variant="contained"
-              sx={{ borderRadius: '5px' }}
+              sx={{
+                borderRadius: '5px', '&:focus': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                },
+                '&:focus-visible': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                }
+              }}
               onClick={handleClickOpenAuthorisedUser}
             >
               Add User
@@ -359,7 +377,9 @@ function AuthorizedUserHeader() {
                     <MenuItem value="Other">Other</MenuItem>
                   </Select>
                   {isTouched && !formData.Relation && (
+                    // <span style={{ color: 'red', fontSize: '12px' }}>Relationship is required</span>
                     <Typography variant="subtitle1" color="error">  Relationship is required </Typography>
+
                   )}
                 </FormControl>
               </Grid>
@@ -368,13 +388,31 @@ function AuthorizedUserHeader() {
         </DialogContent>
 
         <DialogActions sx={{ justifyContent: 'flex-end', paddingRight: '22px', marginBottom: '10px' }}>
-          <Button variant="outlined" color="primary" sx={{ borderRadius: '5px' }} onClick={handleClose}>
+          <Button variant="outlined" color="primary" sx={{
+            borderRadius: '5px', '&:focus': {
+              outline: '2px solid #1976d2',
+              outlineOffset: '2px'
+            },
+            '&:focus-visible': {
+              outline: '2px solid #1976d2',
+              outlineOffset: '2px'
+            }
+          }} onClick={handleClose}>
             Cancel
           </Button>
           <Button
             variant="contained"
             color="primary"
-            sx={{ borderRadius: '5px' }}
+            sx={{
+              borderRadius: '5px', '&:focus': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              },
+              '&:focus-visible': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              }
+            }}
             onClick={handleAuthorisedUserSend}
           >
             {loading ? (

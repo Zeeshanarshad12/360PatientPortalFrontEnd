@@ -14,48 +14,48 @@ import { useDispatch, useSelector } from "@/store/index";
 import { GetPatientCCDAActivityLog } from '@/slices/patientprofileslice';
 import moment from 'moment';
 
-function ActivityLogFilter () {
-   const dispatch = useDispatch();
-   const { isActivityLoad, setIsActivityLoad } = useActivityLoadState();
-   const { PatientCCDAActivityLog } = useSelector((state) => state.patientprofileslice);
-   
+function ActivityLogFilter() {
+  const dispatch = useDispatch();
+  const { isActivityLoad, setIsActivityLoad } = useActivityLoadState();
+  const { PatientCCDAActivityLog } = useSelector((state) => state.patientprofileslice);
 
-    const activityOptions = PatientCCDAActivityLog?.result.item1;
-    const dateRangeOptions = PatientCCDAActivityLog?.result.item2;
-    const [activityValue, setActivityValue] = useState('1');
-    const [dateRangeValue, setDateRangeValue] = useState('1');
-    const LogObj = {
-      PatientId : localStorage.getItem('patientID'),
-      Activity : activityValue,
-      Daterange : dateRangeValue
-    }
-    const handleActivityChange = (event: any) => {
+
+  const activityOptions = PatientCCDAActivityLog?.result.item1;
+  const dateRangeOptions = PatientCCDAActivityLog?.result.item2;
+  const [activityValue, setActivityValue] = useState('1');
+  const [dateRangeValue, setDateRangeValue] = useState('1');
+  const LogObj = {
+    PatientId: localStorage.getItem('patientID'),
+    Activity: activityValue,
+    Daterange: dateRangeValue
+  }
+  const handleActivityChange = (event: any) => {
     setActivityValue(event.target.value);
-    LogObj.Activity=activityValue;
-     };
-
-
-    const handleDateRangeChange = (event: any) => {
-      
-    setDateRangeValue(event.target.value);
-    LogObj.Daterange=dateRangeValue;
+    LogObj.Activity = activityValue;
   };
- 
+
+
+  const handleDateRangeChange = (event: any) => {
+
+    setDateRangeValue(event.target.value);
+    LogObj.Daterange = dateRangeValue;
+  };
+
   const getLogReport = () => {
     setIsActivityLoad(true);
     if (localStorage.getItem('patientID') != null) {
- 
+
       dispatch(GetPatientCCDAActivityLog(LogObj));
     }
   };
 
-     useEffect(() => {
-      if (localStorage.getItem('patientID') != null) {
-       
-        dispatch(GetPatientCCDAActivityLog(LogObj));
-        setIsActivityLoad(true);
-      }
-    }, [dispatch]);
+  useEffect(() => {
+    if (localStorage.getItem('patientID') != null) {
+
+      dispatch(GetPatientCCDAActivityLog(LogObj));
+      setIsActivityLoad(true);
+    }
+  }, [dispatch]);
   return (
     <>
       <Card sx={{ marginY: 2 }}>
@@ -103,7 +103,16 @@ function ActivityLogFilter () {
               <Typography variant="subtitle2">{'\u00A0'}</Typography>
               <Button
                 variant="contained"
-                sx={{ borderRadius: '5px' }}
+                sx={{
+                  borderRadius: '5px', '&:focus': {
+                    outline: '2px solid #1976d2',
+                    outlineOffset: '2px'
+                  },
+                  '&:focus-visible': {
+                    outline: '2px solid #1976d2',
+                    outlineOffset: '2px'
+                  }
+                }}
                 // onClick={() => setIsActivityLoad(true)}
                 onClick={getLogReport}
               >

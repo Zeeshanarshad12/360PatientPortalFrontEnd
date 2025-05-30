@@ -23,7 +23,7 @@ function Insurance() {
 
   return (
     <CardContent>
-      <Typography variant="h6" fontWeight="bold" color="primary">
+      <Typography variant="h6" component="h2" fontWeight="bold" color="primary">
         Insurance
       </Typography>
       <Divider sx={{ marginY: 2 }} />

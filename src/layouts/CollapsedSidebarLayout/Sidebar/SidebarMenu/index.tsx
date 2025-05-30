@@ -1,8 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import { usePathname } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
-import { Fragment } from "react";
 import NextLink from "next/link";
 import {
   List,
@@ -14,53 +13,32 @@ import {
 } from "@mui/material";
 import Image from "next/image";
 
-const MenuWrapper = styled(Box)(
-  () => `
-  // Styles for the Menu Wrapper
-`
-);
+const MenuWrapper = styled(Box)(`
+  // Add any MenuWrapper styles here if needed
+`);
 
-const SubMenuWrapper = styled(Box)(
-  () => `
-  // Styles for the SubMenu Wrapper
-`
-);
+const SubMenuWrapper = styled(Box)(`
+  // Add any SubMenuWrapper styles here if needed
+`);
 
 function SidebarMenu() {
-  const [mounted, setMounted] = useState(false); // Track whether the component has mounted
+  const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
 
-  // Set mounted to true once the component is mounted
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // If component is not mounted, return null to avoid accessing `useRouter` prematurely
   if (!mounted) {
     return null;
   }
 
-  const key = uuidv4();
-
   const menu = [
-    // {
-    //   name: "Dashboard",
-    //   link: "/patientportal/dashboard",
-    //   key: key,
-    //   active: pathname === "/patientportal/dashboard",
-    //   badge: undefined,
-    //   icon:
-    //     pathname === "/patientportal/dashboard"
-    //       ? "/statics/dashfill.svg"
-    //       : "/statics/dashout.svg",
-    //   right: true,
-    // },
     {
       name: "Profile",
       link: "/patientportal/profile",
-      key: key,
+      key: uuidv4(),
       active: pathname.includes("profile"),
-      badge: undefined,
       icon: pathname.includes("profile")
         ? "/statics/pafill.svg"
         : "/statics/paout.svg",
@@ -69,9 +47,8 @@ function SidebarMenu() {
     {
       name: "Health Sharing",
       link: "/patientportal/healthsharing",
-      key: key,
+      key: uuidv4(),
       active: pathname === "/patientportal/healthsharing",
-      badge: undefined,
       icon:
         pathname === "/patientportal/healthsharing"
           ? "/statics/hsf.svg"
@@ -81,9 +58,8 @@ function SidebarMenu() {
     {
       name: "Authorized Users",
       link: "/patientportal/authorizedUser",
-      key: key,
+      key: uuidv4(),
       active: pathname === "/patientportal/authorizedUser",
-      badge: undefined,
       icon:
         pathname === "/patientportal/authorizedUser"
           ? "/statics/aufill.svg"
@@ -93,9 +69,8 @@ function SidebarMenu() {
     {
       name: "Find A Doctor",
       link: "/patientportal/findAdoc",
-      key: key,
+      key: uuidv4(),
       active: pathname.includes("findAdoc"),
-      badge: undefined,
       icon: pathname.includes("findAdoc")
         ? "/statics/docfill.svg"
         : "/statics/docout.svg",
@@ -104,9 +79,8 @@ function SidebarMenu() {
     {
       name: "Patient Visits",
       link: "/patientportal/patientvisits",
-      key: key,
+      key: uuidv4(),
       active: pathname.includes("patientvisits"),
-      badge: undefined,
       icon: pathname.includes("patientvisits")
         ? "/statics/pvfill.svg"
         : "/statics/pvout.svg",
@@ -115,9 +89,8 @@ function SidebarMenu() {
     {
       name: "Documents",
       link: "/patientportal/documents",
-      key: key,
+      key: uuidv4(),
       active: pathname === "/patientportal/documents",
-      badge: undefined,
       icon:
         pathname === "/patientportal/documents"
           ? "/statics/docufill.svg"
@@ -127,49 +100,58 @@ function SidebarMenu() {
     {
       name: "Education and Resources",
       link: "/patientportal/educationAndresources",
-      key: key,
+      key: uuidv4(),
       active: pathname === "/patientportal/educationAndresources",
-      badge: undefined,
       icon:
         pathname === "/patientportal/educationAndresources"
           ? "/statics/edufill.svg"
           : "/statics/eduout.svg",
       right: true,
     },
-    
   ];
 
   return (
     <>
       <Box sx={{ my: 10 }}></Box>
       {menu
-        ?.filter((menuitem) => menuitem.right)
+        .filter((menuitem) => menuitem.right)
         .map((item) => {
-          const { name, link, active, icon } = item;
+          const { name, link, active, icon, key } = item;
           return (
-            <Fragment key={uuidv4()}>
+            <Fragment key={key}>
               <MenuWrapper>
                 <Box>
                   <SubMenuWrapper>
-                    <List
-                      sx={{ padding: "0px !important" }}
-                      component="div"
-                      id="main"
-                    >
+                    <List sx={{ padding: "0px !important" }} component="div" id="main">
                       <ListItem component="div" key={name} id={name}>
-                        <NextLink href={link}>
+                        <NextLink href={link} passHref legacyBehavior>
                           <Tooltip title={name} placement="right" arrow>
                             <IconButton
+                              component="a"
                               className={active ? "active-sidebar-item" : ""}
+                              aria-current={active ? "page" : undefined}
+                              sx={{
+                                '&:focus': {
+                                  outline: '2px solid #1976d2',
+                                  outlineOffset: '2px'
+                                },
+                                '&:focus-visible': {
+                                  outline: '2px solid #1976d2',
+                                  outlineOffset: '2px'
+                                }
+                              }}
                             >
-                              <div id="img" style={{ display: "flex" }}>
+                              <div style={{ display: "flex" }}>
                                 <Image
                                   src={icon}
-                                  alt={name}
+                                  alt={name+key}
                                   width={25}
                                   height={25}
                                 />
                               </div>
+                              <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>
+                                {name}
+                              </span>
                             </IconButton>
                           </Tooltip>
                         </NextLink>

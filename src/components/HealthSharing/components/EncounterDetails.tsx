@@ -156,7 +156,7 @@ function EncounterDetailsReport() {
   };
 
   useAriaHiddenFixOnDialog(open);
-  
+
   return (
     <Box
       sx={{
@@ -183,7 +183,16 @@ function EncounterDetailsReport() {
           <Button
             variant="outlined"
             color="primary"
-            sx={{ borderRadius: '5px' }}
+            sx={{
+              borderRadius: '5px', '&:focus': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              },
+              '&:focus-visible': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              }
+            }}
             onClick={handleClickOpen}
           >
             Email
@@ -193,7 +202,16 @@ function EncounterDetailsReport() {
           <Button
             variant="outlined"
             color="primary"
-            sx={{ borderRadius: '5px' }}
+            sx={{
+              borderRadius: '5px', '&:focus': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              },
+              '&:focus-visible': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              }
+            }}
             onClick={() => handleDownload()}
           >
             Download (Human Readable Format)
@@ -203,7 +221,16 @@ function EncounterDetailsReport() {
           <Button
             variant="outlined"
             color="primary"
-            sx={{ borderRadius: '5px' }}
+            sx={{
+              borderRadius: '5px', '&:focus': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              },
+              '&:focus-visible': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              }
+            }}
             onClick={() => handleDownloadxml()}
           >
             Download (CCD Format)
@@ -235,56 +262,56 @@ function EncounterDetailsReport() {
             </Box>
 
             <Box display="flex" alignItems="center" gap={2}>
-  <TextField
-    fullWidth
-    label="Email Address"
-    value={email}
-    onChange={(e) => {
-      setEmail(e.target.value);
-      if (isTouched) {
-        const isValid = /\S+@\S+\.\S+/.test(e.target.value);
-        setEmailError(!isValid);
-      }
-    }}
-    margin="dense"
-    variant="outlined"
-    required
-    error={isTouched && emailError}
-    helperText={
-      isTouched && emailError ? 'Enter a valid email address' : ''
-    }
-    FormHelperTextProps={{
-      sx: {
-        fontWeight: 'normal'
-      }
-    }}
-    sx={{
-      flexGrow: 1,
-      '& .MuiOutlinedInput-root': {
-        '&.Mui-error': {
-          borderColor: 'transparent'
-        }
-      },
-      '& .MuiInputBase-input::placeholder': {
-        color: 'gray'
-      },
-      '& .MuiInputLabel-root.Mui-error': {
-        color: 'gray'
-      }
-    }}
-  />
-  <FormControlLabel
-    control={
-      <Checkbox
-        checked={includeCCD}
-        onChange={(e) => setIncludeCCD(e.target.checked)}
-        color="primary"
-      />
-    }
-    label="Secure"
-    sx={{ whiteSpace: 'nowrap' }}
-  />
-</Box>
+              <TextField
+                fullWidth
+                label="Email Address"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (isTouched) {
+                    const isValid = /\S+@\S+\.\S+/.test(e.target.value);
+                    setEmailError(!isValid);
+                  }
+                }}
+                margin="dense"
+                variant="outlined"
+                required
+                error={isTouched && emailError}
+                helperText={
+                  isTouched && emailError ? 'Enter a valid email address' : ''
+                }
+                FormHelperTextProps={{
+                  sx: {
+                    fontWeight: 'normal'
+                  }
+                }}
+                sx={{
+                  flexGrow: 1,
+                  '& .MuiOutlinedInput-root': {
+                    '&.Mui-error': {
+                      borderColor: 'transparent'
+                    }
+                  },
+                  '& .MuiInputBase-input::placeholder': {
+                    color: 'gray'
+                  },
+                  '& .MuiInputLabel-root.Mui-error': {
+                    color: 'gray'
+                  }
+                }}
+              />
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={includeCCD}
+                    onChange={(e) => setIncludeCCD(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label="Secure"
+                sx={{ whiteSpace: 'nowrap' }}
+              />
+            </Box>
 
             <TextField
               fullWidth
@@ -328,7 +355,16 @@ function EncounterDetailsReport() {
           <Button
             variant="outlined"
             color="primary"
-            sx={{ borderRadius: '5px' }}
+            sx={{
+              borderRadius: '5px', '&:focus': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              },
+              '&:focus-visible': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              }
+            }}
             onClick={handleClose}
           >
             Cancel
@@ -336,7 +372,16 @@ function EncounterDetailsReport() {
           <Button
             variant="contained"
             color="primary"
-            sx={{ borderRadius: '5px' }}
+            sx={{
+              borderRadius: '5px', '&:focus': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              },
+              '&:focus-visible': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              }
+            }}
             onClick={handleSendEmail}
           >
             Send

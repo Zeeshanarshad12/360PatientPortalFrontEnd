@@ -7,14 +7,14 @@ import {
   Box,
   IconButton,
   Alert,
-  CircularProgress
+  CircularProgress,
+  Tooltip
 } from '@mui/material';
 import Image from 'next/image';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import { useDispatch, useSelector } from "@/store/index";
-import { GetToken } from "@/slices/patientprofileslice";
+import { useDispatch, useSelector } from '@/store/index';
+import { GetToken } from '@/slices/patientprofileslice';
 import { useRouter } from 'next/router';
-
 
 const Login = () => {
   const dispatch = useDispatch();
@@ -38,7 +38,7 @@ const Login = () => {
     const loginobj = {
       username: email,
       password: password
-    }
+    };
 
     const response = await dispatch(GetToken(loginobj)).unwrap();
     if (!response || !response.access_token || response.error_description) {
@@ -91,19 +91,21 @@ const Login = () => {
           }}
         >
           <Image src="/statics/Logo.svg" alt="Logo" width={50} height={50} />
-          <Typography variant="h3" sx={{ fontWeight: 'bold' }}>
+          <Typography variant="h3" component="h3" sx={{ fontWeight: 'bold' }}>
             Patient Portal
           </Typography>
         </Box>
 
         <Typography
           variant="h4"
+          component="h4"
           sx={{ fontWeight: 'bold', mt: 2, textAlign: 'left' }}
         >
           Sign In
         </Typography>
         <Typography
           variant="subtitle2"
+          component="h6"
           sx={{ mt: 1, textAlign: 'left', mb: 2 }}
         >
           Enter your email address and password to sign in
@@ -128,7 +130,6 @@ const Login = () => {
           error={!!error} // Show error if email or password is empty
         />
 
-
         <TextField
           id="password"
           fullWidth
@@ -141,15 +142,29 @@ const Login = () => {
           onChange={handlePasswordChange}
           InputProps={{
             endAdornment: (
-              <IconButton
-                onClick={togglePasswordVisibility}
-                id="LoginEyeIcon"
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                title={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? <VisibilityOff /> : <Visibility />}
-              </IconButton>
-
+              <>
+                <IconButton
+                  onClick={togglePasswordVisibility}
+                  id="LoginEyeIcon"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  title={showPassword ? 'Hide password' : 'Show password'}
+                  sx={{
+                    '&:focus': {
+                      outline: '2px solid #1976d2',
+                      outlineOffset: '2px'
+                    },
+                    '&:focus-visible': {
+                      outline: '2px solid #1976d2',
+                      outlineOffset: '2px'
+                    }
+                  }}
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                  <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>
+                    {showPassword ? 'Hide' : 'Show'}
+                  </span>
+                </IconButton>
+              </>
             )
           }}
           error={!!error} // Show error if email or password is empty
@@ -158,7 +173,18 @@ const Login = () => {
           fullWidth
           variant="contained"
           color="primary"
-          sx={{ mt: 2, borderRadius: '5px' }}
+          sx={{
+            mt: 2,
+            borderRadius: '5px',
+            '&:focus': {
+              outline: '2px solid #1976d2',
+              outlineOffset: '2px'
+            },
+            '&:focus-visible': {
+              outline: '2px solid #1976d2',
+              outlineOffset: '2px'
+            }
+          }}
           onClick={handleLogin}
           disabled={loading}
         >
@@ -171,14 +197,16 @@ const Login = () => {
 
         <Typography
           variant="subtitle2"
+          component="p"
           sx={{ mt: 3, textAlign: 'left', mb: 2 }}
         >
-          To use the patient portal, you need an invitation from your
-          provider. If you haven't registered yet, please request your
-          doctor or their office to send an invite.
+          To use the patient portal, you need an invitation from your provider.
+          If you haven't registered yet, please request your doctor or their
+          office to send an invite.
         </Typography>
         <Typography
           variant="subtitle2"
+          component="p"
           sx={{ fontWeight: 'bold', mt: 6, textAlign: 'center' }}
         >
           © {new Date().getFullYear()} All rights reserved.

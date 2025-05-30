@@ -120,7 +120,16 @@ function HealthRecordFilter() {
                 <Grid item xs={12} sm={6} md={2}>
                   <Button
                     variant="contained"
-                    sx={{ borderRadius: '5px' }}
+                    sx={{
+                      borderRadius: '5px', '&:focus': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      },
+                      '&:focus-visible': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      }
+                    }}
                     onClick={getPatientencountersClick}
                   >
                     Apply
@@ -132,7 +141,16 @@ function HealthRecordFilter() {
                 <Grid item xs={12} sm={6} md={2}>
                   <Button
                     variant="contained"
-                    sx={{ borderRadius: '5px' }}
+                    sx={{
+                      borderRadius: '5px', '&:focus': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      },
+                      '&:focus-visible': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      }
+                    }}
                     onClick={getPatientencountersClick}
                   >
                     Apply
