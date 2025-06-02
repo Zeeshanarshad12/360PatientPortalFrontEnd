@@ -31,6 +31,7 @@ function AuthorizedUserHeader() {
   const [isTouched, setIsTouched] = useState(false); // Tracks whether the user has interacted with the form
   const [loading, setLoading] = useState(false);
   const [snackbarmsg, setsnackbarmsg] = useState("");
+  const [isSending, setIsSending] = useState(false);
 
   const handleSaveCDS = async () => {
     const response = await dispatch(UpdateSharingModulesData(togglesJson)).unwrap();
@@ -48,13 +49,17 @@ function AuthorizedUserHeader() {
         return; // Don't proceed if form is invalid
       }
       setLoading(true);
+      setIsSending(true); //  Disable the button
       formData.Name = formData.firstName + ' ' + formData.lastName;
       // Dispatch the CreateAuthorizedUser action and wait for it to complete
       const response = await dispatch(CreateAuthorizedUser(formData)).unwrap();
       // Now that the dispatch is complete, check the result of CreateAuthorizedUserData
-      if (response === "success") {
+      // if (response === "success") 
+        if (response > 0 )
+        {
         // Execute your logic when the user is successfully created
         setLoading(false);
+        setIsSending(false); //  Re-enable the button
         handleClose();
         setOpenSnackbar(true);
         setsnackbarmsg("User created Successfully!");
@@ -403,6 +408,7 @@ function AuthorizedUserHeader() {
           <Button
             variant="contained"
             color="primary"
+            disabled={isSending}
             sx={{
               borderRadius: '5px', '&:focus': {
                 outline: '2px solid #1976d2',
