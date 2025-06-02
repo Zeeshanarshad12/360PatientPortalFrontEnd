@@ -8,7 +8,8 @@ import {
   TableCell,
   TableContainer,
   TableHead,
-  TableRow
+  TableRow,
+  AlertColor
 } from '@mui/material';
 import { useDispatch, useSelector } from '@/store/index';
 import { CreateAuthorizedUser, GetPatientAuthorizedUser, GetSharingModulesData, UpdateSharingModulesData } from '@/slices/patientprofileslice';
@@ -32,6 +33,8 @@ function AuthorizedUserHeader() {
   const [loading, setLoading] = useState(false);
   const [snackbarmsg, setsnackbarmsg] = useState("");
   const [isSending, setIsSending] = useState(false);
+//  const [snackbarType, setsnackbarType] = useState('success');
+ const [snackbarType, setSnackbarType] = useState<AlertColor>('success');
 
   const handleSaveCDS = async () => {
     const response = await dispatch(UpdateSharingModulesData(togglesJson)).unwrap();
@@ -39,6 +42,7 @@ function AuthorizedUserHeader() {
     if (response.result === "Success") {
       setOpenSnackbar(true);
       setsnackbarmsg("Changes Saved.");
+      setSnackbarType("success");
       handleCloseCDS();
     }
   }
@@ -62,14 +66,25 @@ function AuthorizedUserHeader() {
         handleClose();
         setOpenSnackbar(true);
         setsnackbarmsg("User created Successfully!");
-        
+        setSnackbarType("success");
         await dispatch(GetPatientAuthorizedUser(localStorage.getItem('patientID')));
       } else {
         // Handle failure or other cases here
-        console.error("User creation failed:", response);
+        setLoading(false);
+        setIsSending(false);
+        // console.error("User creation failed:", response);
+        setOpenSnackbar(true);
+        setsnackbarmsg("User creation failed");
+        setSnackbarType("error");
       }
     } catch (error) {
-      console.error("Error while creating authorized user:", error);
+      // console.error("Error while creating authorized user:", error);
+      setLoading(false);
+        setIsSending(false);
+        // console.error("User creation failed:", response);
+        setOpenSnackbar(true);
+        setsnackbarmsg("Error while creating authorized user");
+        setSnackbarType("error");
     }
   };
 
@@ -557,7 +572,7 @@ function AuthorizedUserHeader() {
         onClose={() => setOpenSnackbar(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={() => setOpenSnackbar(false)} severity="success" variant="filled">
+        <Alert onClose={() => setOpenSnackbar(false)} severity={snackbarType} variant="filled">
           {snackbarmsg}
         </Alert>
       </Snackbar>
