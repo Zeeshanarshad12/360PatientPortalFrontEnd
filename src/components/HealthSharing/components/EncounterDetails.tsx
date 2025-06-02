@@ -263,6 +263,7 @@ function EncounterDetailsReport() {
 
             <Box display="flex" alignItems="center" gap={2}>
               <TextField
+                id="emailAddress"
                 fullWidth
                 label="Email Address"
                 value={email}
@@ -314,6 +315,7 @@ function EncounterDetailsReport() {
             </Box>
 
             <TextField
+             id="MessageId"
               fullWidth
               label="Message"
               value={message}
