@@ -62,7 +62,7 @@ function AuthorizedUserHeader() {
         handleClose();
         setOpenSnackbar(true);
         setsnackbarmsg("User created Successfully!");
-        setIsSending(false); //  Re-enable the button
+        
         await dispatch(GetPatientAuthorizedUser(localStorage.getItem('patientID')));
       } else {
         // Handle failure or other cases here
@@ -101,6 +101,7 @@ function AuthorizedUserHeader() {
   const handleClickOpenAuthorisedUser = () => {
     setOpen(true);
     setIsTouched(false);
+    setIsSending(false); //  Re-enable the button
     // Reset formData to initial state
     setFormData({
       PatientId: localStorage.getItem('patientID'),
