@@ -59,11 +59,10 @@ function AuthorizedUserHeader() {
         {
         // Execute your logic when the user is successfully created
         setLoading(false);
-        setIsSending(false); //  Re-enable the button
         handleClose();
         setOpenSnackbar(true);
         setsnackbarmsg("User created Successfully!");
-
+        setIsSending(false); //  Re-enable the button
         await dispatch(GetPatientAuthorizedUser(localStorage.getItem('patientID')));
       } else {
         // Handle failure or other cases here
