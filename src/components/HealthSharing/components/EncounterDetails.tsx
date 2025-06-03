@@ -90,16 +90,16 @@ function EncounterDetailsReport() {
 
     dispatch(ShareDocument(Emailobj));
 
-    // if (ShareDocumentData === true) {
-    //   handleClose();
-    //   setOpenSnackbar(true);
-    //   const LogEmailobj = {
-    //     PatientId: localStorage.getItem('patientID'),
-    //     Email: email, //localStorage.getItem('Email'),
-    //     ActivityTypeId: '4'
-    //   };
-    //   dispatch(InsertActivityLog(LogEmailobj));
-    // }
+    if (ShareDocumentData === true) {
+      handleClose();
+      setOpenSnackbar(true);
+      const LogEmailobj = {
+        PatientId: localStorage.getItem('patientID'),
+        Email: email, //localStorage.getItem('Email'),
+        ActivityTypeId: '4'
+      };
+      dispatch(InsertActivityLog(LogEmailobj));
+    }
   };
 
 
