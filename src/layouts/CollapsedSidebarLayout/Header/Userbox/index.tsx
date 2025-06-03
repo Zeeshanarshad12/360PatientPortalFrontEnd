@@ -86,6 +86,8 @@ function HeaderUserbox() {
     return <>Loading...</>;
   }
 
+  const avatarProps = stringAvatar(userName);
+
   return (
     <>
       <UserBoxButton
@@ -101,7 +103,8 @@ function HeaderUserbox() {
         <Avatar
           variant="rounded"
           alt={userName}
-          {...stringAvatar(userName)}
+          {...avatarProps}
+          sx={{ ...(avatarProps.sx || {}), bgcolor: '#1976d2', color: 'white' }}
         />
         <Box sx={{ display: { xs: "none", md: "inline-block" } }}>
           <UserBoxText>
@@ -137,7 +140,8 @@ function HeaderUserbox() {
           <Avatar
             variant="rounded"
             alt={userName}
-            {...stringAvatar(userName)}
+            {...avatarProps}
+            sx={{ ...(avatarProps.sx || {}), bgcolor: '#1976d2', color: 'white' }}
           />
           <UserBoxText>
             <UserBoxLabel variant="body1" sx={{ color: theme.palette.text.primary }}>
