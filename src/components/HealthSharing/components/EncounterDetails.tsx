@@ -76,7 +76,8 @@ function EncounterDetailsReport() {
 
 
 
-  const handleSendEmail = () => {
+  
+  const handleSendEmail = async () => {
     setIsTouched(true);
 
     const isEmailValid = email.trim() !== '' && /\S+@\S+\.\S+/.test(email);
@@ -88,9 +89,9 @@ function EncounterDetailsReport() {
       return; // stop here if any field is invalid
     }
 
-    dispatch(ShareDocument(Emailobj));
-
-    if (ShareDocumentData === true) {
+    const response = await dispatch(ShareDocument(Emailobj)).unwrap();;
+    console.log(response);
+    if (response === true) {
       handleClose();
       setOpenSnackbar(true);
       const LogEmailobj = {
@@ -103,21 +104,21 @@ function EncounterDetailsReport() {
   };
 
 
-  useEffect(() => {
-    // Check if ShareDocumentData is true
-    if (ShareDocumentData === true) {
-      // Execute your logic when ShareDocumentData is updated
-      handleClose();
-      //setOpenSnackbar(true);
+  // useEffect(() => {
+  //   // Check if ShareDocumentData is true
+  //   if (ShareDocumentData === true) {
+  //     // Execute your logic when ShareDocumentData is updated
+  //     handleClose();
+  //     //setOpenSnackbar(true);
 
-      const LogEmailobj = {
-        PatientId: localStorage.getItem('patientID'),
-        Email: email, // localStorage.getItem('Email'),
-        ActivityTypeId: '4',
-      };
-      dispatch(InsertActivityLog(LogEmailobj));
-    }
-  }, [ShareDocumentData, dispatch]); // Dependency on ShareDocumentData so the effect runs when it changes
+  //     const LogEmailobj = {
+  //       PatientId: localStorage.getItem('patientID'),
+  //       Email: email, // localStorage.getItem('Email'),
+  //       ActivityTypeId: '4',
+  //     };
+  //     dispatch(InsertActivityLog(LogEmailobj));
+  //   }
+  // }, [ShareDocumentData, dispatch]); // Dependency on ShareDocumentData so the effect runs when it changes
 
 
   const { PatientCCDADetail } = useSelector(
