@@ -95,7 +95,7 @@ function EncounterDetailsReport() {
       setOpenSnackbar(true);
       const LogEmailobj = {
         PatientId: localStorage.getItem('patientID'),
-        Email: localStorage.getItem('Email'),
+        Email: email, //localStorage.getItem('Email'),
         ActivityTypeId: '4'
       };
       dispatch(InsertActivityLog(LogEmailobj));
