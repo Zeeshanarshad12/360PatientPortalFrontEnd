@@ -30,8 +30,9 @@ const Dashboard = () => {
     if (patient?.patientID) {
       localStorage.setItem('patientID', patient?.patientID);
       localStorage.setItem('PracticeId', patient?.practiceId);
+      localStorage.setItem('vdtAccess', patient?.vdtAccess);
     }
-  }, [patient?.patientID]);
+  }, [patient?.patientID,patient?.vdtAccess]);
 
   return (
     <>

@@ -103,7 +103,7 @@ const GetGeneralLookup = (data) =>
    
          get(
            
-          `${SERVICE_URLSV2.Share}?&encounterId=${data?.EncounterId}&emailAddress=${data?.PatientEmail}`,
+          `${SERVICE_URLSV2.Share}?&encounterId=${data?.EncounterId}&emailAddress=${data?.PatientEmail}&message=${data?.message}&message=${data?.includeCCD}`,
            {},
            {
              feature: featureConstants.static

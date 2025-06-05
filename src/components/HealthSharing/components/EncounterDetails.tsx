@@ -43,7 +43,9 @@ function EncounterDetailsReport() {
   };
   const Emailobj = {
     PatientEmail: email,// localStorage.getItem('patientEmail'),
-    EncounterId: EncounterId
+    EncounterId: EncounterId,
+    message :  message,
+    includeCCD : includeCCD
   }
 
   const handleClickOpen = () => {
@@ -76,8 +78,8 @@ function EncounterDetailsReport() {
 
 
 
-  
-  const handleSendEmail = async () => {
+  const handleSendEmail = () => {
+    debugger;
     setIsTouched(true);
 
     const isEmailValid = email.trim() !== '' && /\S+@\S+\.\S+/.test(email);
@@ -89,14 +91,14 @@ function EncounterDetailsReport() {
       return; // stop here if any field is invalid
     }
 
-    const response = await dispatch(ShareDocument(Emailobj)).unwrap();;
-    console.log(response);
-    if (response === true) {
+    dispatch(ShareDocument(Emailobj));
+
+    if (ShareDocumentData === true) {
       handleClose();
       setOpenSnackbar(true);
       const LogEmailobj = {
         PatientId: localStorage.getItem('patientID'),
-        Email: email, //localStorage.getItem('Email'),
+        Email: localStorage.getItem('Email'),
         ActivityTypeId: '4'
       };
       dispatch(InsertActivityLog(LogEmailobj));
@@ -104,21 +106,21 @@ function EncounterDetailsReport() {
   };
 
 
-  // useEffect(() => {
-  //   // Check if ShareDocumentData is true
-  //   if (ShareDocumentData === true) {
-  //     // Execute your logic when ShareDocumentData is updated
-  //     handleClose();
-  //     //setOpenSnackbar(true);
+  useEffect(() => {
+    // Check if ShareDocumentData is true
+    if (ShareDocumentData === true) {
+      // Execute your logic when ShareDocumentData is updated
+      handleClose();
+      // setOpenSnackbar(true);
 
-  //     const LogEmailobj = {
-  //       PatientId: localStorage.getItem('patientID'),
-  //       Email: email, // localStorage.getItem('Email'),
-  //       ActivityTypeId: '4',
-  //     };
-  //     dispatch(InsertActivityLog(LogEmailobj));
-  //   }
-  // }, [ShareDocumentData, dispatch]); // Dependency on ShareDocumentData so the effect runs when it changes
+      const LogEmailobj = {
+        PatientId: localStorage.getItem('patientID'),
+        Email: email, // localStorage.getItem('Email'),
+        ActivityTypeId: '4',
+      };
+      dispatch(InsertActivityLog(LogEmailobj));
+    }
+  }, [ShareDocumentData, dispatch]); // Dependency on ShareDocumentData so the effect runs when it changes
 
 
   const { PatientCCDADetail } = useSelector(

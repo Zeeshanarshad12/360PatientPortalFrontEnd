@@ -13,12 +13,15 @@ function AuthorisedUsersList() {
 
   // Maintain the toggle state for each row (based on AccessStatus)
   const [toggleStates, setToggleStates] = useState([]);
+  const [togglePHIStates, setTogglePHIStates] = useState([]);
 
   useEffect(() => {
     if (activityDatarows) {
       // Initialize toggle states based on AccessStatus from data
       const initialStates = activityDatarows.map((item) => item.accessStatus.trim() === "Active");
       setToggleStates(initialStates);
+      const initialPHIStates = activityDatarows.map((item) => item.vdtAccess?.trim() === "Active");
+      setTogglePHIStates(initialPHIStates);
     }
   }, [activityDatarows]);
 
@@ -35,6 +38,7 @@ function AuthorisedUsersList() {
     const AccessObj = {
       index: index, // use index for backend identification if needed
       PatientId: localStorage.getItem('patientID'),
+      vdtAccess: '',
       isActive: isActive, // Updated status
     };
 
@@ -52,6 +56,30 @@ function AuthorisedUsersList() {
     }
   };
 
+    const handlePHIToggle = async (index, rowid) => {
+    const updatedStates = [...togglePHIStates];
+    updatedStates[rowid] = !updatedStates[rowid];
+    setTogglePHIStates(updatedStates);
+
+    const isActive = updatedStates[rowid] ? 'Active' : 'Inactive';
+
+    const AccessObj = {
+      index: index,
+      PatientId: localStorage.getItem('patientID'),
+      vdtAccess: isActive,
+      isActive: ''
+    };
+
+    try {
+      await dispatch(UpdatePatientAuthorizedUserAccess(AccessObj)).unwrap();
+      if (localStorage.getItem('patientID') != null) {
+        dispatch(GetPatientAuthorizedUser(localStorage.getItem('patientID')));
+      }
+    } catch (error) {
+      console.error("Error updating PHI access status:", error);
+    }
+  };
+
   useEffect(() => {
     if (localStorage.getItem('patientID') != null) {
       dispatch(GetPatientAuthorizedUser(localStorage.getItem('patientID')));
@@ -64,10 +92,7 @@ function AuthorisedUsersList() {
       { field: 'EmailAddress', headerName: 'Email Address', flex: 1 },
       { field: 'Relationship', headerName: 'Relationship', flex: 1 },
       { field: 'AccessProvidedOn', headerName: 'Access Provided On', flex: 1 },
-      {
-        field: 'AccessStatus',
-        headerName: 'Access Status',
-        flex: 1,
+      { field: 'AccessStatus', headerName: 'Access Status', flex: 1,
         renderCell: (params) => {
           const rowid = params.row.rowid; // Use rowid from the row data
           const isActive = toggleStates[rowid]; // Fetch the correct state for this row
@@ -96,6 +121,21 @@ function AuthorisedUsersList() {
             />
           );
         }
+      },
+      { field: 'vdtAccess', headerName: 'Access PHI', flex: 1,
+        renderCell: (params) => {
+          const rowid = params.row.rowid;
+          const isActive = togglePHIStates[rowid];
+
+          return (
+            <Switch
+              id={`switchPHI-${params.row.id}`}
+              checked={isActive}
+              onChange={() => handlePHIToggle(params.row.id, rowid)}
+              inputProps={{ 'aria-label': 'Enable/Disable PHI Access' }}
+            />
+          );
+        }
       }
     ],
     rows: activityDatarows ? activityDatarows.map((item, index) => ({
@@ -106,6 +146,7 @@ function AuthorisedUsersList() {
       Relationship: item.relationship,
       AccessProvidedOn: item.accessProvidedOn,
       AccessStatus: item.accessStatus, // This can be used to show the initial status if needed
+      AccessPHI: item.vdtAccess,
     })) : []
   };
 

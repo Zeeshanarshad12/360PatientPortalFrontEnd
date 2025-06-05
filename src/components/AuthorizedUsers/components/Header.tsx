@@ -33,8 +33,8 @@ function AuthorizedUserHeader() {
   const [loading, setLoading] = useState(false);
   const [snackbarmsg, setsnackbarmsg] = useState("");
   const [isSending, setIsSending] = useState(false);
-//  const [snackbarType, setsnackbarType] = useState('success');
- const [snackbarType, setSnackbarType] = useState<AlertColor>('success');
+  //  const [snackbarType, setsnackbarType] = useState('success');
+  const [snackbarType, setSnackbarType] = useState<AlertColor>('success');
 
   const handleSaveCDS = async () => {
     const response = await dispatch(UpdateSharingModulesData(togglesJson)).unwrap();
@@ -59,14 +59,13 @@ function AuthorizedUserHeader() {
       const response = await dispatch(CreateAuthorizedUser(formData)).unwrap();
       // Now that the dispatch is complete, check the result of CreateAuthorizedUserData
       // if (response === "success") 
-        if (response > 0 )
-        {
+      if (response > 0) {
         // Execute your logic when the user is successfully created
         setLoading(false);
         handleClose();
         setOpenSnackbar(true);
         setsnackbarmsg("User created Successfully!");
-        setSnackbarType("success");
+        setSnackbarType('success');
         await dispatch(GetPatientAuthorizedUser(localStorage.getItem('patientID')));
       } else {
         // Handle failure or other cases here
@@ -80,11 +79,11 @@ function AuthorizedUserHeader() {
     } catch (error) {
       // console.error("Error while creating authorized user:", error);
       setLoading(false);
-        setIsSending(false);
-        // console.error("User creation failed:", response);
-        setOpenSnackbar(true);
-        setsnackbarmsg("Error while creating authorized user");
-        setSnackbarType("error");
+      setIsSending(false);
+      // console.error("User creation failed:", response);
+      setOpenSnackbar(true);
+      setsnackbarmsg("Error while creating authorized user");
+      setSnackbarType("error");
     }
   };
 
@@ -289,6 +288,8 @@ function AuthorizedUserHeader() {
                       color: 'gray', // You can change this to any color you want for the label
                     },
                   }}
+
+                  
                 />
               </Grid>
               <Grid item xs={6}>
@@ -401,6 +402,7 @@ function AuthorizedUserHeader() {
                     <Typography variant="subtitle1" color="error">  Relationship is required </Typography>
 
                   )}
+                  
                 </FormControl>
               </Grid>
             </Grid>

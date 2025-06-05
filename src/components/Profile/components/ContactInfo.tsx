@@ -16,7 +16,7 @@ function ContactInfo() {
   return (
     <CardContent>
       {/* Main section heading */}
-      <Typography variant="h3" component="h2" fontWeight="bold">
+      <Typography variant="h3" component="h1" fontWeight="bold">
         Profile
       </Typography>
       <Divider sx={{ marginY: 2 }} />
