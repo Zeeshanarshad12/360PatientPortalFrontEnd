@@ -58,3 +58,6 @@ html {
   /* height: calc(100vh - 66px); sch */
   height: calc(100vh - 79px);
 }
+.test .MuiFormControl-root div fieldset {
+    border-color: rgba(0, 0, 0, 0.23) !important;
+}

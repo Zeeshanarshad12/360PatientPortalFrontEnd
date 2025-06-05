@@ -192,6 +192,32 @@ function AuthorizedUserHeader() {
   useAriaHiddenFixOnDialog(open);
   useAriaHiddenFixOnDialog(openCDS);
 
+  // Common SX for black border
+const blackBorderSx = {
+  '& .MuiOutlinedInput-root': {
+    '& fieldset': {
+      borderColor: '#A0A0A0',
+      borderWidth: '1.5px',
+    },
+    '&:hover fieldset': {
+      borderColor: '#A0A0A0',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: '#A0A0A0',
+    },
+    '&.Mui-error fieldset': {
+      borderColor: '#A0A0A0', // Optional: still black even in error
+    },
+  },
+  '& .MuiInputBase-input::placeholder': {
+    color: 'gray',
+  },
+  '& .MuiInputLabel-root.Mui-error': {
+    color: 'gray',
+  },
+};
+
+
   return (
     <>
       <Grid container justifyContent="space-between" alignItems="center">
@@ -251,7 +277,7 @@ function AuthorizedUserHeader() {
           <Divider sx={{ marginY: 1 }} />
         </DialogTitle>
 
-        <DialogContent>
+        <DialogContent className='test'>
           <Box sx={{ padding: 2 }}>
             <Grid container spacing={2}>
               {/* First Name and Last Name fields side by side */}
@@ -289,7 +315,7 @@ function AuthorizedUserHeader() {
                     },
                   }}
 
-                  
+
                 />
               </Grid>
               <Grid item xs={6}>
@@ -340,6 +366,7 @@ function AuthorizedUserHeader() {
                   onChange={handleChange}
                   required
                   type="email"
+                  autoComplete="email" 
                   error={isTouched && (!formData.EmailAddress || !isValidEmail(formData.EmailAddress))}
                   helperText={
                     isTouched && !formData.EmailAddress
@@ -369,12 +396,13 @@ function AuthorizedUserHeader() {
                       color: 'gray', // You can change this to any color you want for the label
                     },
                   }}
+                  // sx={blackBorderSx}
                 />
               </Grid>
 
               {/* Relationship Dropdown */}
               <Grid item xs={6}>
-                <FormControl fullWidth required>
+                <FormControl fullWidth required >
                   <InputLabel id="relationship-label">Relationship</InputLabel>
                   <Select
                     id="relation"
