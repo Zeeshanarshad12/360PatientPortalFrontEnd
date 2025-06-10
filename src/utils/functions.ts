@@ -1,6 +1,7 @@
 /* eslint-disable */
 import Router from 'next/router';
 import SnackbarUtils from "../content/snackbar";
+import moment from 'moment';
 
 export const Check_Authentication = async (response) => {
   if (response?.status === 500) {
@@ -271,6 +272,67 @@ export function stringAvatar(
     },
     children: initials || "U", // Ensures at least one letter
   };
+}
+
+export const formatAddresswithCCDA = (addr) => {
+  if (!addr) return '';
+ 
+  const parts = [];
+  if (addr.streetAddressLine) parts.push(addr.streetAddressLine);
+  if (addr.city || addr.state || addr.postalCode) {
+    parts.push(`${addr.city || ''}, ${addr.state || ''} ${addr.postalCode || ''}, ${addr.country || ''}`.trim());
+  }
+ 
+  return parts.join('\n');
+};
+
+export function formatDateCCDADate(dateString: string): string {
+  if (!dateString) return '';
+ 
+  // Check if it's an 8-digit date first (YYYYMMDD)
+  const numericOnly = dateString.replace(/\D/g, '');
+  if (numericOnly.length === 8) {
+    // 8-digit format: YYYYMMDD -> "July 1, 1980"
+    const formatted = moment(numericOnly, 'YYYYMMDD');
+    return formatted.isValid() ? formatted.format('MMMM D, YYYY') : dateString;
+  }
+ 
+  // Handle formats with timezone offset (e.g., 201507221430-0500)
+  if (dateString.includes('-') || dateString.includes('+')) {
+    // Manual parsing for timezone format
+    const parts = dateString.split(/[\-\+]/);
+    if (parts.length === 2 && parts[0].length >= 12) {
+      const dateTimePart = parts[0];
+      const year = dateTimePart.substring(0, 4);
+      const month = dateTimePart.substring(4, 6);
+      const day = dateTimePart.substring(6, 8);
+      const hour = dateTimePart.substring(8, 10);
+      const minute = dateTimePart.substring(10, 12);
+     
+      const formatted = moment(`${year}-${month}-${day} ${hour}:${minute}`, 'YYYY-MM-DD HH:mm');
+      if (formatted.isValid()) {
+        return `${formatted.format('MMMM D, YYYY, HH:mm')}, EST`;
+      }
+    }
+   
+    // Fallback: try parsing with moment's timezone formats
+    const formats = ['YYYYMMDDHHMMZZ', 'YYYYMMDDHHMM ZZ'];
+    for (const format of formats) {
+      const formatted = moment(dateString, format);
+      if (formatted.isValid()) {
+        return `${formatted.format('MMMM D, YYYY, HH:mm')}, EST`;
+      }
+    }
+  }
+ 
+  // Handle pure numeric formats without timezone (12+ digits)
+  if (numericOnly.length >= 12) {
+    // 12+ digit format: YYYYMMDDHHMM -> "July 22, 2015, 14:00, EST"
+    const formatted = moment(numericOnly.substring(0, 12), 'YYYYMMDDHHMM');
+    return formatted.isValid() ? `${formatted.format('MMMM D, YYYY, HH:mm')}, EST` : dateString;
+  }
+ 
+  return dateString;
 }
 
 

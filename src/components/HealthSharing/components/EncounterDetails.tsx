@@ -14,7 +14,8 @@ import {
   Snackbar,
   Alert,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  CircularProgress
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
@@ -22,6 +23,10 @@ import { useDispatch, useSelector } from '@/store/index';
 import { InsertActivityLog, ShareDocument, } from '@/slices/patientprofileslice';
 import { useEffect } from 'react';
 import { useAriaHiddenFixOnDialog } from '@/hooks/useAriaHiddenFixOnDialog';
+import { parseString } from 'xml2js';
+import MapXMLDirectly from './MapXMLDirectly';
+import { isNull } from '@/utils/functions';
+
 
 function EncounterDetailsReport() {
 
@@ -34,6 +39,8 @@ function EncounterDetailsReport() {
   const [isTouched, setIsTouched] = useState(false);  // Track if user has clicked Send
   const [emailError, setEmailError] = useState(false);
   const [includeCCD, setIncludeCCD] = useState(true);
+  const [parseJson, setParsedJson] = useState(null);
+  const [jsonError, setJsonError] = useState(null);
 
   //Save ActivityLog Obj 
   const Logobj = {
@@ -160,6 +167,30 @@ function EncounterDetailsReport() {
 
   useAriaHiddenFixOnDialog(open);
 
+
+
+  useEffect(() => {
+     if (PatientCCDADetail) {
+
+      parseString(
+        PatientCCDADetail,
+        { explicitArray: false, mergeAttrs: true },
+        (err, result) => {
+
+          if (err) {
+            console.error('Failed to parse XML:', err);
+            setParsedJson(null);
+            setJsonError('Failed to parse XML content.');
+          } else {
+            setParsedJson(result);
+            setJsonError(null);
+          }
+        }
+      );
+    }
+  }, [PatientCCDADetail])
+  
+
   return (
     <Box
       sx={{
@@ -167,19 +198,36 @@ function EncounterDetailsReport() {
         flexGrow: 1
       }}
     >
-      <Box
+      {
+        isNull(parseJson) ? (
+          <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <CircularProgress size={30} color="primary" />
+        </Box>
+        ):(
+             <Box
         sx={{
           width: '100%',
           height: 'calc(64vh - 100px)',
-          backgroundColor: '#fff'
+          backgroundColor: '#fff',
+          overflowY:'auto'
         }}
       >
-        <iframe
+        < MapXMLDirectly XmlToJson={parseJson}/>
+        {/* <iframe
           title="Patient Report"
           srcDoc={PatientCCDADetail}
           style={{ width: '100%', height: '100%', border: 'none' }}
-        />
+        /> */}
       </Box>
+        )
+      }
+   
 
       <Grid container spacing={2} justifyContent="right" sx={{ marginTop: 2 }}>
         <Grid item>
