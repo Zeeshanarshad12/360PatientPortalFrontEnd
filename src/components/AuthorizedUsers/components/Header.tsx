@@ -258,9 +258,9 @@ function AuthorizedUserHeader() {
         </Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           {' '}
-
           {/* This Box will handle the buttons next to each other */}
-          {/* {localStorage.getItem('UserAccessType') === 'Self' && (
+          {(localStorage.getItem('UserAccessType') == 'Self' ||
+            localStorage.getItem('vdtAccess') == 'true') && (
             <Button
               variant={'outlined'}
               sx={{
@@ -279,27 +279,9 @@ function AuthorizedUserHeader() {
             >
               {'Control Data Sharing'}
             </Button>
-          )} */}
-          <Button
-              variant={'outlined'}
-              sx={{
-                textTransform: 'none',
-                borderRadius: '5px',
-                '&:focus': {
-                  outline: '2px solid #1976d2',
-                  outlineOffset: '2px'
-                },
-                '&:focus-visible': {
-                  outline: '2px solid #1976d2',
-                  outlineOffset: '2px'
-                }
-              }}
-              onClick={handleClickOpenControlDataSharing}
-            >
-              {'Control Data Sharing'}
-            </Button>
-
-          {/* {localStorage.getItem('UserAccessType') === 'Self' && (
+          )}
+          {(localStorage.getItem('UserAccessType') == 'Self' ||
+            localStorage.getItem('vdtAccess') == 'true') && (
             <Button
               variant="contained"
               sx={{
@@ -317,24 +299,7 @@ function AuthorizedUserHeader() {
             >
               Add User
             </Button>
-          )} */}
-          <Button
-              variant="contained"
-              sx={{
-                borderRadius: '5px',
-                '&:focus': {
-                  outline: '2px solid #1976d2',
-                  outlineOffset: '2px'
-                },
-                '&:focus-visible': {
-                  outline: '2px solid #1976d2',
-                  outlineOffset: '2px'
-                }
-              }}
-              onClick={handleClickOpenAuthorisedUser}
-            >
-              Add User
-            </Button>
+          )}
         </Box>
       </Grid>
 
@@ -444,11 +409,11 @@ function AuthorizedUserHeader() {
                   variant="outlined"
                   fullWidth
                   name="EmailAddress"
+                  autoComplete="email"
                   value={formData.EmailAddress}
                   onChange={handleChange}
                   required
                   type="email"
-                  autoComplete="email"
                   error={
                     isTouched &&
                     (!formData.EmailAddress ||
