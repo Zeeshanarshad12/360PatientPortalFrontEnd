@@ -53,7 +53,7 @@ const HealthRecordHeader = () => {
   return (
     <>
       <Grid container justifyContent="space-between" alignItems="center">
-        <Typography variant="h4" fontWeight="bold">
+        <Typography variant="h3" component="h1" fontWeight="bold">
           {isActivityLog ? 'Activity Log' : 'My Health Record'}
         </Typography>
 

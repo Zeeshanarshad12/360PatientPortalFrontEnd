@@ -40,7 +40,7 @@ function ContactInfo() {
         <Grid item>
           {/* Name styled as heading */}
           <Typography component="h3" fontWeight="bold" color="primary" fontSize="18px">
-            {patientDetails?.prefix + '. ' + patientDetails?.firstName +
+            {(patientDetails?.prefix ? patientDetails.prefix + '. ' : '') + patientDetails?.firstName +
               ' ' +
               patientDetails?.lastName}
           </Typography>

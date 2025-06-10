@@ -2,7 +2,27 @@ import React, { useState } from 'react';
 import CloseIcon from '@mui/icons-material/Close';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import {
-  CircularProgress, Card, CardContent, Box, Button, Grid, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, Typography, TextField, Divider, Snackbar, Alert, Switch, FormControl, Select, MenuItem, InputLabel,
+  CircularProgress,
+  Card,
+  CardContent,
+  Box,
+  Button,
+  Grid,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  IconButton,
+  Typography,
+  TextField,
+  Divider,
+  Snackbar,
+  Alert,
+  Switch,
+  FormControl,
+  Select,
+  MenuItem,
+  InputLabel,
   Table,
   TableBody,
   TableCell,
@@ -12,17 +32,24 @@ import {
   AlertColor
 } from '@mui/material';
 import { useDispatch, useSelector } from '@/store/index';
-import { CreateAuthorizedUser, GetPatientAuthorizedUser, GetSharingModulesData, UpdateSharingModulesData } from '@/slices/patientprofileslice';
+import {
+  CreateAuthorizedUser,
+  GetPatientAuthorizedUser,
+  GetSharingModulesData,
+  UpdateSharingModulesData
+} from '@/slices/patientprofileslice';
 import { useEffect } from 'react';
 import { debug } from 'console';
 import { format } from 'path';
 import { useAriaHiddenFixOnDialog } from '@/hooks/useAriaHiddenFixOnDialog';
 
 function AuthorizedUserHeader() {
-  const { CreateAuthorizedUserData, GetSharingModulesDataList } = useSelector((state) => state.patientprofileslice);
+  const { CreateAuthorizedUserData, GetSharingModulesDataList } = useSelector(
+    (state) => state.patientprofileslice
+  );
   const GetSharingModulesList = GetSharingModulesDataList?.result;
   const dispatch = useDispatch();
-  const handleSwitchViewClick = () => { };
+  const handleSwitchViewClick = () => {};
 
   const [open, setOpen] = useState(false);
   const [openCDS, setOpenCDS] = useState(false);
@@ -31,21 +58,23 @@ function AuthorizedUserHeader() {
   const handleCloseCDS = () => setOpenCDS(false);
   const [isTouched, setIsTouched] = useState(false); // Tracks whether the user has interacted with the form
   const [loading, setLoading] = useState(false);
-  const [snackbarmsg, setsnackbarmsg] = useState("");
+  const [snackbarmsg, setsnackbarmsg] = useState('');
   const [isSending, setIsSending] = useState(false);
   //  const [snackbarType, setsnackbarType] = useState('success');
   const [snackbarType, setSnackbarType] = useState<AlertColor>('success');
 
   const handleSaveCDS = async () => {
-    const response = await dispatch(UpdateSharingModulesData(togglesJson)).unwrap();
+    const response = await dispatch(
+      UpdateSharingModulesData(togglesJson)
+    ).unwrap();
     console.log(response.result);
-    if (response.result === "Success") {
+    if (response.result === 'Success') {
       setOpenSnackbar(true);
-      setsnackbarmsg("Changes Saved.");
-      setSnackbarType("success");
+      setsnackbarmsg('Changes Saved.');
+      setSnackbarType('success');
       handleCloseCDS();
     }
-  }
+  };
 
   const handleAuthorisedUserSend = async () => {
     try {
@@ -58,23 +87,25 @@ function AuthorizedUserHeader() {
       // Dispatch the CreateAuthorizedUser action and wait for it to complete
       const response = await dispatch(CreateAuthorizedUser(formData)).unwrap();
       // Now that the dispatch is complete, check the result of CreateAuthorizedUserData
-      // if (response === "success") 
+      // if (response === "success")
       if (response > 0) {
         // Execute your logic when the user is successfully created
         setLoading(false);
         handleClose();
         setOpenSnackbar(true);
-        setsnackbarmsg("User created Successfully!");
+        setsnackbarmsg('User created Successfully!');
         setSnackbarType('success');
-        await dispatch(GetPatientAuthorizedUser(localStorage.getItem('patientID')));
+        await dispatch(
+          GetPatientAuthorizedUser(localStorage.getItem('patientID'))
+        );
       } else {
         // Handle failure or other cases here
         setLoading(false);
         setIsSending(false);
         // console.error("User creation failed:", response);
         setOpenSnackbar(true);
-        setsnackbarmsg("User creation failed");
-        setSnackbarType("error");
+        setsnackbarmsg('User creation failed');
+        setSnackbarType('error');
       }
     } catch (error) {
       // console.error("Error while creating authorized user:", error);
@@ -82,8 +113,8 @@ function AuthorizedUserHeader() {
       setIsSending(false);
       // console.error("User creation failed:", response);
       setOpenSnackbar(true);
-      setsnackbarmsg("Error while creating authorized user");
-      setSnackbarType("error");
+      setsnackbarmsg('Error while creating authorized user');
+      setSnackbarType('error');
     }
   };
 
@@ -131,7 +162,7 @@ function AuthorizedUserHeader() {
   const handleClickOpenControlDataSharing = () => {
     setOpenCDS(true);
     dispatch(GetSharingModulesData(localStorage.getItem('patientID')));
-  }
+  };
 
   const [formData, setFormData] = useState({
     PatientId: localStorage.getItem('patientID'),
@@ -153,19 +184,21 @@ function AuthorizedUserHeader() {
   };
 
   const [toggles, setToggles] = useState({});
-  const [togglesJson, setTogglesJson] = useState("");
+  const [togglesJson, setTogglesJson] = useState('');
 
   useEffect(() => {
-    const patientId = localStorage.getItem("patientID");
+    const patientId = localStorage.getItem('patientID');
 
-    const modulesArray = Object.entries(toggles).map(([moduleName, moduleAccess]) => ({
-      moduleName,
-      moduleAccess
-    }));
+    const modulesArray = Object.entries(toggles).map(
+      ([moduleName, moduleAccess]) => ({
+        moduleName,
+        moduleAccess
+      })
+    );
 
     const newJson = JSON.stringify({
       PatientId: patientId,
-      Modules: modulesArray,
+      Modules: modulesArray
     });
 
     setTogglesJson(newJson);
@@ -174,7 +207,7 @@ function AuthorizedUserHeader() {
   const handleToggleChange = (item) => {
     const updatedToggles = {
       ...toggles,
-      [item.moduleName]: !toggles[item.moduleName],
+      [item.moduleName]: !toggles[item.moduleName]
     };
     setToggles(updatedToggles); // triggers useEffect, which updates togglesJson
   };
@@ -182,7 +215,7 @@ function AuthorizedUserHeader() {
   useEffect(() => {
     if (GetSharingModulesList) {
       const initialToggles = {};
-      GetSharingModulesList.forEach(item => {
+      GetSharingModulesList.forEach((item) => {
         initialToggles[item.moduleName] = item.moduleAccess ?? false;
       });
       setToggles(initialToggles);
@@ -193,43 +226,47 @@ function AuthorizedUserHeader() {
   useAriaHiddenFixOnDialog(openCDS);
 
   // Common SX for black border
-const blackBorderSx = {
-  '& .MuiOutlinedInput-root': {
-    '& fieldset': {
-      borderColor: '#A0A0A0',
-      borderWidth: '1.5px',
+  const blackBorderSx = {
+    '& .MuiOutlinedInput-root': {
+      '& fieldset': {
+        borderColor: '#A0A0A0',
+        borderWidth: '1.5px'
+      },
+      '&:hover fieldset': {
+        borderColor: '#A0A0A0'
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: '#A0A0A0'
+      },
+      '&.Mui-error fieldset': {
+        borderColor: '#A0A0A0' // Optional: still black even in error
+      }
     },
-    '&:hover fieldset': {
-      borderColor: '#A0A0A0',
+    '& .MuiInputBase-input::placeholder': {
+      color: 'gray'
     },
-    '&.Mui-focused fieldset': {
-      borderColor: '#A0A0A0',
-    },
-    '&.Mui-error fieldset': {
-      borderColor: '#A0A0A0', // Optional: still black even in error
-    },
-  },
-  '& .MuiInputBase-input::placeholder': {
-    color: 'gray',
-  },
-  '& .MuiInputLabel-root.Mui-error': {
-    color: 'gray',
-  },
-};
-
+    '& .MuiInputLabel-root.Mui-error': {
+      color: 'gray'
+    }
+  };
 
   return (
     <>
       <Grid container justifyContent="space-between" alignItems="center">
-        <Typography variant="h4" fontWeight="bold">
+        <Typography variant="h3" component="h1" fontWeight="bold">
           {'Authorised User'}
         </Typography>
-        <Box sx={{ display: 'flex', gap: 1 }}>  {/* This Box will handle the buttons next to each other */}
-          {localStorage.getItem("UserAccessType") === "Self" && (
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {' '}
+
+          {/* This Box will handle the buttons next to each other */}
+          {/* {localStorage.getItem('UserAccessType') === 'Self' && (
             <Button
               variant={'outlined'}
               sx={{
-                textTransform: 'none', borderRadius: '5px', '&:focus': {
+                textTransform: 'none',
+                borderRadius: '5px',
+                '&:focus': {
                   outline: '2px solid #1976d2',
                   outlineOffset: '2px'
                 },
@@ -242,12 +279,32 @@ const blackBorderSx = {
             >
               {'Control Data Sharing'}
             </Button>
-          )}
-          {localStorage.getItem("UserAccessType") === "Self" && (
+          )} */}
+          <Button
+              variant={'outlined'}
+              sx={{
+                textTransform: 'none',
+                borderRadius: '5px',
+                '&:focus': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                },
+                '&:focus-visible': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                }
+              }}
+              onClick={handleClickOpenControlDataSharing}
+            >
+              {'Control Data Sharing'}
+            </Button>
+
+          {/* {localStorage.getItem('UserAccessType') === 'Self' && (
             <Button
               variant="contained"
               sx={{
-                borderRadius: '5px', '&:focus': {
+                borderRadius: '5px',
+                '&:focus': {
                   outline: '2px solid #1976d2',
                   outlineOffset: '2px'
                 },
@@ -260,7 +317,24 @@ const blackBorderSx = {
             >
               Add User
             </Button>
-          )}
+          )} */}
+          <Button
+              variant="contained"
+              sx={{
+                borderRadius: '5px',
+                '&:focus': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                },
+                '&:focus-visible': {
+                  outline: '2px solid #1976d2',
+                  outlineOffset: '2px'
+                }
+              }}
+              onClick={handleClickOpenAuthorisedUser}
+            >
+              Add User
+            </Button>
         </Box>
       </Grid>
 
@@ -277,7 +351,7 @@ const blackBorderSx = {
           <Divider sx={{ marginY: 1 }} />
         </DialogTitle>
 
-        <DialogContent className='test'>
+        <DialogContent className="test">
           <Box sx={{ padding: 2 }}>
             <Grid container spacing={2}>
               {/* First Name and Last Name fields side by side */}
@@ -288,34 +362,37 @@ const blackBorderSx = {
                   variant="outlined"
                   fullWidth
                   name="firstName"
+                  autoComplete="given-name"
                   value={formData.firstName}
                   onChange={handleChange}
                   required
                   error={isTouched && !formData.firstName}
-                  helperText={isTouched && !formData.firstName ? 'First Name is required' : ''}
+                  helperText={
+                    isTouched && !formData.firstName
+                      ? 'First Name is required'
+                      : ''
+                  }
                   FormHelperTextProps={{
                     sx: {
-                      fontWeight: 'normal', // Ensures the helper text is not bold
-                    },
+                      fontWeight: 'normal' // Ensures the helper text is not bold
+                    }
                   }}
                   sx={{
                     // Remove red outline when there's an error
                     '& .MuiOutlinedInput-root': {
                       '&.Mui-error': {
-                        borderColor: 'transparent', // Make the error border transparent
-                      },
+                        borderColor: 'transparent' // Make the error border transparent
+                      }
                     },
                     // Change placeholder color to be normal even when error is present
                     '& .MuiInputBase-input::placeholder': {
-                      color: 'gray', // Placeholder color when there is an error
+                      color: 'gray' // Placeholder color when there is an error
                     },
                     // Optional: Style the label when there is an error
                     '& .MuiInputLabel-root.Mui-error': {
-                      color: 'gray', // You can change this to any color you want for the label
-                    },
+                      color: 'gray' // You can change this to any color you want for the label
+                    }
                   }}
-
-
                 />
               </Grid>
               <Grid item xs={6}>
@@ -325,31 +402,36 @@ const blackBorderSx = {
                   variant="outlined"
                   fullWidth
                   name="lastName"
+                  autoComplete="family-name"
                   value={formData.lastName}
                   onChange={handleChange}
                   required
                   error={isTouched && !formData.lastName}
-                  helperText={isTouched && !formData.lastName ? 'Last Name is required' : ''}
+                  helperText={
+                    isTouched && !formData.lastName
+                      ? 'Last Name is required'
+                      : ''
+                  }
                   FormHelperTextProps={{
                     sx: {
-                      fontWeight: 'normal', // Ensures the helper text is not bold
-                    },
+                      fontWeight: 'normal' // Ensures the helper text is not bold
+                    }
                   }}
                   sx={{
                     // Remove red outline when there's an error
                     '& .MuiOutlinedInput-root': {
                       '&.Mui-error': {
-                        borderColor: 'transparent', // Make the error border transparent
-                      },
+                        borderColor: 'transparent' // Make the error border transparent
+                      }
                     },
                     // Change placeholder color to be normal even when error is present
                     '& .MuiInputBase-input::placeholder': {
-                      color: 'gray', // Placeholder color when there is an error
+                      color: 'gray' // Placeholder color when there is an error
                     },
                     // Optional: Style the label when there is an error
                     '& .MuiInputLabel-root.Mui-error': {
-                      color: 'gray', // You can change this to any color you want for the label
-                    },
+                      color: 'gray' // You can change this to any color you want for the label
+                    }
                   }}
                 />
               </Grid>
@@ -366,35 +448,39 @@ const blackBorderSx = {
                   onChange={handleChange}
                   required
                   type="email"
-                  autoComplete="email" 
-                  error={isTouched && (!formData.EmailAddress || !isValidEmail(formData.EmailAddress))}
+                  autoComplete="email"
+                  error={
+                    isTouched &&
+                    (!formData.EmailAddress ||
+                      !isValidEmail(formData.EmailAddress))
+                  }
                   helperText={
                     isTouched && !formData.EmailAddress
                       ? 'Email Address is required'
                       : isTouched && !isValidEmail(formData.EmailAddress)
-                        ? 'Invalid email address'
-                        : ''
+                      ? 'Invalid email address'
+                      : ''
                   }
                   FormHelperTextProps={{
                     sx: {
-                      fontWeight: 'normal', // Ensures the helper text is not bold
-                    },
+                      fontWeight: 'normal' // Ensures the helper text is not bold
+                    }
                   }}
                   sx={{
                     // Remove red outline when there's an error
                     '& .MuiOutlinedInput-root': {
                       '&.Mui-error': {
-                        borderColor: 'transparent', // Make the error border transparent
-                      },
+                        borderColor: 'transparent' // Make the error border transparent
+                      }
                     },
                     // Change placeholder color to be normal even when error is present
                     '& .MuiInputBase-input::placeholder': {
-                      color: 'gray', // Placeholder color when there is an error
+                      color: 'gray' // Placeholder color when there is an error
                     },
                     // Optional: Style the label when there is an error
                     '& .MuiInputLabel-root.Mui-error': {
-                      color: 'gray', // You can change this to any color you want for the label
-                    },
+                      color: 'gray' // You can change this to any color you want for the label
+                    }
                   }}
                   // sx={blackBorderSx}
                 />
@@ -402,7 +488,7 @@ const blackBorderSx = {
 
               {/* Relationship Dropdown */}
               <Grid item xs={6}>
-                <FormControl fullWidth required >
+                <FormControl fullWidth required>
                   <InputLabel id="relationship-label">Relationship</InputLabel>
                   <Select
                     id="relation"
@@ -427,27 +513,40 @@ const blackBorderSx = {
                   </Select>
                   {isTouched && !formData.Relation && (
                     // <span style={{ color: 'red', fontSize: '12px' }}>Relationship is required</span>
-                    <Typography variant="subtitle1" color="error">  Relationship is required </Typography>
-
+                    <Typography variant="subtitle1" color="error">
+                      {' '}
+                      Relationship is required{' '}
+                    </Typography>
                   )}
-                  
                 </FormControl>
               </Grid>
             </Grid>
           </Box>
         </DialogContent>
 
-        <DialogActions sx={{ justifyContent: 'flex-end', paddingRight: '22px', marginBottom: '10px' }}>
-          <Button variant="outlined" color="primary" sx={{
-            borderRadius: '5px', '&:focus': {
-              outline: '2px solid #1976d2',
-              outlineOffset: '2px'
-            },
-            '&:focus-visible': {
-              outline: '2px solid #1976d2',
-              outlineOffset: '2px'
-            }
-          }} onClick={handleClose}>
+        <DialogActions
+          sx={{
+            justifyContent: 'flex-end',
+            paddingRight: '22px',
+            marginBottom: '10px'
+          }}
+        >
+          <Button
+            variant="outlined"
+            color="primary"
+            sx={{
+              borderRadius: '5px',
+              '&:focus': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              },
+              '&:focus-visible': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              }
+            }}
+            onClick={handleClose}
+          >
             Cancel
           </Button>
           <Button
@@ -455,7 +554,8 @@ const blackBorderSx = {
             color="primary"
             disabled={isSending}
             sx={{
-              borderRadius: '5px', '&:focus': {
+              borderRadius: '5px',
+              '&:focus': {
                 outline: '2px solid #1976d2',
                 outlineOffset: '2px'
               },
@@ -475,7 +575,6 @@ const blackBorderSx = {
         </DialogActions>
       </Dialog>
 
-
       <Dialog open={openCDS} onClose={handleCloseCDS} fullWidth maxWidth="sm">
         <DialogTitle sx={{ fontWeight: 'bold' }}>
           Control Data Sharing
@@ -492,17 +591,27 @@ const blackBorderSx = {
         {/* DialogContent */}
         <DialogContent>
           {/* Info Card */}
-          <Card sx={{ backgroundColor: 'rgba(96, 148, 185, 0.16)', mb: 2, borderRadius: 2 }}>
+          <Card
+            sx={{
+              backgroundColor: 'rgba(96, 148, 185, 0.16)',
+              mb: 2,
+              borderRadius: 2
+            }}
+          >
             <CardContent sx={{ padding: 2 }}>
               <Typography variant="body1" fontWeight="bold">
-                Toggle settings to request a restriction on specific health data, for treatment, payment, or health care operations.
+                Toggle settings to request a restriction on specific health
+                data, for treatment, payment, or health care operations.
               </Typography>
             </CardContent>
           </Card>
 
           {/* Scrollable Table with Sticky Header */}
           <TableContainer sx={{ maxHeight: '300px', overflowY: 'auto' }}>
-            <Table stickyHeader sx={{ borderCollapse: 'separate', borderSpacing: '0 5px' }}>
+            <Table
+              stickyHeader
+              sx={{ borderCollapse: 'separate', borderSpacing: '0 5px' }}
+            >
               <TableHead>
                 <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
                   <TableCell
@@ -512,7 +621,7 @@ const blackBorderSx = {
                       backgroundColor: '#f5f5f5',
                       position: 'sticky',
                       top: 0,
-                      zIndex: 1,
+                      zIndex: 1
                     }}
                   >
                     Information
@@ -525,7 +634,7 @@ const blackBorderSx = {
                       position: 'sticky',
                       top: 0,
                       zIndex: 1,
-                      textAlign: 'right',
+                      textAlign: 'right'
                     }}
                   >
                     <div style={{ marginRight: '20%' }}>Access Status</div>
@@ -534,7 +643,10 @@ const blackBorderSx = {
               </TableHead>
               <TableBody>
                 {GetSharingModulesList?.map((item, index) => (
-                  <TableRow key={index} sx={{ borderBottom: '1px solid #e0e0e0' }}>
+                  <TableRow
+                    key={index}
+                    sx={{ borderBottom: '1px solid #e0e0e0' }}
+                  >
                     <TableCell>{item.moduleName}</TableCell>
                     <TableCell sx={{ textAlign: 'right' }}>
                       <div style={{ marginRight: '25%' }}>
@@ -543,7 +655,9 @@ const blackBorderSx = {
                           checked={toggles[item.moduleName] ?? false}
                           onChange={() => handleToggleChange(item)}
                           color="primary"
-                          inputProps={{ 'aria-label': 'Enable/Disable Control Sharing' }}
+                          inputProps={{
+                            'aria-label': 'Enable/Disable Control Sharing'
+                          }}
                         />
                       </div>
                     </TableCell>
@@ -556,23 +670,30 @@ const blackBorderSx = {
 
         {/* Actions */}
         <DialogActions sx={{ justifyContent: 'flex-end', px: 2, pb: 2 }}>
-          <Button variant="outlined" color="primary" sx={{
-            borderRadius: '5px', '&:focus': {
-              outline: '2px solid #1976d2',
-              outlineOffset: '2px'
-            },
-            '&:focus-visible': {
-              outline: '2px solid #1976d2',
-              outlineOffset: '2px'
-            }
-          }} onClick={handleCloseCDS}>
+          <Button
+            variant="outlined"
+            color="primary"
+            sx={{
+              borderRadius: '5px',
+              '&:focus': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              },
+              '&:focus-visible': {
+                outline: '2px solid #1976d2',
+                outlineOffset: '2px'
+              }
+            }}
+            onClick={handleCloseCDS}
+          >
             Cancel
           </Button>
           <Button
             variant="contained"
             color="primary"
             sx={{
-              borderRadius: '5px', '&:focus': {
+              borderRadius: '5px',
+              '&:focus': {
                 outline: '2px solid #1976d2',
                 outlineOffset: '2px'
               },
@@ -593,8 +714,6 @@ const blackBorderSx = {
         </DialogActions>
       </Dialog>
 
-
-
       {/* Snackbar for Success Message of Create User */}
       <Snackbar
         open={openSnackbar}
@@ -602,7 +721,11 @@ const blackBorderSx = {
         onClose={() => setOpenSnackbar(false)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
-        <Alert onClose={() => setOpenSnackbar(false)} severity={snackbarType} variant="filled">
+        <Alert
+          onClose={() => setOpenSnackbar(false)}
+          severity={snackbarType}
+          variant="filled"
+        >
           {snackbarmsg}
         </Alert>
       </Snackbar>
