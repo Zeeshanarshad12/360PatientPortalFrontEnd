@@ -174,7 +174,10 @@ const DocumentDetails = ({ XmlToJson }) => {
                     ? 'Female'
                     : XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
                         ?.patient?.administrativeGenderCode?.code === 'UNK'
-                    ? 'Unknown'
+                    ? 'UNK'
+                    : XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
+                        ?.patient?.administrativeGenderCode?.code === 'UN'
+                    ? 'UNK'
                     : ''
                 )}
                 {renderRowDiv(

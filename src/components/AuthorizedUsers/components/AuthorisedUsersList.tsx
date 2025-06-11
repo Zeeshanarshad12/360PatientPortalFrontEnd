@@ -96,7 +96,7 @@ function AuthorisedUsersList() {
         renderCell: (params) => {
           const rowid = params.row.rowid; // Use rowid from the row data
           const isActive = toggleStates[rowid]; // Fetch the correct state for this row
-          const isDisabled = localStorage.getItem("UserAccessType") !== "Self"; // condition for disabling switch
+          const isDisabled = false; //localStorage.getItem("UserAccessType") !== "Self"; // condition for disabling switch
 
           return (
             <Switch
@@ -149,8 +149,6 @@ function AuthorisedUsersList() {
       AccessPHI: item.vdtAccess,
     })) : []
   };
-
-
 
   return (
     <>

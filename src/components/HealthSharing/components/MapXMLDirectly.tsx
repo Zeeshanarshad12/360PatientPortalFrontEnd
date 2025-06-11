@@ -251,6 +251,7 @@ const MapXMLDirectly = ({ XmlToJson }) => {
   const components =
     XmlToJson?.ClinicalDocument?.component?.structuredBody?.component || [];
 
+console.log("XmlToJson?.ClinicalDocument",XmlToJson?.ClinicalDocument);
 
     
 
@@ -389,7 +390,10 @@ const MapXMLDirectly = ({ XmlToJson }) => {
                   ? 'Female'
                   : XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
                       ?.patient?.administrativeGenderCode?.code === 'UNK'
-                  ? 'Unknown'
+                  ? 'UNK'
+                  : XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
+                      ?.patient?.administrativeGenderCode?.code === 'UN'
+                  ? 'UNK'
                   : ''}
               </Typography>
             </Box>

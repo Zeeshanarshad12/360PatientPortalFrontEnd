@@ -27,7 +27,6 @@ import { parseString } from 'xml2js';
 import MapXMLDirectly from './MapXMLDirectly';
 import { isNull } from '@/utils/functions';
 
-
 function EncounterDetailsReport() {
 
   const { EncounterId, ShareDocumentData } = useSelector((state) => state.patientprofileslice);
@@ -45,11 +44,12 @@ function EncounterDetailsReport() {
   //Save ActivityLog Obj 
   const Logobj = {
     PatientId: localStorage.getItem('patientID'),
-     Email: localStorage.getItem('Email'), //email
+     Email: localStorage.getItem('Email'),
     ActivityTypeId: '3'  
   };
+
   const Emailobj = {
-    PatientEmail: email,// localStorage.getItem('patientEmail'),
+    PatientEmail: email,
     EncounterId: EncounterId,
     message :  message,
     includeCCD : includeCCD
@@ -62,31 +62,8 @@ function EncounterDetailsReport() {
     setEmail('');
   }
   const handleClose = () => setOpen(false);
-  // const handleSendEmail  = () => {
-
-  //   setIsTouched(true);
-  //   if (message.trim() === '') {
-  //     return; // Don't proceed if the message is empty
-  //   }
-  //   dispatch(ShareDocument(Emailobj));
-  //  if(ShareDocumentData==true){
-  //   handleClose();
-  //   setOpenSnackbar(true);
-  //   const LogEmailobj = {
-  //     PatientId: localStorage.getItem('patientID'),
-  //     Email : localStorage.getItem('Email'), 
-  //     ActivityTypeId: '4'
-  //   };
-  //   dispatch(InsertActivityLog(LogEmailobj));
-
-  // }
-
-  // }
-
-
 
   const handleSendEmail = () => {
-    debugger;
     setIsTouched(true);
 
     const isEmailValid = email.trim() !== '' && /\S+@\S+\.\S+/.test(email);
@@ -105,30 +82,12 @@ function EncounterDetailsReport() {
       setOpenSnackbar(true);
       const LogEmailobj = {
         PatientId: localStorage.getItem('patientID'),
-        Email: localStorage.getItem('Email'),
+        Email: (email+'|'+localStorage.getItem('Email')), // localStorage.getItem('Email'),
         ActivityTypeId: '4'
       };
       dispatch(InsertActivityLog(LogEmailobj));
     }
   };
-
-
-  useEffect(() => {
-    // Check if ShareDocumentData is true
-    if (ShareDocumentData === true) {
-      // Execute your logic when ShareDocumentData is updated
-      handleClose();
-      // setOpenSnackbar(true);
-
-      const LogEmailobj = {
-        PatientId: localStorage.getItem('patientID'),
-        Email: email, // localStorage.getItem('Email'),
-        ActivityTypeId: '4',
-      };
-      dispatch(InsertActivityLog(LogEmailobj));
-    }
-  }, [ShareDocumentData, dispatch]); // Dependency on ShareDocumentData so the effect runs when it changes
-
 
   const { PatientCCDADetail } = useSelector(
     (state) => state.patientprofileslice
@@ -137,19 +96,146 @@ function EncounterDetailsReport() {
     (state) => state.patientprofileslice
   );
 
-  const handleDownload = () => {
-    const blob = new Blob([PatientCCDADetail], {
-      type: 'text/html'
-    });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `patient_data.${'html'}`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+const handleDownload = () => {
+  // Extract and format section titles from the PatientCCDADetail
+  const extractAndFormatSections = (htmlString) => {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlString, 'text/html');
+    const sections = doc.querySelectorAll('component > section');
 
-    dispatch(InsertActivityLog(Logobj));
+    let formatted = '';
+
+    sections.forEach((section, index) => {
+      const title = section.querySelector('title')?.textContent?.trim() || `Section ${index + 1}`;
+      const content = section.querySelector('text')?.innerHTML?.trim() || 'No information available';
+
+      formatted += `
+        <div class="section">
+          <h3 class="section-title">${title}</h3>
+          <div>${content}</div>
+        </div>
+      `;
+    });
+
+    return formatted || htmlString; // fallback to raw HTML if no match
   };
+
+  const formattedSections = extractAndFormatSections(PatientCCDADetail);
+
+  const styledHtml = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Patient Clinical Document</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #333;
+    background-color: #f8f9fa;
+    padding: 20px;
+    font-size: 14px;
+  }
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+  .header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+  }
+  .header h1 {
+    font-size: 18px;
+    margin-bottom: 10px;
+    font-weight: 500;
+  }
+  .header p {
+    font-size: 14px;
+    opacity: 0.9;
+  }
+  .content {
+    padding: 30px;
+  }
+  .section {
+    margin-bottom: 30px;
+    border-left: 4px solid #667eea;
+    padding-left: 20px;
+  }
+  .section-title {
+    color: #667eea;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 10px;
+    border: 1px solid #dee2e6;
+    text-align: left;
+  }
+  th {
+    background-color: #f1f3f5;
+    color: #495057;
+    font-size: 14px;
+  }
+  .timestamp {
+    color: #6c757d;
+    font-size: 14px;
+    text-align: center;
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #e9ecef;
+  }
+  @media print {
+    body { background: white; padding: 0; }
+    .container { box-shadow: none; max-width: none; }
+    .header { background: #667eea !important; -webkit-print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Clinical Document</h1>
+      <h1>Continuity of Care Document (CCD)</h1>
+    </div>
+    <div class="content">
+      ${formattedSections}
+    </div>
+    <div class="timestamp">
+      Generated on: ${new Date().toLocaleString()}
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const blob = new Blob([styledHtml], { type: 'text/html' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = `patient_clinical_document_${new Date().toISOString().split('T')[0]}.html`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  dispatch(InsertActivityLog(Logobj));
+};
+
 
   const handleDownloadxml = () => {
     const blob = new Blob([PatientCCDADetailXMLF], {
