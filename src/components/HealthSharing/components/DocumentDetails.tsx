@@ -6,7 +6,8 @@ import {
   TableCell,
   TableRow,
   Collapse,
-  Paper
+  Paper,
+  TableHead
 } from '@mui/material';
 
 import { useSelector } from 'react-redux';
@@ -17,6 +18,7 @@ import {
 } from '@/utils/functions';
 
 const DocumentDetails = ({ XmlToJson }) => {
+    
   const [showDetails, setShowDetails] = useState(false);
 
   const toggleDetails = () => {
@@ -107,61 +109,23 @@ const DocumentDetails = ({ XmlToJson }) => {
     ? [performers]
     : [];
 
-  const renderTableRow = (
-    label: string,
-    value: React.ReactNode,
-    label2?: string,
-    value2?: React.ReactNode
-  ) => (
-    <TableRow sx={{ borderBottom: '1px solid rgba(224, 224, 224, 1)' }}>
-      <TableCell
-        align="right"
-        sx={{
-          color: 'black',
-          fontWeight: 'bold',
-          width: 180,
-          whiteSpace: 'normal',
-          wordBreak: 'break-word'
-        }}
-      >
-        {label}:
-      </TableCell>
-      <TableCell
-        sx={{
-          whiteSpace: 'normal',
-          wordBreak: 'break-word'
-        }}
-      >
-        {value}
-      </TableCell>
-      {label2 && (
-        <TableCell
-          align="right"
-          sx={{
-            color: 'black',
-            fontWeight: 'bold',
-            width: 100,
-            whiteSpace: 'normal',
-            wordBreak: 'break-word'
-          }}
-        >
-          {label2}:
-        </TableCell>
-      )}
-      {value2 && (
-        <TableCell
-          sx={{
-            whiteSpace: 'normal',
-            wordBreak: 'break-word',
-            pr: 5,
-            width: 400
-          }}
-        >
-          {value2}
-        </TableCell>
-      )}
-    </TableRow>
-  );
+  const renderRowDiv = (
+  label: string,
+  value: React.ReactNode,
+  label2?: string,
+  value2?: React.ReactNode
+) => (
+  <div style={{ display: 'flex', flexWrap: 'wrap', padding: '8px 0', borderBottom: '1px solid #e0e0e0' }}>
+    <div style={{ flex: '0 0 180px', fontWeight: 'bold', color: 'black' }}>{label}:</div>
+    <div style={{ flex: '1 1 300px' }}>{value}</div>
+    {label2 && (
+      <>
+        <div style={{ flex: '0 0 100px', fontWeight: 'bold', color: 'black' }}>{label2}:</div>
+        <div style={{ flex: '1 1 400px' }}>{value2}</div>
+      </>
+    )}
+  </div>
+);
 
   return (
     <div
@@ -192,16 +156,10 @@ const DocumentDetails = ({ XmlToJson }) => {
           }}
         >
           {!isNull(XmlToJson) && (
-            <Table
-              sx={{
-                tableLayout: 'fixed',
-                width: '100%',
-                minWidth: 700,
-                border: '1px solid rgba(224, 224, 224, 1)' // Table border
-              }}
-            >
-              <TableBody>
-                {renderTableRow(
+          
+
+              <div>
+                {renderRowDiv(
                   'Patient',
                   getFullName(
                     XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
@@ -219,7 +177,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                     ? 'Unknown'
                     : ''
                 )}
-                {renderTableRow(
+                {renderRowDiv(
                   'D.O.B',
                   formatDateCCDADate(
                     XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
@@ -229,7 +187,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                   XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
                     ?.patient?.ethnicGroupCode?.displayName
                 )}
-                {renderTableRow(
+                {renderRowDiv(
                   'Race',
                   Array.isArray(
                     XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
@@ -260,7 +218,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                           ?.id?.root || ''
                       }`.trim()
                 )}
-                {renderTableRow(
+                {renderRowDiv(
                   'Contact info',
                   <>
                     Primary Home:
@@ -275,16 +233,16 @@ const DocumentDetails = ({ XmlToJson }) => {
                         XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
                           ?.telecom;
                       if (Array.isArray(telecom)) {
-                        const mcPhone = telecom.find((t) => t?.$?.use === 'MC');
-                        return mcPhone?.$?.value || '';
+                        const mcPhone = telecom.find((t) => t?.use === 'MC');
+                        return mcPhone?.value || '';
                       } else {
-                        return telecom?.$?.value || '';
+                        return telecom?.value || '';
                       }
                     })()}
                   </>
                 )}
 
-                {renderTableRow(
+                {renderRowDiv(
                   'Document Id',
                   <>
                     {XmlToJson?.ClinicalDocument?.id?.extension}{' '}
@@ -292,13 +250,13 @@ const DocumentDetails = ({ XmlToJson }) => {
                   </>
                 )}
 
-                {renderTableRow(
+                {renderRowDiv(
                   'Document Created',
                   formatDateCCDADate(
                     XmlToJson?.ClinicalDocument?.effectiveTime?.value
                   )
                 )}
-                {renderTableRow(
+                {renderRowDiv(
                   'Care provision',
                   <>
                     {
@@ -317,7 +275,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                     )}
                   </>
                 )}
-                {renderTableRow(
+                {renderRowDiv(
                   'Performer (PCP)',
                   (() => {
                     if (performerList.length === 0) return null;
@@ -345,7 +303,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                 )}
 
                 {performerList.length > 1 &&
-                  renderTableRow(
+                  renderRowDiv(
                     'Performer',
                     (() => {
                       return (
@@ -374,7 +332,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                     })()
                   )}
 
-                {renderTableRow(
+                {renderRowDiv(
                   'Author',
                   <>
                     {!isNull(
@@ -401,7 +359,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                   </>
                 )}
 
-                {renderTableRow(
+                {renderRowDiv(
                   'Author Contact',
                   <>
                     {formatAddresswithCCDA(
@@ -415,7 +373,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                   </>
                 )}
 
-                {renderTableRow(
+                {renderRowDiv(
                   'Encounter Id',
                   <>
                     {
@@ -431,7 +389,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                   XmlToJson?.ClinicalDocument?.documentationOf?.serviceEvent
                     ?.code?.displayName
                 )}
-                {renderTableRow(
+                {renderRowDiv(
                   'Encounter Date',
                   <>
                     from{' '}
@@ -447,7 +405,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                   </>
                 )}
 
-                {renderTableRow(
+                {renderRowDiv(
                   'Encounter Location',
                   <>
                     id:{' '}
@@ -458,7 +416,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                   </>
                 )}
 
-                {renderTableRow(
+                {renderRowDiv(
                   'Responsible party',
                   <>
                     {
@@ -478,7 +436,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                     }
                   </>
                 )}
-                {XmlToJson?.ClinicalDocument?.participant?.map(
+                { XmlToJson?.ClinicalDocument?.participant?.length > 0 && XmlToJson?.ClinicalDocument?.participant?.map(
                   (person: any, index: number) => {
                     const name =
                       person?.associatedEntity?.associatedPerson?.name;
@@ -489,7 +447,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                         ''
                       );
 
-                    return renderTableRow(
+                    return renderRowDiv(
                       'Personal relationship',
                       `${name?.prefix || ''} ${name?.given || ''} ${
                         name?.family || ''
@@ -509,7 +467,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                   }
                 )}
 
-                {renderTableRow(
+                {renderRowDiv(
                   'Entered By',
                   <>
                     {
@@ -535,7 +493,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                   </>
                 )}
 
-                {renderTableRow(
+                {renderRowDiv(
                   'Signed',
                   <>
                     {
@@ -565,7 +523,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                   </>
                 )}
 
-                {XmlToJson?.ClinicalDocument?.informant?.map(
+                { XmlToJson?.ClinicalDocument?.informant?.length > 0 && XmlToJson?.ClinicalDocument?.informant?.map(
                   (informant, index) => {
                     let name = '';
                     let address = '';
@@ -603,9 +561,9 @@ const DocumentDetails = ({ XmlToJson }) => {
 
                     return (
                       <React.Fragment key={index}>
-                        {renderTableRow('Informant', name)}
+                        {renderRowDiv('Informant', name)}
                         {(address || telecom) &&
-                          renderTableRow(
+                          renderRowDiv(
                             'Contact Info',
                             <>
                               {address}
@@ -622,9 +580,13 @@ const DocumentDetails = ({ XmlToJson }) => {
                   }
                 )}
 
-                {renderTableRow(
+                {renderRowDiv(
                   'Information recipient',
                   <>
+                     {
+                      XmlToJson?.ClinicalDocument?.informationRecipient
+                        ?.intendedRecipient?.informationRecipient?.name?.prefix
+                    }{' '}
                     {
                       XmlToJson?.ClinicalDocument?.informationRecipient
                         ?.intendedRecipient?.informationRecipient?.name?.given
@@ -636,10 +598,13 @@ const DocumentDetails = ({ XmlToJson }) => {
                   </>
                 )}
 
-                {renderTableRow(
+                {renderRowDiv(
                   'Legal authenticator',
                   <>
-                    {'Dr'}{' '}
+                     {
+                      XmlToJson?.ClinicalDocument?.legalAuthenticator
+                        ?.assignedEntity?.assignedPerson?.name.prefix
+                    }{' '}
                     {
                       XmlToJson?.ClinicalDocument?.legalAuthenticator
                         ?.assignedEntity?.assignedPerson?.name.given
@@ -668,7 +633,7 @@ const DocumentDetails = ({ XmlToJson }) => {
                   </>
                 )}
 
-                {renderTableRow(
+                {renderRowDiv(
                   'Document maintained by',
                   <>
                     {
@@ -690,8 +655,8 @@ const DocumentDetails = ({ XmlToJson }) => {
                     }
                   </>
                 )}
-              </TableBody>
-            </Table>
+              </div>
+           
           )}
         </Paper>
       </Collapse>

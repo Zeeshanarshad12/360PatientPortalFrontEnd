@@ -66,6 +66,15 @@ const GetGeneralLookup = (data) =>
           feature: featureConstants.static
         }
       );
+      const GetServerTime = (data,flag) =>
+        get(
+          `${SERVICE_URLSV2.GetServerTime}`,
+          {},
+          {
+            feature: featureConstants.static,
+            ApiVersion2Req: flag
+          }
+        );
       const GetPatientCCDAActivityLog = (data,flag) =>
     
         get(
@@ -211,6 +220,7 @@ const apiServicesV2 = {
   GetPatientEncounterDetails,
   GetPatientCCDADetail,
   GetPatientCCDADetailCCDF,
+  GetServerTime,
   GetPatientCCDAActivityLog,
   InsertActivityLog,
   CreateAuthorizedUser,

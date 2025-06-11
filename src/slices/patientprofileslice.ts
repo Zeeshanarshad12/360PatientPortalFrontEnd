@@ -36,6 +36,7 @@ const initialState = {
   GetTokenLoader: false,
   GetSharingModulesDataList: null,
   GetSharingModulesDataLoader: false,  
+  getServerTimeData:null
 
 };
 
@@ -154,6 +155,22 @@ export const InsertActivityLog: any = createAsyncThunk(
   'InsertActivityLog',
   async (data, thunkAPI) => {
     const res = await apiServicesV2.InsertActivityLog(data, 'ApiVersion2Req'); 
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data.result;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+);
+export const GetServerTime: any = createAsyncThunk(
+  'GetServerTime',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.GetServerTime(data); 
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data.result;
@@ -466,6 +483,17 @@ const patientProfileSlice = createSlice({
     },
     [GetPatientAuthorizedUser.rejected]: (state: any) => {
       state.GetPatientAuthorizedUserLoader = false;
+    },
+
+    // GetServerTime Request Handling
+    [GetServerTime.pending]: (state: any) => {
+      state.getServerTimeData = null;
+    },
+    [GetServerTime.fulfilled]: (state: any, { payload }: any) => {
+      state.getServerTimeData = payload;
+    },
+    [GetServerTime.rejected]: (state: any) => {
+      state.getServerTimeData = null;
     },
     
     [GetPatientUserRequestByCode.pending]: (state: any) => {

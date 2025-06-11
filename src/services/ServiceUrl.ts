@@ -17,5 +17,6 @@ export const SERVICE_URLSV2 = {
   AddPatientUser: 'patientuser/addpatientuser',
   GetToken: 'patientuser/gettoken',
   GetSharingModulesData : 'patientportal/getsharingmodulesdata',
-  UpdateSharingModulesData : 'patientportal/updatesharingmodulesdata'
+  UpdateSharingModulesData : 'patientportal/updatesharingmodulesdata',
+  GetServerTime:'dashboard/getservertime'
 };

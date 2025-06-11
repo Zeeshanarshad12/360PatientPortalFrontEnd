@@ -14,14 +14,27 @@ import {
 } from '@mui/material';
 import { useSelector } from 'react-redux';
 import DocumentDetails from './DocumentDetails';
-import { isNull } from '@/utils/functions';
+import { formatDateCCDADate, isNull } from '@/utils/functions';
 import moment from 'moment';
 
+
 const extractNodeText = (node: any): string => {
-  if (typeof node === 'string') return node;
-  if (typeof node._ === 'string') return node._;
-  if (node.content && typeof node.content._ === 'string') return node.content._;
-  return '';
+  let value = '';
+
+  if (typeof node === 'string') {
+    value = node;
+  } else if (typeof node._ === 'string') {
+    value = node._;
+  } else if (node.content && typeof node.content._ === 'string') {
+    value = node.content._;
+  }
+
+  // Check if value is a date in format YYYYMMDD (like "20150621")
+  if (/^\d{8}$/.test(value)) {
+    return formatDateCCDADate(value);
+  }
+
+  return value;
 };
 
 const extractFromNestedContent = (contentObj: any): string => {
@@ -237,6 +250,9 @@ const renderCcdaContentList = (node: any): React.ReactNode => {
 const MapXMLDirectly = ({ XmlToJson }) => {
   const components =
     XmlToJson?.ClinicalDocument?.component?.structuredBody?.component || [];
+
+
+    
 
   const getFullName = (nameData: any): string => {
     if (!nameData) return '';
@@ -576,9 +592,9 @@ const MapXMLDirectly = ({ XmlToJson }) => {
         if (typeof text === 'string') {
           return (
             <Box key={idx} mb={4}>
-              <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+               <h3 style={{ marginBottom: 2 }}>
                 {section.title}
-              </Typography>
+              </h3>
               <Typography
                 variant="body1"
                 sx={{
@@ -597,9 +613,9 @@ const MapXMLDirectly = ({ XmlToJson }) => {
           const extractedText = extractFromNestedContent(text.content);
           return (
             <Box key={idx} mb={4}>
-              <Typography variant="h6" gutterBottom sx={{ mb: 2 }}>
+              <h3 style={{ marginBottom: 2 }}>
                 {section.title}
-              </Typography>
+              </h3>
               <Typography
                 variant="body1"
                 sx={{
@@ -617,9 +633,9 @@ const MapXMLDirectly = ({ XmlToJson }) => {
         if (text?.content || text?._ || text?.list || text?.paragraph) {
           return (
             <Box key={idx} mb={4}>
-              <Typography variant="h6" gutterBottom>
+              <h3 style={{ marginBottom: 2 }}>
                 {section.title}
-              </Typography>
+              </h3>
               {renderCcdaContentList(text)}
             </Box>
           );

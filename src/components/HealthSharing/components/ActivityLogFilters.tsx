@@ -11,13 +11,15 @@ import {
 } from '@mui/material';
 import { useActivityLoadState } from '@/components/HealthSharing/contexts/activityLoadStates';
 import { useDispatch, useSelector } from "@/store/index";
-import { GetPatientCCDAActivityLog } from '@/slices/patientprofileslice';
-import moment from 'moment';
+import { GetPatientCCDAActivityLog, GetServerTime } from '@/slices/patientprofileslice';
+import { isNull } from '@/utils/functions';
+import moment from 'moment-timezone';
+
 
 function ActivityLogFilter() {
   const dispatch = useDispatch();
   const { isActivityLoad, setIsActivityLoad } = useActivityLoadState();
-  const { PatientCCDAActivityLog } = useSelector((state) => state.patientprofileslice);
+  const { PatientCCDAActivityLog , getServerTimeData } = useSelector((state) => state.patientprofileslice);
 
 
   const activityOptions = PatientCCDAActivityLog?.result.item1;
@@ -56,6 +58,21 @@ function ActivityLogFilter() {
       setIsActivityLoad(true);
     }
   }, [dispatch]);
+
+    useEffect(() => {
+    // Call it immediately
+    dispatch(GetServerTime());
+
+    // Set up the interval
+    const intervalId = setInterval(() => {
+      dispatch(GetServerTime());
+    }, 5000); // 5000ms = 5 seconds
+
+    // Clear the interval on unmount
+    return () => clearInterval(intervalId);
+  }, [dispatch]);
+
+  
   return (
     <>
       <Card sx={{ marginY: 2 }}>
@@ -119,6 +136,23 @@ function ActivityLogFilter() {
                 Get Report
               </Button>
             </Grid>
+            <Grid item xs={12} sm={6} md={4}>
+              <Typography variant="subtitle2"><span style={{fontWeight:'bold'}}>Server Time Stamp :</span> 
+              { !isNull(getServerTimeData?.serverTimeStamp)
+               &&
+                moment.parseZone(getServerTimeData?.serverTimeStamp).format('dddd, MMMM Do YYYY, h:mm:ss a')
+              }
+                
+                </Typography>
+              <Typography variant="subtitle2"> <span style={{fontWeight:'bold'}}>UTC Time Stamp :</span> 
+              { !isNull(getServerTimeData?.utcTimeStamp) && 
+              moment.parseZone(getServerTimeData?.utcTimeStamp).format('dddd, MMMM Do YYYY, h:mm:ss a z')
+           
+              }
+              </Typography>
+              <Typography variant="subtitle2"> <span style={{fontWeight:'bold'}}>Display Name :</span> {getServerTimeData?.displayName}</Typography>
+            </Grid>              
+
           </Grid>
         </CardContent>
       </Card>
