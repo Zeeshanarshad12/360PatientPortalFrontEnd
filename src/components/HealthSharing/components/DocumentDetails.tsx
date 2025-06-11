@@ -156,8 +156,6 @@ const DocumentDetails = ({ XmlToJson }) => {
           }}
         >
           {!isNull(XmlToJson) && (
-          
-
               <div>
                 {renderRowDiv(
                   'Patient',

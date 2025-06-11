@@ -25,7 +25,7 @@ import { useEffect } from 'react';
 import { useAriaHiddenFixOnDialog } from '@/hooks/useAriaHiddenFixOnDialog';
 import { parseString } from 'xml2js';
 import MapXMLDirectly from './MapXMLDirectly';
-import { isNull } from '@/utils/functions';
+import { formatAddresswithCCDA, formatDateCCDADate, isNull } from '@/utils/functions';
 
 function EncounterDetailsReport() {
 
@@ -97,6 +97,293 @@ function EncounterDetailsReport() {
   );
 
 const handleDownload = () => {
+  // Function to generate DocumentDetails HTML
+  const generateDocumentDetailsHTML = (parseJson) => {
+    const getFullName = (nameData) => {
+      if (!nameData) return '';
+
+      const formatGiven = (given) => {
+        if (Array.isArray(given)) {
+          return given
+            .map((g) => {
+              if (typeof g === 'string') return g;
+              if (typeof g === 'object' && g._ && !g.$?.qualifier) return g._;
+              return '';
+            })
+            .filter(Boolean)
+            .join(' ');
+        }
+
+        if (typeof given === 'string') {
+          return given;
+        }
+
+        if (typeof given === 'object' && given._ && !given.$?.qualifier) {
+          return given._;
+        }
+
+        return '';
+      };
+
+      if (Array.isArray(nameData) && nameData.length > 0) {
+        const first = nameData[0];
+        const given = formatGiven(first?.given[0]);
+        const family = first?.family || '';
+        return `${given} ${family}`.trim();
+      }
+
+      if (typeof nameData === 'object') {
+        const suffix = nameData.suffix || '';
+
+        if (!('family' in nameData)) {
+          const givenArray = Array.isArray(nameData.given)
+            ? nameData.given
+                .map((item) => {
+                  if (typeof item === 'string') return item;
+                  if (typeof item === 'object' && item._) return item._;
+                  return '';
+                })
+                .filter(Boolean)
+            : [nameData.given];
+
+          const fullGiven = givenArray.join(' ');
+          return `${fullGiven}${suffix ? ' ' + suffix : ''}`.trim();
+        } else {
+          const given = formatGiven(
+            Array.isArray(nameData.given) && nameData.given.length > 0
+              ? nameData.given[0]
+              : nameData.given
+          );
+          const family = nameData.family || '';
+          const fullName = `${given} ${family}${
+            suffix ? ', ' + suffix : ''
+          }`.trim();
+
+          if (!given && !family && !suffix) {
+            return ',';
+          }
+
+          return fullName;
+        }
+      }
+
+      return '';
+    };
+
+    const performers = parseJson?.ClinicalDocument?.documentationOf?.serviceEvent?.performer;
+    const performerList = Array.isArray(performers) ? performers : performers ? [performers] : [];
+
+    const renderRowHTML = (label, value, label2 = null, value2 = null) => {
+      return `
+        <div style="display: flex; flex-wrap: wrap; padding: 8px 0; border-bottom: 1px solid #e0e0e0;">
+          <div style="flex: 0 0 180px; font-weight: bold; color: black;">${label}:</div>
+          <div style="flex: 1 1 300px;">${value || ''}</div>
+          ${label2 ? `
+            <div style="flex: 0 0 100px; font-weight: bold; color: black;">${label2}:</div>
+            <div style="flex: 1 1 400px;">${value2 || ''}</div>
+          ` : ''}
+        </div>
+      `;
+    };
+
+    // Generate all the rows
+    let documentDetailsHTML = '';
+
+    if (!isNull(parseJson)) {
+      // Patient and Sex
+      const patientName = getFullName(parseJson?.ClinicalDocument?.recordTarget?.patientRole?.patient?.name);
+      const genderCode = parseJson?.ClinicalDocument?.recordTarget?.patientRole?.patient?.administrativeGenderCode?.code;
+      const sex = genderCode === 'M' ? 'Male' : genderCode === 'F' ? 'Female' : genderCode === 'UNK' || genderCode === 'UN' ? 'UNK' : '';
+      
+      documentDetailsHTML += renderRowHTML('Patient', patientName, 'Sex', sex);
+
+      // D.O.B and Ethnicity
+      const dob = formatDateCCDADate(parseJson?.ClinicalDocument?.recordTarget?.patientRole?.patient?.birthTime?.value);
+      const ethnicity = parseJson?.ClinicalDocument?.recordTarget?.patientRole?.patient?.ethnicGroupCode?.displayName;
+      
+      documentDetailsHTML += renderRowHTML('D.O.B', dob, 'Ethnicity', ethnicity);
+
+      // Race and Patient IDs
+      const race = Array.isArray(parseJson?.ClinicalDocument?.recordTarget?.patientRole?.patient?.raceCode)
+        ? parseJson.ClinicalDocument.recordTarget.patientRole.patient.raceCode[0]?.displayName || ''
+        : parseJson?.ClinicalDocument?.recordTarget?.patientRole?.patient?.raceCode?.displayName || '';
+
+      const patientIds = Array.isArray(parseJson?.ClinicalDocument?.recordTarget?.patientRole?.id)
+        ? parseJson.ClinicalDocument.recordTarget.patientRole.id
+            .map((item) => {
+              const ext = item?.$?.extension || item?.extension;
+              const root = item?.$?.root || item?.root;
+              return `${ext} ${root}`.trim();
+            })
+            .filter((id) => id !== '')
+            .join('  ')
+        : `${parseJson?.ClinicalDocument?.recordTarget?.patientRole?.id?.extension || ''} ${parseJson?.ClinicalDocument?.recordTarget?.patientRole?.id?.root || ''}`.trim();
+
+      documentDetailsHTML += renderRowHTML('Race', race, 'Patient IDs', patientIds);
+
+      // Contact info
+      const telecom = parseJson?.ClinicalDocument?.recordTarget?.patientRole?.telecom;
+      let phoneNumber = '';
+      if (Array.isArray(telecom)) {
+        const mcPhone = telecom.find((t) => t?.use === 'MC');
+        phoneNumber = mcPhone?.value || '';
+      } else {
+        phoneNumber = telecom?.value || '';
+      }
+
+      const contactInfo = `Primary Home:<br/>${formatAddresswithCCDA(parseJson?.ClinicalDocument?.recordTarget?.patientRole?.addr)}<br/>${phoneNumber}`;
+      
+      documentDetailsHTML += renderRowHTML('Contact info', contactInfo);
+
+      // Document Id
+      const documentId = `${parseJson?.ClinicalDocument?.id?.extension || ''} ${parseJson?.ClinicalDocument?.id?.root || ''}`;
+      documentDetailsHTML += renderRowHTML('Document Id', documentId);
+
+      // Document Created
+      const documentCreated = formatDateCCDADate(parseJson?.ClinicalDocument?.effectiveTime?.value);
+      documentDetailsHTML += renderRowHTML('Document Created', documentCreated);
+
+      // Care provision
+      const careProvision = `${parseJson?.ClinicalDocument?.documentationOf?.serviceEvent?.code?.displayName || ''} from ${formatDateCCDADate(parseJson?.ClinicalDocument?.documentationOf?.serviceEvent?.effectiveTime?.low?.value)} to ${formatDateCCDADate(parseJson?.ClinicalDocument?.documentationOf?.serviceEvent?.effectiveTime?.high?.value)}`;
+      documentDetailsHTML += renderRowHTML('Care provision', careProvision);
+
+      // Performer (PCP)
+      if (performerList.length > 0) {
+        const performer = performerList[0];
+        const assignedPerson = performer?.assignedEntity?.assignedPerson?.name;
+        const organizationName = performer?.assignedEntity?.representedOrganization?.name;
+
+        const prefix = typeof assignedPerson?.prefix === 'object' ? assignedPerson?.prefix?._ : assignedPerson?.prefix || '';
+        const given = assignedPerson?.given || '';
+        const family = assignedPerson?.family || '';
+
+        const performerPCP = `${prefix && `${prefix} `}${given} ${family}${organizationName ? ` of ${organizationName}` : ''}`.trim();
+        documentDetailsHTML += renderRowHTML('Performer (PCP)', performerPCP);
+      }
+
+      // Additional Performers
+      if (performerList.length > 1) {
+        const additionalPerformers = performerList.slice(1).map((performer) => {
+          const assignedPerson = performer?.assignedEntity?.assignedPerson?.name;
+          const prefix = typeof assignedPerson?.prefix === 'object' ? assignedPerson?.prefix?._ : assignedPerson?.prefix || '';
+          const given = assignedPerson?.given || '';
+          const family = assignedPerson?.family || '';
+
+          if (!given && !family) return '';
+          return `${prefix && `${prefix} `}${given} ${family}`.trim();
+        }).filter(Boolean).join('<br/>');
+
+        if (additionalPerformers) {
+          documentDetailsHTML += renderRowHTML('Performer', additionalPerformers);
+        }
+      }
+
+      // Author
+      const authorDevice = parseJson?.ClinicalDocument?.author?.assignedAuthor?.assignedAuthoringDevice?.softwareName;
+      const authorPerson = `${parseJson?.ClinicalDocument?.author?.assignedAuthor?.assignedPerson?.name?.given || ''} ${parseJson?.ClinicalDocument?.author?.assignedAuthor?.assignedPerson?.name?.family || ''}`.trim();
+      const author = !isNull(authorDevice) ? authorDevice : authorPerson;
+      
+      documentDetailsHTML += renderRowHTML('Author', author);
+
+      // Author Contact
+      const authorContact = `${formatAddresswithCCDA(parseJson?.ClinicalDocument?.author?.assignedAuthor?.addr)}<br/>${parseJson?.ClinicalDocument?.author?.assignedAuthor?.telecom?.value || ''}`;
+      documentDetailsHTML += renderRowHTML('Author Contact', authorContact);
+
+      // Encounter Id and Encounter Type
+      const encounterId = `${parseJson?.ClinicalDocument?.componentOf?.encompassingEncounter?.id?.extension || ''} ${parseJson?.ClinicalDocument?.componentOf?.encompassingEncounter?.id?.root || ''}`.trim();
+      const encounterType = parseJson?.ClinicalDocument?.documentationOf?.serviceEvent?.code?.displayName;
+      
+      documentDetailsHTML += renderRowHTML('Encounter Id', encounterId, 'Encounter Type', encounterType);
+
+      // Encounter Date
+      const encounterDate = `from ${formatDateCCDADate(parseJson?.ClinicalDocument?.documentationOf?.serviceEvent?.effectiveTime?.low?.value)} to ${formatDateCCDADate(parseJson?.ClinicalDocument?.documentationOf?.serviceEvent?.effectiveTime?.high?.value)}`;
+      documentDetailsHTML += renderRowHTML('Encounter Date', encounterDate);
+
+      // Encounter Location
+      const encounterLocation = `id: ${parseJson?.ClinicalDocument?.componentOf?.encompassingEncounter?.id?.root || ''}`;
+      documentDetailsHTML += renderRowHTML('Encounter Location', encounterLocation);
+
+      // Responsible party
+      const responsibleParty = `${parseJson?.ClinicalDocument?.componentOf?.encompassingEncounter?.encounterParticipant?.assignedEntity?.assignedPerson?.name?.prefix || ''} ${parseJson?.ClinicalDocument?.componentOf?.encompassingEncounter?.encounterParticipant?.assignedEntity?.assignedPerson?.name?.given || ''} ${parseJson?.ClinicalDocument?.componentOf?.encompassingEncounter?.encounterParticipant?.assignedEntity?.assignedPerson?.name?.family || ''}`.trim();
+      documentDetailsHTML += renderRowHTML('Responsible party', responsibleParty);
+
+      // Personal relationships
+      if (parseJson?.ClinicalDocument?.participant?.length > 0) {
+        parseJson.ClinicalDocument.participant.forEach((person) => {
+          const name = person?.associatedEntity?.associatedPerson?.name;
+          const address = person?.associatedEntity?.addr;
+          const telecom = person?.associatedEntity?.telecom?.value?.replace('tel:', '');
+
+          const personName = `${name?.prefix || ''} ${name?.given || ''} ${name?.family || ''}`.trim();
+          const contactInfo = `Primary Home:<br/>${address?.streetAddressLine}<br/>${address?.city}, ${address?.state} ${address?.postalCode}, ${address?.country}<br/>Tel: ${telecom}`;
+
+          documentDetailsHTML += renderRowHTML('Personal relationship', personName, 'Contact info', contactInfo);
+        });
+      }
+
+      // Entered By
+      const enteredBy = `${parseJson?.ClinicalDocument?.dataEnterer?.assignedEntity?.assignedPerson?.name?.given || ''} ${parseJson?.ClinicalDocument?.dataEnterer?.assignedEntity?.assignedPerson?.name?.family || ''}`.trim();
+      const enteredByContact = `${formatAddresswithCCDA(parseJson?.ClinicalDocument?.dataEnterer?.assignedEntity?.addr)}<br/>${parseJson?.ClinicalDocument?.dataEnterer?.assignedEntity?.telecom?.value || ''}`;
+      
+      documentDetailsHTML += renderRowHTML('Entered By', enteredBy, 'Contact Info', enteredByContact);
+
+      // Signed
+      const signed = `${parseJson?.ClinicalDocument?.authenticator?.assignedEntity?.assignedPerson?.name?.prefix || ''} ${parseJson?.ClinicalDocument?.authenticator?.assignedEntity?.assignedPerson?.name?.given || ''} ${parseJson?.ClinicalDocument?.authenticator?.assignedEntity?.assignedPerson?.name?.family || ''}`.trim();
+      const signedContact = `${formatAddresswithCCDA(parseJson?.ClinicalDocument?.authenticator?.assignedEntity?.addr)}<br/>${parseJson?.ClinicalDocument?.authenticator?.assignedEntity?.telecom?.value || ''}`;
+      
+      documentDetailsHTML += renderRowHTML('Signed', signed, 'Contact Info', signedContact);
+
+      // Informants
+      if (parseJson?.ClinicalDocument?.informant?.length > 0) {
+        parseJson.ClinicalDocument.informant.forEach((informant) => {
+          let name = '';
+          let address = '';
+          let telecom = '';
+
+          if (informant.assignedEntity) {
+            const person = informant.assignedEntity.assignedPerson?.name;
+            const addr = informant.assignedEntity.addr;
+            const phone = informant.assignedEntity.telecom?.value;
+
+            name = [person?.given, person?.family].filter(Boolean).join(' ');
+            address = [addr?.streetAddressLine, addr?.city, addr?.state, addr?.postalCode, addr?.country].filter(Boolean).join(', ');
+            telecom = phone;
+          }
+
+          if (informant.relatedEntity) {
+            const person = informant.relatedEntity.relatedPerson?.name;
+            name = [person?.given, person?.family].filter(Boolean).join(' ');
+          }
+
+          documentDetailsHTML += renderRowHTML('Informant', name);
+
+          if (address || telecom) {
+            const contactInfo = `${address}${telecom ? `<br/>${telecom}` : ''}`;
+            documentDetailsHTML += renderRowHTML('Contact Info', contactInfo);
+          }
+        });
+      }
+
+      // Information recipient
+      const infoRecipient = `${parseJson?.ClinicalDocument?.informationRecipient?.intendedRecipient?.informationRecipient?.name?.prefix || ''} ${parseJson?.ClinicalDocument?.informationRecipient?.intendedRecipient?.informationRecipient?.name?.given || ''} ${parseJson?.ClinicalDocument?.informationRecipient?.intendedRecipient?.informationRecipient?.name?.family || ''}`.trim();
+      documentDetailsHTML += renderRowHTML('Information recipient', infoRecipient);
+
+      // Legal authenticator
+      const legalAuth = `${parseJson?.ClinicalDocument?.legalAuthenticator?.assignedEntity?.assignedPerson?.name?.prefix || ''} ${parseJson?.ClinicalDocument?.legalAuthenticator?.assignedEntity?.assignedPerson?.name?.given || ''} ${parseJson?.ClinicalDocument?.legalAuthenticator?.assignedEntity?.assignedPerson?.name?.family || ''} Signed At ${formatDateCCDADate(parseJson?.ClinicalDocument?.legalAuthenticator?.time?.value)}`.trim();
+      const legalAuthContact = `${formatAddresswithCCDA(parseJson?.ClinicalDocument?.legalAuthenticator?.assignedEntity?.addr)}<br/>${parseJson?.ClinicalDocument?.legalAuthenticator?.assignedEntity?.telecom?.value || ''}`;
+      
+      documentDetailsHTML += renderRowHTML('Legal authenticator', legalAuth, 'Contact info', legalAuthContact);
+
+      // Document maintained by
+      const maintainedBy = parseJson?.ClinicalDocument?.custodian?.assignedCustodian?.representedCustodianOrganization?.name || '';
+      const maintainedByContact = `Work Place:<br/>${formatAddresswithCCDA(parseJson?.ClinicalDocument?.custodian?.assignedCustodian?.representedCustodianOrganization?.addr)}<br/>${parseJson?.ClinicalDocument?.custodian?.assignedCustodian?.representedCustodianOrganization?.telecom?.value || ''}`;
+      
+      documentDetailsHTML += renderRowHTML('Document maintained by', maintainedBy, 'Contact info', maintainedByContact);
+    }
+
+    return documentDetailsHTML;
+  };
+
   // Extract and format section titles from the PatientCCDADetail
   const extractAndFormatSections = (htmlString) => {
     const parser = new DOMParser();
@@ -117,10 +404,13 @@ const handleDownload = () => {
       `;
     });
 
-    return formatted || htmlString; // fallback to raw HTML if no match
+    return formatted || htmlString;
   };
 
   const formattedSections = extractAndFormatSections(PatientCCDADetail);
+  
+  // Generate DocumentDetails HTML (assuming you have parseJson available)
+  const documentDetailsHTML = generateDocumentDetailsHTML(parseJson);
 
   const styledHtml = `
 <!DOCTYPE html>
@@ -178,6 +468,26 @@ const handleDownload = () => {
     text-transform: uppercase;
     letter-spacing: 1px;
   }
+  .document-details {
+    margin-bottom: 30px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .document-details-header {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .document-details-header h3 {
+    color: #667eea;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+  }
+  .document-details-content {
+    padding: 20px;
+  }
   table {
     width: 100%;
     border-collapse: collapse;
@@ -216,6 +526,14 @@ const handleDownload = () => {
       <h1>Continuity of Care Document (CCD)</h1>
     </div>
     <div class="content">
+      <div class="document-details">
+        <div class="document-details-header">
+          <h3>Document Details</h3>
+        </div>
+        <div class="document-details-content">
+          ${documentDetailsHTML}
+        </div>
+      </div>
       ${formattedSections}
     </div>
     <div class="timestamp">
@@ -232,7 +550,6 @@ const handleDownload = () => {
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-
   dispatch(InsertActivityLog(Logobj));
 };
 
