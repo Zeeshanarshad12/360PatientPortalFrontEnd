@@ -36,8 +36,9 @@ const initialState = {
   GetTokenLoader: false,
   GetSharingModulesDataList: null,
   GetSharingModulesDataLoader: false,  
-  getServerTimeData:null
-
+  getServerTimeData:null,
+  GetConsentFormDataList: null,
+  GetConsentFormDataLoader: false, 
 };
 
 export const ClearCahceNLogout: any = createAsyncThunk(
@@ -365,6 +366,43 @@ export const UpdateSharingModulesData: any = createAsyncThunk(
   }
 ) ;
 
+export const saveConsentForm : any = createAsyncThunk(
+  'saveConsentForm',
+  async (data, thunkAPI) => {
+
+    const res = await apiServicesV2.saveConsentForm(data, 'ApiVersion2Req');
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+) ;
+
+export const GetConsentFormData: any = createAsyncThunk(
+  'GetConsentFormData',
+  async (data, thunkAPI) => {
+    debugger;
+    const res = await apiServicesV2.GetConsentFormData(data, 'ApiVersion2Req');
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+) ;
+
+
 const patientProfileSlice = createSlice({
   name: 'Patient Profile Slice',
   initialState: initialState,
@@ -542,6 +580,16 @@ const patientProfileSlice = createSlice({
       state.GetSharingModulesDataLoader = false;
     },
     
+    [GetConsentFormData.pending]: (state: any) => {
+      state.GetConsentFormDataLoader = true;
+    },
+    [GetConsentFormData.fulfilled]: (state: any, { payload }: any) => {
+      state.GetConsentFormDataList = payload;
+      state.GetConsentFormDataLoader = false;
+    },
+    [GetConsentFormData.rejected]: (state: any) => {
+      state.GetConsentFormDataLoader = false;
+    },
 
     [ClearCahceNLogout.pending]: (state: any) => {
       state.clearcache = true;

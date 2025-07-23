@@ -95,6 +95,12 @@ function SidebarMenu() {
       link: "/patientportal/educationAndresources",
       icon: pathname === "/patientportal/educationAndresources" ? "/statics/edufill.svg" : "/statics/eduout.svg"
     }
+    ,
+    {
+      name: "Consent Forms",
+      link: "/patientportal/consentforms",
+      icon: pathname === "/patientportal/consentforms" ? "/statics/ConsentFormfill.svg" : "/statics/ConsentFormout.svg" 
+    }
   ];
 
   return (

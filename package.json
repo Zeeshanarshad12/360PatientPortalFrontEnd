@@ -86,7 +86,7 @@
     "react-redux": "7.2.6",
     "react-resizable-panels": "^2.1.7",
     "react-select": "^5.7.2",
-    "react-signature-canvas": "^1.0.6",
+    "react-signature-canvas": "^1.0.7",
     "redux": "4.1.2",
     "redux-persist": "^6.0.0",
     "redux-persist-transform-filter": "^0.0.20",
