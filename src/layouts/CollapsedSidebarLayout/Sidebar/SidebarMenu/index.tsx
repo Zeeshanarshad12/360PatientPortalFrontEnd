@@ -76,6 +76,11 @@ function SidebarMenu() {
       icon: pathname === "/patientportal/authorizedUser" ? "/statics/aufill.svg" : "/statics/auout.svg"
     },
     {
+      name: "Consent Forms",
+      link: "/patientportal/consentforms",
+      icon: pathname === "/patientportal/consentforms" ? "/statics/ConsentFormfill.svg" : "/statics/ConsentFormout.svg" 
+    },
+    {
       name: "Find A Doctor",
       link: "/patientportal/findAdoc",
       icon: pathname.includes("findAdoc") ? "/statics/docfill.svg" : "/statics/docout.svg"
@@ -94,13 +99,7 @@ function SidebarMenu() {
       name: "Education and Resources",
       link: "/patientportal/educationAndresources",
       icon: pathname === "/patientportal/educationAndresources" ? "/statics/edufill.svg" : "/statics/eduout.svg"
-    }
-    ,
-    {
-      name: "Consent Forms",
-      link: "/patientportal/consentforms",
-      icon: pathname === "/patientportal/consentforms" ? "/statics/ConsentFormfill.svg" : "/statics/ConsentFormout.svg" 
-    }
+    }   
   ];
 
   return (

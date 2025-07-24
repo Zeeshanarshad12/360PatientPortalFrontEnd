@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { Box, Card, CircularProgress, Typography } from '@mui/material';
+import React, { useState ,useEffect } from 'react';
+import { Box, Card } from '@mui/material';
 import ContactInfo from '@/components/Profile/components/ContactInfo';
 import Contacts from '@/components/Profile/components/Contacts';
 import Insurance from '@/components/Profile/components/Insurance';
@@ -8,14 +8,24 @@ import { usePatientDataLoadState } from '@/components/Profile/contexts/patientDa
 import { useDispatch, useSelector } from "@/store/index";
 import { GetPatientDetailsById } from "@/slices/patientprofileslice";
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
+import HeartProgressLoader from '@/components/ProgressLoaders/components/HeartLoader';
 
 const PatientProfile = () => {
+  const [heartLoading, setHeartLoading] = useState(true);
   const { isPatientDataLoad, setIsPatientDataLoad } = usePatientDataLoadState();
 
   const dispatch = useDispatch();
   const { PatientByEmailData, PatientDetailsById } = useSelector((state) => state.patientprofileslice);
 
   const patient = PatientByEmailData?.[0];
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setHeartLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (localStorage.getItem('patientID') != null) {
@@ -31,8 +41,10 @@ const PatientProfile = () => {
 
   return (
     <>
-      {!isPatientDataLoad ? (
-        <CircularProgressLoader />
+      {/* {!isPatientDataLoad ? ( */}
+      {heartLoading ? (
+        // <CircularProgressLoader />
+        <HeartProgressLoader />
       ) : (
         <Box
           sx={{
