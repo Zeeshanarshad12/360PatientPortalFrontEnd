@@ -100,7 +100,6 @@ function ConsentFormsLayout() {
       .find((f) => f.Status === 'Pending');
 
     if (!nextPending) return; // Prevent endless "Thank You" trigger
-
     const timer = setTimeout(() => {
       setSelectedForm(nextPending);
     }, 6000); // wait 6 seconds

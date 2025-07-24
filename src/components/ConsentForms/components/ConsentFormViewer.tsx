@@ -31,6 +31,7 @@ const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm }: P
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+  const [showAllSignedMessage, setShowAllSignedMessage] = useState(false);
 
 
   useEffect(() => {
@@ -63,6 +64,25 @@ const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm }: P
     return () => clearTimeout(timer);
   }, [countdown, pendingForms, form]);
 
+
+   useEffect(() => {
+  // ✅ Calculate this value INSIDE the useEffect, not outside or conditionally
+
+  debugger;
+  const allSigned =
+    pendingForms.length > 0 &&
+    pendingForms.every((f) => f.Status === 'Pending');
+
+  if (!allSigned) {
+    setShowAllSignedMessage(true);
+
+    const timer = setTimeout(() => {
+      setShowAllSignedMessage(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }
+}, [pendingForms]); //  Hook called consistently
 
   const handlePrint = () => {
     if (typeof window === 'undefined') return;
@@ -136,7 +156,7 @@ const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm }: P
 
         onFormSigned(form.FormID, Signature);
         setCountdown(5);
-      } 
+      }
       else {
         debugger;
         console.log(response);
@@ -181,6 +201,7 @@ const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm }: P
       </Box>
     );
   }
+
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -228,7 +249,8 @@ const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm }: P
         <div dangerouslySetInnerHTML={{ __html: renderedContent }} />
 
         {
-          countdown !== null && countdown > 0 && (
+          countdown !== null && countdown > 0 &&
+          pendingForms.some(f => f.Status === 'Pending') && (
             <Box
               sx={{
                 position: 'absolute',
@@ -263,6 +285,36 @@ const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm }: P
           )
         }
       </Box>
+
+
+      {
+  showAllSignedMessage && (
+    <Box
+      sx={{
+        position: 'absolute',
+        top: '50%',
+        left: '50%',
+        transform: 'translate(-50%, -50%)',
+        bgcolor: 'white',
+        opacity: '0.95',
+        color: 'green',
+        p: 4,
+        borderRadius: 3,
+        boxShadow: '0px 4px 12px rgba(0,0,0,0.1)',
+        textAlign: 'center',
+        zIndex: 1000,
+        minWidth: 300,
+        transition: 'opacity 0.5s ease-in-out',
+      }}
+    >
+      <Typography variant="h6" fontWeight={600}>
+        🎉 You have completed all pending consent forms!
+      </Typography>
+    </Box>
+  )
+}
+
+
 
 
       {/* Footer */}
