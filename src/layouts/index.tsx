@@ -11,7 +11,7 @@ interface CollapsedSidebarLayoutProps {
 }
 const SharedLayout: FC<CollapsedSidebarLayoutProps> = ({ children }) => {
   // const { isAuthenticated, isLoading } = useAuth0();
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem('token');
   // if (token) {
   //   return <ThemeLoader loader={isLoading} />;
   // }
@@ -23,7 +23,8 @@ const SharedLayout: FC<CollapsedSidebarLayoutProps> = ({ children }) => {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            height: '100vh'
+            height: '100vh',
+            overflow: 'hidden'
           }}
         >
           <Sidebar />
@@ -35,7 +36,14 @@ const SharedLayout: FC<CollapsedSidebarLayoutProps> = ({ children }) => {
             }}
           >
             <Header />
-            <Box id="app-com-content">{children}</Box>
+            <Box
+              id="app-com-content"
+              sx={{
+                marginLeft: '170px'
+              }}
+            >
+              {children}
+            </Box>
           </Box>
         </Box>
       </>

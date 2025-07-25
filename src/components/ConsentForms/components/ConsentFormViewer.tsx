@@ -149,7 +149,7 @@ useEffect(() => {
 
       //  Forcefully check for result === 'success'
       if (response.payload.result === 'success') {
-        setSnackbarMessage(response.payload.result);
+        setSnackbarMessage('Signing Complete!');
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
 

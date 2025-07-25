@@ -18,6 +18,7 @@ function ConsentFormsLayout() {
   const [forms, setForms] = useState<ConsentForm[]>([]);
   const [selectedForm, setSelectedForm] = useState<ConsentForm | null>(null);
   const dispatch = useDispatch();
+  const [justSigned, setJustSigned] = useState(false);
 
   const { GetConsentFormDataList } = useSelector(
     (state) => state.patientprofileslice
@@ -68,6 +69,7 @@ function ConsentFormsLayout() {
 
   const handleFormSigned = (formId: string, Signature: string) => {
     const now = new Date().toISOString();
+    setJustSigned(true);
 
     setForms((prevForms) =>
       prevForms.map((f) =>
@@ -89,23 +91,45 @@ function ConsentFormsLayout() {
   };
 
   //  Automatically go to next pending form after 6 seconds of signing
+  // useEffect(() => {
+  //   if (selectedForm?.Status !== 'Signed') return;
+
+  //   const currentIndex = forms.findIndex(
+  //     (f) => f.FormID === selectedForm.FormID
+  //   );
+  //   const nextPending = forms
+  //     .slice(currentIndex + 1)
+  //     .find((f) => f.Status === 'Pending');
+
+  //   if (!nextPending) return; // Prevent endless "Thank You" trigger
+  //   const timer = setTimeout(() => {
+  //     setSelectedForm(nextPending);
+  //   }, 6000); // wait 6 seconds
+
+  //   return () => clearTimeout(timer);
+  // }, [forms, selectedForm]);
+
+
   useEffect(() => {
-    if (selectedForm?.Status !== 'Signed') return;
+  if (!justSigned || selectedForm?.Status !== 'Signed') return;
 
-    const currentIndex = forms.findIndex(
-      (f) => f.FormID === selectedForm.FormID
-    );
-    const nextPending = forms
-      .slice(currentIndex + 1)
-      .find((f) => f.Status === 'Pending');
+  const currentIndex = forms.findIndex(
+    (f) => f.FormID === selectedForm.FormID
+  );
+  const nextPending = forms
+    .slice(currentIndex + 1)
+    .find((f) => f.Status === 'Pending');
 
-    if (!nextPending) return; // Prevent endless "Thank You" trigger
-    const timer = setTimeout(() => {
-      setSelectedForm(nextPending);
-    }, 6000); // wait 6 seconds
+  if (!nextPending) return; // No more pending forms
 
-    return () => clearTimeout(timer);
-  }, [forms, selectedForm]);
+  const timer = setTimeout(() => {
+    setSelectedForm(nextPending);
+    setJustSigned(false); // Reset after moving
+  }, 6000);
+
+  return () => clearTimeout(timer);
+}, [forms, selectedForm, justSigned]);
+
 
   return (
     <>

@@ -33,11 +33,10 @@ function Sidebar() {
         id="app-sidebar"
         sx={{
           background: "#FFFFFF",
-
           position: "fixed",
           top: 0,
           bottom: 0,
-          // width: '55px'
+          width: '240px'
         }}
       >
         <Box>

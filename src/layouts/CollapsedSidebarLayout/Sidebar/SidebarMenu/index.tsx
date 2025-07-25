@@ -1,7 +1,8 @@
-"use client";
-import { useEffect, useState, Fragment } from "react";
-import { usePathname, useRouter } from "next/navigation";
-import { v4 as uuidv4 } from "uuid";
+'use client';
+
+import { useEffect, useState, Fragment } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { v4 as uuidv4 } from 'uuid';
 import {
   List,
   IconButton,
@@ -13,9 +14,10 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button
-} from "@mui/material";
-import Image from "next/image";
+  Button,
+  Typography
+} from '@mui/material';
+import Image from 'next/image';
 import { useAriaHiddenFixOnDialog } from '@/hooks/useAriaHiddenFixOnDialog';
 
 const MenuWrapper = styled(Box)(``);
@@ -31,22 +33,20 @@ function SidebarMenu() {
   // Set mounted and get localStorage on first load
   useEffect(() => {
     setMounted(true);
-    const access = localStorage.getItem("vdtAccess") === "true";
+    const access = localStorage.getItem('vdtAccess') === 'true';
     setVdtAccess(access);
   }, []);
-
 
   // Fix MUI aria-hidden bug
   useAriaHiddenFixOnDialog(showAccessDenied);
 
   const restrictedLinks = [
-    "/patientportal/healthsharing",
-    "/patientportal/authorizedUser"
+    '/patientportal/healthsharing',
+    '/patientportal/authorizedUser'
   ];
 
   const handleProtectedClick = (e, link) => {
-
-    const access = localStorage.getItem("vdtAccess") === "true";
+    const access = localStorage.getItem('vdtAccess') === 'true';
     setVdtAccess(access);
     if (!access && restrictedLinks.includes(link)) {
       e.preventDefault(); // Block navigation
@@ -60,44 +60,65 @@ function SidebarMenu() {
 
   const menu = [
     {
-      name: "Profile",
-      link: "/patientportal/profile",
-      icon: pathname.includes("profile") ? "/statics/pafill.svg" : "/statics/paout.svg"
+      name: 'Patient Info',
+      link: '/patientportal/profile',
+      icon: pathname.includes('profile')
+        ? '/statics/pafill.svg'
+        : '/statics/paout.svg'
     },
     {
-      name: "Health Sharing",
-      link: "/patientportal/healthsharing",
-      icon: pathname === "/patientportal/healthsharing" ? "/statics/hsf.svg" : "/statics/hso.svg"
+      name: 'Health Records',
+      link: '/patientportal/healthsharing',
+      icon:
+        pathname === '/patientportal/healthsharing'
+          ? '/statics/hsf.svg'
+          : '/statics/hso.svg'
     },
     {
-      name: "Authorized Users",
-      link: "/patientportal/authorizedUser",
-      icon: pathname === "/patientportal/authorizedUser" ? "/statics/aufill.svg" : "/statics/auout.svg"
+      name: 'Authorized User',
+      link: '/patientportal/authorizedUser',
+      icon:
+        pathname === '/patientportal/authorizedUser'
+          ? '/statics/aufill.svg'
+          : '/statics/auout.svg'
     },
     {
-      name: "Consent Forms",
-      link: "/patientportal/consentforms",
-      icon: pathname === "/patientportal/consentforms" ? "/statics/ConsentFormfill.svg" : "/statics/ConsentFormout.svg"
+      name: 'Consent Forms',
+      link: '/patientportal/consentforms',
+      icon:
+        pathname === '/patientportal/consentforms'
+          ? '/statics/ConsentFormfill.svg'
+          : '/statics/ConsentFormout.svg'
     },
     {
-      name: "Find A Doctor",
-      link: "/patientportal/findAdoc",
-      icon: pathname.includes("findAdoc") ? "/statics/docfill.svg" : "/statics/docout.svg"
+      name: 'Find A Doctor',
+      link: '/patientportal/findAdoc',
+      icon: pathname.includes('findAdoc')
+        ? '/statics/docfill.svg'
+        : '/statics/docout.svg'
     },
     {
-      name: "Patient Visits",
-      link: "/patientportal/patientvisits",
-      icon: pathname.includes("patientvisits") ? "/statics/pvfill.svg" : "/statics/pvout.svg"
+      name: 'Patient Visits',
+      link: '/patientportal/patientvisits',
+      icon: pathname.includes('patientvisits')
+        ? '/statics/pvfill.svg'
+        : '/statics/pvout.svg'
     },
     {
-      name: "Documents",
-      link: "/patientportal/documents",
-      icon: pathname === "/patientportal/documents" ? "/statics/docufill.svg" : "/statics/docuout.svg"
+      name: 'Patient Documents',
+      link: '/patientportal/documents',
+      icon:
+        pathname === '/patientportal/documents'
+          ? '/statics/docufill.svg'
+          : '/statics/docuout.svg'
     },
     {
-      name: "Education and Resources",
-      link: "/patientportal/educationAndresources",
-      icon: pathname === "/patientportal/educationAndresources" ? "/statics/edufill.svg" : "/statics/eduout.svg"
+      name: 'Health Education',
+      link: '/patientportal/educationAndresources',
+      icon:
+        pathname === '/patientportal/educationAndresources'
+          ? '/statics/edufill.svg'
+          : '/statics/eduout.svg'
     }
   ];
 
@@ -109,37 +130,63 @@ function SidebarMenu() {
           <MenuWrapper>
             <Box>
               <SubMenuWrapper>
-                <List sx={{ padding: "0px !important" }} component="div" id={uuidv4()}>
+                <List
+                  sx={{ padding: '0px !important' }}
+                  component="div"
+                  id={uuidv4()}
+                >
                   <ListItem component="div" key={item.name} id={item.name}>
-                    <Tooltip title={item.name} placement="right" arrow>
-                      <IconButton
-
-
-                        onClick={(e) => handleProtectedClick(e, item.link)}
-                        className={pathname === item.link ? "active-sidebar-item" : ""}
-                        sx={{
-                          '&:focus': {
-                            outline: '2px solid #1976d2',
-                            outlineOffset: '2px'
+                    <Box
+                      onClick={(e) => handleProtectedClick(e, item.link)}
+                      className={
+                        pathname === item.link ? 'active-sidebar-item' : ''
+                      }
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        width: '100%',
+                        borderRadius: '10px',
+                        px: 1.5,
+                        py: 1,
+                        cursor: 'pointer',
+                        '&:hover': {
+                          backgroundColor: '#E3F2FD',
+                          color: '#1976D2',
+                          '& .MuiTypography-root': {
+                            color: '#1976D2'
+                          },
+                          '& img': {
+                            filter:
+                              'brightness(0) saturate(100%) invert(34%) sepia(85%) saturate(2104%) hue-rotate(188deg) brightness(91%) contrast(92%)'
                           }
-                        }}
+                        },
+                        ...(pathname === item.link && {
+                          backgroundColor: '#E3F2FD',
+                          color: '#1976D2',
+                          '& .MuiTypography-root': {
+                            color: '#1976D2'
+                          },
+                          '& img': {
+                            filter:
+                              'brightness(0) saturate(100%) invert(34%) sepia(85%) saturate(2104%) hue-rotate(188deg) brightness(91%) contrast(92%)'
+                          }
+                        })
+                      }}
+                    >
+                      <Image
+                        src={item.icon}
+                        alt={item.name}
+                        width={25}
+                        height={25}
+                      />
+                      <Typography
+                        sx={{ ml: '15px' }}
+                        variant="subtitle2"
+                        component="h5"
                       >
-                        <Image
-                          src={item.icon}
-                          alt={item.name}
-                          width={25}
-                          height={25}
-                        />
-                        <span style={{
-                          position: 'absolute', width: 1, height: 1,
-                          overflow: 'hidden', clip: 'rect(0 0 0 0)',
-                          whiteSpace: 'nowrap'
-                        }}>
-                          {item.name}
-                        </span>
-                      </IconButton>
-
-                    </Tooltip>
+                        {item.name}
+                      </Typography>
+                    </Box>
                   </ListItem>
                 </List>
               </SubMenuWrapper>
@@ -148,16 +195,14 @@ function SidebarMenu() {
         </Fragment>
       ))}
 
-
-
-      
-
       {/* Access Denied Popup */}
-      <Dialog open={showAccessDenied} onClose={() => setShowAccessDenied(false)}>
-
+      <Dialog
+        open={showAccessDenied}
+        onClose={() => setShowAccessDenied(false)}
+      >
         <DialogTitle
           sx={{
-            color: '#b00020', // ✅ WCAG AA Compliant
+            color: '#b00020',
             fontWeight: 'bold'
           }}
         >
@@ -188,5 +233,3 @@ function SidebarMenu() {
 }
 
 export default SidebarMenu;
-
-
