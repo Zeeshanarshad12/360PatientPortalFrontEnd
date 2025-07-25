@@ -138,7 +138,7 @@ function ConsentFormsLayout() {
                   <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
                     Consent Forms{' '}
                     <Badge
-                      badgeContent={forms.length}
+                      badgeContent={pendingForms.length}
                       color="primary"
                       sx={{ ml: 2 }}
                     />

@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect, useState, Fragment } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { v4 as uuidv4 } from "uuid";
@@ -36,7 +35,7 @@ function SidebarMenu() {
     setVdtAccess(access);
   }, []);
 
-  
+
   // Fix MUI aria-hidden bug
   useAriaHiddenFixOnDialog(showAccessDenied);
 
@@ -46,7 +45,7 @@ function SidebarMenu() {
   ];
 
   const handleProtectedClick = (e, link) => {
-   
+
     const access = localStorage.getItem("vdtAccess") === "true";
     setVdtAccess(access);
     if (!access && restrictedLinks.includes(link)) {
@@ -78,7 +77,7 @@ function SidebarMenu() {
     {
       name: "Consent Forms",
       link: "/patientportal/consentforms",
-      icon: pathname === "/patientportal/consentforms" ? "/statics/ConsentFormfill.svg" : "/statics/ConsentFormout.svg" 
+      icon: pathname === "/patientportal/consentforms" ? "/statics/ConsentFormfill.svg" : "/statics/ConsentFormout.svg"
     },
     {
       name: "Find A Doctor",
@@ -99,7 +98,7 @@ function SidebarMenu() {
       name: "Education and Resources",
       link: "/patientportal/educationAndresources",
       icon: pathname === "/patientportal/educationAndresources" ? "/statics/edufill.svg" : "/statics/eduout.svg"
-    }   
+    }
   ];
 
   return (
@@ -114,6 +113,8 @@ function SidebarMenu() {
                   <ListItem component="div" key={item.name} id={item.name}>
                     <Tooltip title={item.name} placement="right" arrow>
                       <IconButton
+
+
                         onClick={(e) => handleProtectedClick(e, item.link)}
                         className={pathname === item.link ? "active-sidebar-item" : ""}
                         sx={{
@@ -137,6 +138,7 @@ function SidebarMenu() {
                           {item.name}
                         </span>
                       </IconButton>
+
                     </Tooltip>
                   </ListItem>
                 </List>
@@ -145,6 +147,10 @@ function SidebarMenu() {
           </MenuWrapper>
         </Fragment>
       ))}
+
+
+
+      
 
       {/* Access Denied Popup */}
       <Dialog open={showAccessDenied} onClose={() => setShowAccessDenied(false)}>
@@ -182,3 +188,5 @@ function SidebarMenu() {
 }
 
 export default SidebarMenu;
+
+
