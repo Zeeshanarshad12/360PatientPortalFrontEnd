@@ -387,7 +387,6 @@ export const saveConsentForm : any = createAsyncThunk(
 export const GetConsentFormData: any = createAsyncThunk(
   'GetConsentFormData',
   async (data, thunkAPI) => {
-    debugger;
     const res = await apiServicesV2.GetConsentFormData(data, 'ApiVersion2Req');
     try {
       if (res?.status === 200 || res?.status === 201) {

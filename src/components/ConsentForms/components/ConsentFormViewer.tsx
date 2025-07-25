@@ -32,7 +32,7 @@ const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm }: P
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const [showAllSignedMessage, setShowAllSignedMessage] = useState(false);
-
+  const prevPendingCount = useRef<number>(0);
 
   useEffect(() => {
     if (form) {
@@ -65,15 +65,11 @@ const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm }: P
   }, [countdown, pendingForms, form]);
 
 
-   useEffect(() => {
-  // ✅ Calculate this value INSIDE the useEffect, not outside or conditionally
+useEffect(() => {
+  const currentPendingCount = pendingForms.filter(f => f.Status === 'Pending').length;
+  const allSigned = currentPendingCount === 0 && prevPendingCount.current > 0;
 
-  debugger;
-  const allSigned =
-    pendingForms.length > 0 &&
-    pendingForms.every((f) => f.Status === 'Pending');
-
-  if (!allSigned) {
+  if (allSigned) {
     setShowAllSignedMessage(true);
 
     const timer = setTimeout(() => {
@@ -82,7 +78,10 @@ const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm }: P
 
     return () => clearTimeout(timer);
   }
-}, [pendingForms]); //  Hook called consistently
+
+  // Update previous count at the end of the effect
+  prevPendingCount.current = currentPendingCount;
+}, [pendingForms]);
 
   const handlePrint = () => {
     if (typeof window === 'undefined') return;
