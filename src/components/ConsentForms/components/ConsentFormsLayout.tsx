@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from '@/store/index';
 import { GetConsentFormData } from '@/slices/patientprofileslice';
 import HeartProgressLoader from '@/components/ProgressLoaders/components/HeartLoader';
 
+
 const HEADER_HEIGHT = 10;
 const SPACING = 0;
 
@@ -19,6 +20,7 @@ function ConsentFormsLayout() {
   const [selectedForm, setSelectedForm] = useState<ConsentForm | null>(null);
   const dispatch = useDispatch();
   const [justSigned, setJustSigned] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(false);
 
   const { GetConsentFormDataList } = useSelector(
     (state) => state.patientprofileslice
@@ -39,20 +41,18 @@ function ConsentFormsLayout() {
         if (!patientId) return;
 
         const response = await dispatch(GetConsentFormData(patientId)).unwrap();
-        // setForms(response.result)
 
         const mappedForms: ConsentForm[] = response.result.map((form: any) => ({
           PatientID: form.patientID,
-          FormID: String(form.formID), // Ensure it's string if required
+          FormID: String(form.formID),
           Title: form.title,
           Content: form.content,
           Status: form.status,
           SignedDate: form.signedDate,
-          Signature: form.signature
+          Signature: form.signature,
         }));
 
         setForms(mappedForms);
-
         console.log('Fetched consent forms:', mappedForms);
       } catch (error) {
         console.error('Failed to fetch consent forms:', error);
@@ -60,7 +60,35 @@ function ConsentFormsLayout() {
     };
 
     fetchConsentForms();
-  }, [dispatch]);
+
+  }, [dispatch, refreshTrigger]);
+
+
+  const refreshForms = async () => {
+  try {
+    const patientId = localStorage.getItem('patientID');
+    if (!patientId) return;
+
+    const response = await dispatch(GetConsentFormData(patientId)).unwrap();
+
+    const mappedForms: ConsentForm[] = response.result.map((form: any) => ({
+      PatientID: form.patientID,
+      FormID: String(form.formID),
+      Title: form.title,
+      Content: form.content,
+      Status: form.status,
+      SignedDate: form.signedDate,
+      Signature: form.signature
+    }));
+
+    setForms(mappedForms);
+    console.log('Refetched consent forms:', mappedForms);
+  } catch (error) {
+    console.error('Failed to refresh consent forms:', error);
+  }
+};
+
+
 
   const pendingForms = useMemo(
     () => forms.filter((f) => f.Status === 'Pending'),
@@ -111,25 +139,26 @@ function ConsentFormsLayout() {
 
 
   useEffect(() => {
-  if (!justSigned || selectedForm?.Status !== 'Signed') return;
+    if (!justSigned || selectedForm?.Status !== 'Signed') return;
 
-  const currentIndex = forms.findIndex(
-    (f) => f.FormID === selectedForm.FormID
-  );
-  const nextPending = forms
-    .slice(currentIndex + 1)
-    .find((f) => f.Status === 'Pending');
+    const currentIndex = forms.findIndex(
+      (f) => f.FormID === selectedForm.FormID
+    );
+    const nextPending = forms
+      .slice(currentIndex + 1)
+      .find((f) => f.Status === 'Pending');
 
-  if (!nextPending) return; // No more pending forms
+    if (!nextPending) return; // No more pending forms
 
-  const timer = setTimeout(() => {
-    setSelectedForm(nextPending);
-    setJustSigned(false); // Reset after moving
-  }, 6000);
+    const timer = setTimeout(() => {
+      setSelectedForm(nextPending);
+      setJustSigned(false); // Reset after moving
+    }, 6000);
 
-  return () => clearTimeout(timer);
-}, [forms, selectedForm, justSigned]);
+    return () => clearTimeout(timer);
+  }, [forms, selectedForm, justSigned]);
 
+  const triggerRefresh = () => setRefreshTrigger(prev => !prev);
 
   return (
     <>
@@ -192,12 +221,15 @@ function ConsentFormsLayout() {
                   overflow: 'hidden'
                 }}
               >
+                
                 <ConsentFormViewer
                   form={selectedForm}
                   onFormSigned={handleFormSigned}
                   pendingForms={pendingForms}
                   onSelectForm={handleSelectForm}
+                  triggerRefresh={triggerRefresh} 
                 />
+
               </Card>
             </Box>
           </Grid>

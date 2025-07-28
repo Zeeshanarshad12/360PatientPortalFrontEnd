@@ -14,6 +14,7 @@ interface Props {
   onFormSigned: (formId: string, Signature: string) => void;
   pendingForms: (ConsentForm & { Signature?: string })[];
   onSelectForm: (form: ConsentForm & { Signature?: string }) => void;
+  triggerRefresh: () => void;
 }
 
 const bounce = keyframes`
@@ -22,7 +23,7 @@ const bounce = keyframes`
   100% { transform: scale(1); opacity: 0.8; }
 `;
 
-const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm }: Props) => {
+const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm, triggerRefresh }: Props) => {
   const dispatch = useDispatch();
   const contentRef = useRef<HTMLDivElement>(null);
   const [signatureOpen, setSignatureOpen] = useState(false);
@@ -47,22 +48,31 @@ const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm }: P
   }, [form]);
 
   useEffect(() => {
-    if (countdown === null || countdown <= 0) return;
+  if (countdown === null || countdown <= 0) return;
 
-    const timer = setTimeout(() => {
-      setCountdown(countdown - 1);
-    }, 1000);
+  const timer = setTimeout(() => {
+    setCountdown(countdown - 1);
+  }, 1000);
 
-    if (countdown === 1 && Array.isArray(pendingForms) && form?.FormID) {
-      const currentIndex = pendingForms.findIndex(f => f.FormID === form.FormID);
+  if (countdown === 1 && Array.isArray(pendingForms) && form?.FormID) {
+    const currentIndex = pendingForms.findIndex(f => f.FormID === form.FormID);
 
-      if (currentIndex !== -1 && currentIndex + 1 < pendingForms.length) {
-        onSelectForm(pendingForms[currentIndex + 1]);
+    // Case 1: Try to go to the next one
+    if (currentIndex !== -1 && currentIndex + 1 < pendingForms.length) {
+      onSelectForm(pendingForms[currentIndex + 1]);
+    } 
+    // Case 2: Stay in list bounds and go to the first available one (excluding current)
+    else {
+      const otherPending = pendingForms.find(f => f.FormID !== form.FormID);
+      if (otherPending) {
+        onSelectForm(otherPending);
       }
     }
+  }
 
-    return () => clearTimeout(timer);
-  }, [countdown, pendingForms, form]);
+  return () => clearTimeout(timer);
+}, [countdown, pendingForms, form]);
+
 
 
 useEffect(() => {
@@ -147,24 +157,23 @@ useEffect(() => {
     try {
       const response = await dispatch(saveConsentForm(updatedForm));
 
+      triggerRefresh(); 
       //  Forcefully check for result === 'success'
       if (response.payload.result === 'success') {
         setSnackbarMessage('Signing Complete!');
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
 
+        
         onFormSigned(form.FormID, Signature);
         setCountdown(5);
       }
       else {
-        debugger;
-        console.log(response);
         setSnackbarMessage(response.payload.result);
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
       }
     } catch (error) {
-      console.error('Error saving form:', error);
       setSnackbarMessage('Something went wrong while saving.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);

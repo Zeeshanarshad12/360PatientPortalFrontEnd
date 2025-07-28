@@ -146,7 +146,7 @@ const ConsentFormList = ({ forms, onSelect, selectedId }: Props) => {
                                     }}
                                     secondary={
                                         form.Status === 'Signed' && form.SignedDate
-                                            ? `Signed on: ${new Date(form.SignedDate).toLocaleDateString()} ${new Date(form.SignedDate).toLocaleTimeString()}`
+                                            ? `Signed on: ${(form.SignedDate)}`
                                             : form.Status
                                     }
                                     secondaryTypographyProps={{
