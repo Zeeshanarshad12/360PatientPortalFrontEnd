@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -62,17 +62,30 @@ const SignatureDialog = ({ open, onClose, onSave }: Props) => {
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoDataUrl(reader.result as string);
-        setFadeIn(true);
-        setError('');
-      };
-      reader.readAsDataURL(file);
+  const file = e.target.files?.[0];
+  if (file) {
+    const validTypes = ['image/jpeg', 'image/png'];
+    if (!validTypes.includes(file.type)) {
+      setError('Only JPG and PNG files are allowed.');
+      setPhotoDataUrl(null);
+      return;
     }
-  };
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setPhotoDataUrl(reader.result as string);
+      setFadeIn(true);
+      setError('');
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+useEffect(() => {
+  if (open) {
+    setError('');
+  }
+}, [open]);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -134,7 +147,7 @@ const SignatureDialog = ({ open, onClose, onSave }: Props) => {
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/png, image/jpeg"
                 onChange={handlePhotoUpload}
                 hidden
                 id="upload-photo"
