@@ -8,6 +8,7 @@ import SignatureDialog from './SignatureDialog';
 import { saveConsentForm } from '@/slices/patientprofileslice';
 import { useSelector, useDispatch } from '@/store/index';
 import { Snackbar, Alert } from '@mui/material';
+import { useConsentFormContext } from '@/contexts/ConsentFormContext';
 
 interface Props {
   form: (ConsentForm & { Signature?: string }) | null;
@@ -34,6 +35,7 @@ const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm, tri
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const [showAllSignedMessage, setShowAllSignedMessage] = useState(false);
   const prevPendingCount = useRef<number>(0);
+  const { decrementPendingCount } = useConsentFormContext();
 
   useEffect(() => {
     if (form) {
@@ -160,6 +162,7 @@ useEffect(() => {
       triggerRefresh(); 
       //  Forcefully check for result === 'success'
       if (response.payload.result === 'success') {
+        decrementPendingCount();
         setSnackbarMessage('Signing Complete!');
         setSnackbarSeverity('success');
         setSnackbarOpen(true);

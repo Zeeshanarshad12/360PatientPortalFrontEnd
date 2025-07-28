@@ -8,7 +8,7 @@ import ConsentFormViewer from './ConsentFormViewer';
 import { useDispatch, useSelector } from '@/store/index';
 import { GetConsentFormData } from '@/slices/patientprofileslice';
 import HeartProgressLoader from '@/components/ProgressLoaders/components/HeartLoader';
-
+import { useConsentFormContext } from '@/contexts/ConsentFormContext';
 
 const HEADER_HEIGHT = 10;
 const SPACING = 0;
@@ -21,6 +21,7 @@ function ConsentFormsLayout() {
   const dispatch = useDispatch();
   const [justSigned, setJustSigned] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(false);
+  const { setPendingCount } = useConsentFormContext();
 
   const { GetConsentFormDataList } = useSelector(
     (state) => state.patientprofileslice
@@ -53,6 +54,8 @@ function ConsentFormsLayout() {
         }));
 
         setForms(mappedForms);
+        const pending = mappedForms.filter((f) => f.Status === 'Pending');
+        setPendingCount(pending.length);
         console.log('Fetched consent forms:', mappedForms);
       } catch (error) {
         console.error('Failed to fetch consent forms:', error);
@@ -80,7 +83,8 @@ function ConsentFormsLayout() {
       SignedDate: form.signedDate,
       Signature: form.signature
     }));
-
+   const pending = mappedForms.filter((f) => f.Status === 'Pending');
+    setPendingCount(pending.length);
     setForms(mappedForms);
     console.log('Refetched consent forms:', mappedForms);
   } catch (error) {
@@ -94,6 +98,7 @@ function ConsentFormsLayout() {
     () => forms.filter((f) => f.Status === 'Pending'),
     [forms]
   );
+  
 
   const handleFormSigned = (formId: string, Signature: string) => {
     const now = new Date().toISOString();
@@ -117,26 +122,6 @@ function ConsentFormsLayout() {
   const handleSelectForm = (form: ConsentForm) => {
     setSelectedForm(form);
   };
-
-  //  Automatically go to next pending form after 6 seconds of signing
-  // useEffect(() => {
-  //   if (selectedForm?.Status !== 'Signed') return;
-
-  //   const currentIndex = forms.findIndex(
-  //     (f) => f.FormID === selectedForm.FormID
-  //   );
-  //   const nextPending = forms
-  //     .slice(currentIndex + 1)
-  //     .find((f) => f.Status === 'Pending');
-
-  //   if (!nextPending) return; // Prevent endless "Thank You" trigger
-  //   const timer = setTimeout(() => {
-  //     setSelectedForm(nextPending);
-  //   }, 6000); // wait 6 seconds
-
-  //   return () => clearTimeout(timer);
-  // }, [forms, selectedForm]);
-
 
   useEffect(() => {
     if (!justSigned || selectedForm?.Status !== 'Signed') return;

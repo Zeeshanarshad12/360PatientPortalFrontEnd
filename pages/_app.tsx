@@ -25,6 +25,7 @@ import SnackbarCloseButton from '@/content/snackbarclosebtn';
 import AuthProvider from '@/components/AuthProvider';
 import { AxiosInterceptor } from '@/components/AxiosInterceptor';
 import SharedLayout from '@/layouts';
+import { ConsentFormProvider } from '@/contexts/ConsentFormContext';
 
 const clientSideEmotionCache = createEmotionCache();
 
@@ -92,9 +93,13 @@ function MyApp(props: MyAppProps) {
                         <SnackbarUtilsConfigurator />
                         <CssBaseline />
                         {/* <CustomScript /> */}
+                         <ConsentFormProvider>
                         <SharedLayout>
+                          
                           <Component {...pageProps} />
+                          
                         </SharedLayout>
+                        </ConsentFormProvider>
                       </SnackbarProvider>
                     </AxiosInterceptor>
                   {/* </AuthProvider> */}

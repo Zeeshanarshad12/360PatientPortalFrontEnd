@@ -19,6 +19,7 @@ import {
 } from '@mui/material';
 import Image from 'next/image';
 import { useAriaHiddenFixOnDialog } from '@/hooks/useAriaHiddenFixOnDialog';
+import { useConsentFormContext } from '@/contexts/ConsentFormContext';
 
 const MenuWrapper = styled(Box)(``);
 const SubMenuWrapper = styled(Box)(``);
@@ -29,6 +30,7 @@ function SidebarMenu() {
   const [showAccessDenied, setShowAccessDenied] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const { pendingCount } = useConsentFormContext();
 
   // Set mounted and get localStorage on first load
   useEffect(() => {
@@ -173,7 +175,7 @@ function SidebarMenu() {
                         })
                       }}
                     >
-                      <Image
+                      {/* <Image
                         src={item.icon}
                         alt={item.name}
                         width={25}
@@ -185,7 +187,59 @@ function SidebarMenu() {
                         component="h5"
                       >
                         {item.name}
-                      </Typography>
+                      </Typography> */}
+
+                      {item.name === 'Consent Forms' ? (
+                        <>
+                          <Image
+                            src={item.icon}
+                            alt={item.name}
+                            width={20}
+                            height={20}
+                          />
+                          <Typography
+                            sx={{ ml: '15px', display: 'flex', alignItems: 'center', gap: 1 }}
+                            variant="subtitle2"
+                            component="h5"
+                          >
+                            {item.name}
+                            {pendingCount > 0 && (
+                              <Box
+                                component="span"
+                                sx={{
+                                  backgroundColor: '#006ed4ff',
+                                  color: '#fff',
+                                  fontSize: '0.65rem',
+                                  borderRadius: '50%',
+                                  padding: '2px 6px',
+                                  minWidth: 15,
+                                  textAlign: 'center',
+                                  ml: 1
+                                }}
+                              >
+                                {pendingCount}
+                              </Box>
+                            )}
+                          </Typography>
+                        </>
+                      ) : (
+                        <>
+                          <Image
+                            src={item.icon}
+                            alt={item.name}
+                            width={20}
+                            height={20}
+                          />
+                          <Typography
+                            sx={{ ml: '15px' }}
+                            variant="subtitle2"
+                            component="h5"
+                          >
+                            {item.name}
+                          </Typography>
+                        </>
+                      )}
+
                     </Box>
                   </ListItem>
                 </List>
