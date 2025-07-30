@@ -83,7 +83,7 @@ useEffect(() => {
 
   if (allSigned) {
     setShowAllSignedMessage(true);
-
+    localStorage.setItem('pendingConsentFormCount','0');
     const timer = setTimeout(() => {
       setShowAllSignedMessage(false);
     }, 3000);

@@ -58,6 +58,43 @@ function SidebarMenu() {
     }
   };
 
+const [localPendingCount, setLocalPendingCount] = useState<number>(0);
+// useEffect(() => {
+//   const stored = Number(localStorage.getItem('pendingConsentFormCount') || '0');
+//   setLocalPendingCount(stored);
+// }, []);
+
+
+
+  useEffect(() => {
+    // Initial read from localStorage on first render
+    const storedCount = Number(localStorage.getItem("pendingConsentFormCount") || "0");
+    setLocalPendingCount(storedCount);
+
+    // Recheck after 500ms (half second) for updated value
+    const timer = setTimeout(() => {
+      const updatedCount = Number(localStorage.getItem("pendingConsentFormCount") || "0");
+      setLocalPendingCount(updatedCount);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [pendingCount]);
+
+
+    useEffect(() => {
+    // Initial read from localStorage on first render
+    const storedCount = Number(localStorage.getItem("pendingConsentFormCount") || "0");
+    setLocalPendingCount(storedCount);
+
+    // Recheck after 500ms (half second) for updated value
+    const timer = setTimeout(() => {
+      const updatedCount = Number(localStorage.getItem("pendingConsentFormCount") || "0");
+      setLocalPendingCount(updatedCount);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
   if (!mounted) return null;
 
   const menu = [
@@ -153,9 +190,9 @@ function SidebarMenu() {
                         cursor: 'pointer',
                         '&:hover': {
                           backgroundColor: '#E3F2FD',
-                          color: '#1976D2',
+                          color: '#0D47A1',
                           '& .MuiTypography-root': {
-                            color: '#1976D2'
+                            color: '#0D47A1'
                           },
                           '& img': {
                             filter:
@@ -164,9 +201,9 @@ function SidebarMenu() {
                         },
                         ...(pathname === item.link && {
                           backgroundColor: '#E3F2FD',
-                          color: '#1976D2',
+                          color: '#0D47A1',
                           '& .MuiTypography-root': {
-                            color: '#1976D2'
+                            color: '#0D47A1'
                           },
                           '& img': {
                             filter:
@@ -203,11 +240,11 @@ function SidebarMenu() {
                             component="h5"
                           >
                             {item.name}
-                            {pendingCount > 0 && (
+                            {(pendingCount || localPendingCount) > 0 && (
                               <Box
                                 component="span"
                                 sx={{
-                                  backgroundColor: '#006ed4ff',
+                                  backgroundColor: '#FFA726',
                                   color: '#fff',
                                   fontSize: '0.65rem',
                                   borderRadius: '50%',
@@ -217,7 +254,8 @@ function SidebarMenu() {
                                   ml: 1
                                 }}
                               >
-                                {pendingCount}
+                                {pendingCount || localPendingCount}
+
                               </Box>
                             )}
                           </Typography>
