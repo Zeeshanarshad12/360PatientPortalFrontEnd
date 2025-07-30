@@ -58,6 +58,8 @@ export const GetPatientByEmail: any = createAsyncThunk(
     const res = await apiServicesV2.GetPatientByEmail(data, 'ApiVersion2Req');
     try {
       if (res?.status === 200 || res?.status === 201) {
+        debugger;
+        localStorage.setItem('pendingConsentFormCount', res?.pendingConsentFormCount);
         Router.push('/patientportal/profile');
         return res?.data?.result;
       }

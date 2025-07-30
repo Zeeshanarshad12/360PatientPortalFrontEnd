@@ -31,6 +31,7 @@ const Dashboard = () => {
       localStorage.setItem('patientID', patient?.patientID);
       localStorage.setItem('PracticeId', patient?.practiceId);
       localStorage.setItem('vdtAccess', patient?.vdtAccess);
+      localStorage.setItem('pendingConsentFormCount', patient?.pendingConsentFormCount);
     }
   }, [patient?.patientID,patient?.vdtAccess]);
 
