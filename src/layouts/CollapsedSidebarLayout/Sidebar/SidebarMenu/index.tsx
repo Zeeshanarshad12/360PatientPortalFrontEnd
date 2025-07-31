@@ -59,29 +59,8 @@ function SidebarMenu() {
   };
 
 const [localPendingCount, setLocalPendingCount] = useState<number>(0);
-// useEffect(() => {
-//   const stored = Number(localStorage.getItem('pendingConsentFormCount') || '0');
-//   setLocalPendingCount(stored);
-// }, []);
 
-
-
-  useEffect(() => {
-    // Initial read from localStorage on first render
-    const storedCount = Number(localStorage.getItem("pendingConsentFormCount") || "0");
-    setLocalPendingCount(storedCount);
-
-    // Recheck after 500ms (half second) for updated value
-    const timer = setTimeout(() => {
-      const updatedCount = Number(localStorage.getItem("pendingConsentFormCount") || "0");
-      setLocalPendingCount(updatedCount);
-    }, 2000);
-
-    return () => clearTimeout(timer);
-  }, [pendingCount]);
-
-
-    useEffect(() => {
+useEffect(() => {
     // Initial read from localStorage on first render
     const storedCount = Number(localStorage.getItem("pendingConsentFormCount") || "0");
     setLocalPendingCount(storedCount);
@@ -244,9 +223,9 @@ const [localPendingCount, setLocalPendingCount] = useState<number>(0);
                               <Box
                                 component="span"
                                 sx={{
-                                  backgroundColor: '#FFA726',
+                                  backgroundColor: '#1976d2',
                                   color: '#fff',
-                                  fontSize: '0.65rem',
+                                  fontSize: '0.60rem',
                                   borderRadius: '50%',
                                   padding: '2px 6px',
                                   minWidth: 15,

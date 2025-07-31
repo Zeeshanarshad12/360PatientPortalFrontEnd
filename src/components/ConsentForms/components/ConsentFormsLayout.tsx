@@ -99,6 +99,11 @@ function ConsentFormsLayout() {
     [forms]
   );
   
+  useEffect(() => {
+  if (forms.length > 0 && !selectedForm) {
+    setSelectedForm(forms[0]);
+  }
+}, [forms]);
 
   const handleFormSigned = (formId: string, Signature: string) => {
     const now = new Date().toISOString();
