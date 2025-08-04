@@ -20,5 +20,6 @@ export const SERVICE_URLSV2 = {
   UpdateSharingModulesData : 'patientportal/updatesharingmodulesdata',
   GetServerTime:'dashboard/getservertime',
   saveConsentForm: 'patientportal/SubmitConsentForm',
-  GetConsentFormData: 'patientportal/GetConsentFormData'
+  GetConsentFormData: 'patientportal/GetConsentFormData',
+  GetConsentFormContent: 'patientportal/getcontent'
 };

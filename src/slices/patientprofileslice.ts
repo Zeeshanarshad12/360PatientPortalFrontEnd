@@ -403,6 +403,23 @@ export const GetConsentFormData: any = createAsyncThunk(
   }
 ) ;
 
+export const GetConsentFormContent: any = createAsyncThunk(
+  'GetConsentFormContent',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.GetConsentFormContent(data, 'ApiVersion2Req');
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+) ;
+
 
 const patientProfileSlice = createSlice({
   name: 'Patient Profile Slice',

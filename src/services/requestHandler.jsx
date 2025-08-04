@@ -233,6 +233,19 @@ const GetConsentFormData = (data, flag) =>
     }
   );
 
+  const GetConsentFormContent = (data, flag) =>
+
+  get(
+
+    `${SERVICE_URLSV2.GetConsentFormContent}?&PatientId=${data?.PatientId}&FormID=${data?.FormID}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+  
+
 
 
 const apiServicesV2 = {
@@ -257,7 +270,8 @@ const apiServicesV2 = {
   GetSharingModulesData,
   UpdateSharingModulesData,
   saveConsentForm,
-  GetConsentFormData
+  GetConsentFormData,
+  GetConsentFormContent
 
 };
 export default apiServicesV2;

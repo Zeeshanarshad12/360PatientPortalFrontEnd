@@ -6,7 +6,7 @@ import { getConsentForms } from '@/services/consentFormService';
 import ConsentFormList from './ConsentFormList';
 import ConsentFormViewer from './ConsentFormViewer';
 import { useDispatch, useSelector } from '@/store/index';
-import { GetConsentFormData } from '@/slices/patientprofileslice';
+import { GetConsentFormData, GetConsentFormContent } from '@/slices/patientprofileslice';
 import HeartProgressLoader from '@/components/ProgressLoaders/components/HeartLoader';
 import { useConsentFormContext } from '@/contexts/ConsentFormContext';
 
@@ -38,6 +38,7 @@ function ConsentFormsLayout() {
   useEffect(() => {
     const fetchConsentForms = async () => {
       try {
+
         const patientId = localStorage.getItem('patientID');
         if (!patientId) return;
 
@@ -47,7 +48,8 @@ function ConsentFormsLayout() {
           PatientID: form.patientID,
           FormID: String(form.formID),
           Title: form.title,
-          Content: form.content,
+          // Content: form.content,
+          Content: '',
           Status: form.status,
           SignedDate: form.signedDate,
           Signature: form.signature,
@@ -66,31 +68,47 @@ function ConsentFormsLayout() {
 
   }, [dispatch, refreshTrigger]);
 
+  // consentFormService.ts
+  const getConsentFormById = async (formId: string) => {
+
+    const Obj = {
+      PatientId: localStorage.getItem('patientID'),
+      FormID: formId
+    }
+    const response = await dispatch(GetConsentFormContent(Obj)).unwrap();
+    debugger;
+    const data = await response.result;
+    return data;
+  };
+
+
+
+
 
   const refreshForms = async () => {
-  try {
-    const patientId = localStorage.getItem('patientID');
-    if (!patientId) return;
+    try {
+      const patientId = localStorage.getItem('patientID');
+      if (!patientId) return;
 
-    const response = await dispatch(GetConsentFormData(patientId)).unwrap();
+      const response = await dispatch(GetConsentFormData(patientId)).unwrap();
 
-    const mappedForms: ConsentForm[] = response.result.map((form: any) => ({
-      PatientID: form.patientID,
-      FormID: String(form.formID),
-      Title: form.title,
-      Content: form.content,
-      Status: form.status,
-      SignedDate: form.signedDate,
-      Signature: form.signature
-    }));
-   const pending = mappedForms.filter((f) => f.Status === 'Pending');
-    setPendingCount(pending.length);
-    setForms(mappedForms);
-    console.log('Refetched consent forms:', mappedForms);
-  } catch (error) {
-    console.error('Failed to refresh consent forms:', error);
-  }
-};
+      const mappedForms: ConsentForm[] = response.result.map((form: any) => ({
+        PatientID: form.patientID,
+        FormID: String(form.formID),
+        Title: form.title,
+        Content: form.content,
+        Status: form.status,
+        SignedDate: form.signedDate,
+        Signature: form.signature
+      }));
+      const pending = mappedForms.filter((f) => f.Status === 'Pending');
+      setPendingCount(pending.length);
+      setForms(mappedForms);
+      console.log('Refetched consent forms:', mappedForms);
+    } catch (error) {
+      console.error('Failed to refresh consent forms:', error);
+    }
+  };
 
 
 
@@ -98,12 +116,13 @@ function ConsentFormsLayout() {
     () => forms.filter((f) => f.Status === 'Pending'),
     [forms]
   );
-  
+
   useEffect(() => {
-  if (forms.length > 0 && !selectedForm) {
-    setSelectedForm(forms[0]);
-  }
-}, [forms]);
+    if (forms.length > 0 && !selectedForm) {
+      // setSelectedForm(forms[0]);
+       handleSelectForm(forms[0]);
+    }
+  }, [forms]);
 
   const handleFormSigned = (formId: string, Signature: string) => {
     const now = new Date().toISOString();
@@ -124,9 +143,26 @@ function ConsentFormsLayout() {
     );
   };
 
-  const handleSelectForm = (form: ConsentForm) => {
-    setSelectedForm(form);
-  };
+  const handleSelectForm = async (form: ConsentForm) => {
+  if (!form.Content) {
+    try {
+      const detailedForms = await getConsentFormById(form.FormID); 
+      const detailedForm = detailedForms[0];
+      debugger;
+      const updatedForm = { ...form, Content: detailedForm.content, Signature:detailedForm.signature };
+
+      setForms(prev =>
+        prev.map(f => (f.FormID === form.FormID ? updatedForm : f))
+      );
+
+      setSelectedForm(updatedForm);
+    } catch (error) {
+      console.error('Failed to load form content:', error);
+    }
+  } else {
+    setSelectedForm(form); // Already has content
+  }
+};
 
   useEffect(() => {
     if (!justSigned || selectedForm?.Status !== 'Signed') return;
@@ -189,7 +225,8 @@ function ConsentFormsLayout() {
                   <ConsentFormList
                     forms={forms}
                     selectedId={selectedForm?.FormID}
-                    onSelect={setSelectedForm}
+                    // onSelect={setSelectedForm}
+                    onSelect={handleSelectForm}
                   />
                 </CardContent>
               </Card>
@@ -211,13 +248,13 @@ function ConsentFormsLayout() {
                   overflow: 'hidden'
                 }}
               >
-                
+
                 <ConsentFormViewer
                   form={selectedForm}
                   onFormSigned={handleFormSigned}
                   pendingForms={pendingForms}
                   onSelectForm={handleSelectForm}
-                  triggerRefresh={triggerRefresh} 
+                  triggerRefresh={triggerRefresh}
                 />
 
               </Card>
