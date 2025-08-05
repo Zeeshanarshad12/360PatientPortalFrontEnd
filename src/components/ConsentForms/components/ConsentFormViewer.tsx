@@ -122,30 +122,32 @@ const hasShownCompletionMessage = useRef<boolean>(false);
   }, [countdown]);
 
 
+useEffect(() => {
+  const currentPendingCount = pendingForms.filter(f => f.Status === 'Pending').length;
+  const allSigned = currentPendingCount === 0 && prevPendingCount.current > 0;
+
+  let timer: NodeJS.Timeout | null = null;
+
+  if (allSigned && !hasShownCompletionMessage.current) {
+    setShowAllSignedMessage(true);
+    hasShownCompletionMessage.current = true;
+ localStorage.setItem('pendingConsentFormCount', '0');
+   
+  }
+    // Start countdown to hide message
+    timer = setTimeout(() => {
+      setShowAllSignedMessage(false);
+    }, 3000);
+  // Always update previous pending count
+  prevPendingCount.current = currentPendingCount;
+
+  // Cleanup timeout
+  return () => {
+    if (timer) clearTimeout(timer);
+  };
+}, [pendingForms]);
 
 
-  useEffect(() => {
-
-    const currentPendingCount = pendingForms.filter(f => f.Status === 'Pending').length;
-    const allSigned = currentPendingCount === 0 && prevPendingCount.current > 0;
-
-    if (allSigned) {
-      setShowAllSignedMessage(true);
-      localStorage.setItem('pendingConsentFormCount', '0');
-      const timer = setTimeout(() => {
-        setShowAllSignedMessage(false);
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-
-    // Update previous count at the end of the effect
-    prevPendingCount.current = currentPendingCount;
-  }, [pendingForms]);
-
-
-
-  
 
   const handlePrint = () => {
     if (typeof window === 'undefined') return;
