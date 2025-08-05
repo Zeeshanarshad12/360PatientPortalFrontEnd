@@ -34,7 +34,9 @@ const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm, tri
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
   const [showAllSignedMessage, setShowAllSignedMessage] = useState(false);
-  const prevPendingCount = useRef<number>(0);
+const prevPendingCount = useRef<number>(0);
+const hasShownCompletionMessage = useRef<boolean>(false);
+
   const { decrementPendingCount } = useConsentFormContext();
 
   useEffect(() => {
@@ -49,51 +51,101 @@ const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm, tri
     }
   }, [form]);
 
+  //   useEffect(() => {
+  //   if (countdown === null || countdown <= 0) return;
+
+  //   const timer = setTimeout(() => {
+  //     setCountdown(countdown - 1);
+  //   }, 1000);
+
+  //   if (countdown === 1 && Array.isArray(pendingForms) && form?.FormID) {
+  //     const currentIndex = pendingForms.findIndex(f => f.FormID === form.FormID);
+
+  //     // Case 1: Try to go to the next one
+  //     if (currentIndex !== -1 && currentIndex + 1 < pendingForms.length) {
+  //       onSelectForm(pendingForms[currentIndex + 1]);
+  //     } 
+  //     // Case 2: Stay in list bounds and go to the first available one (excluding current)
+  //     else {
+  //       const otherPending = pendingForms.find(f => f.FormID !== form.FormID);
+  //       if (otherPending) {
+  //         onSelectForm(otherPending);
+  //       }
+  //     }
+  //   }
+
+  //   return () => clearTimeout(timer);
+  // }, [countdown, pendingForms, form]);
+
+  const [hasMovedToNext, setHasMovedToNext] = useState(false);
   useEffect(() => {
-  if (countdown === null || countdown <= 0) return;
+    if (countdown === null || countdown <= 0 || !form?.FormID) return;
 
-  const timer = setTimeout(() => {
-    setCountdown(countdown - 1);
-  }, 1000);
-
-  if (countdown === 1 && Array.isArray(pendingForms) && form?.FormID) {
-    const currentIndex = pendingForms.findIndex(f => f.FormID === form.FormID);
-
-    // Case 1: Try to go to the next one
-    if (currentIndex !== -1 && currentIndex + 1 < pendingForms.length) {
-      onSelectForm(pendingForms[currentIndex + 1]);
-    } 
-    // Case 2: Stay in list bounds and go to the first available one (excluding current)
-    else {
-      const otherPending = pendingForms.find(f => f.FormID !== form.FormID);
-      if (otherPending) {
-        onSelectForm(otherPending);
-      }
-    }
-  }
-
-  return () => clearTimeout(timer);
-}, [countdown, pendingForms, form]);
-
-
-
-useEffect(() => {
-  const currentPendingCount = pendingForms.filter(f => f.Status === 'Pending').length;
-  const allSigned = currentPendingCount === 0 && prevPendingCount.current > 0;
-
-  if (allSigned) {
-    setShowAllSignedMessage(true);
-    localStorage.setItem('pendingConsentFormCount','0');
     const timer = setTimeout(() => {
-      setShowAllSignedMessage(false);
-    }, 3000);
+      setCountdown(prev => (prev !== null ? prev - 1 : null));
+    }, 1000);
+
+    if (countdown === 1) {
+      setTimeout(() => {
+        const remainingPending = pendingForms.filter(f => f.Status === 'Pending');
+        const currentFormID = form.FormID;
+
+        if (remainingPending.length === 0) return;
+
+        const currentIndex = remainingPending.findIndex(f => f.FormID === currentFormID);
+
+        let nextForm: ConsentForm | undefined;
+
+        if (currentIndex !== -1 && currentIndex + 1 < remainingPending.length) {
+          nextForm = remainingPending[currentIndex + 1]; 
+        } else {
+          nextForm = remainingPending[0];
+        }
+
+        setCountdown(null);
+
+        if (nextForm) {
+          onSelectForm(nextForm);
+        }
+      }, 300); 
+    }
 
     return () => clearTimeout(timer);
-  }
+  }, [countdown, pendingForms, form?.FormID]);
 
-  // Update previous count at the end of the effect
-  prevPendingCount.current = currentPendingCount;
-}, [pendingForms]);
+
+  // Reset flag when new countdown starts
+  useEffect(() => {
+    if (countdown === 5) {
+      setHasMovedToNext(false);
+    }
+  }, [countdown]);
+
+
+
+
+  useEffect(() => {
+
+    const currentPendingCount = pendingForms.filter(f => f.Status === 'Pending').length;
+    const allSigned = currentPendingCount === 0 && prevPendingCount.current > 0;
+
+    if (allSigned) {
+      setShowAllSignedMessage(true);
+      localStorage.setItem('pendingConsentFormCount', '0');
+      const timer = setTimeout(() => {
+        setShowAllSignedMessage(false);
+      }, 3000);
+
+      return () => clearTimeout(timer);
+    }
+
+    // Update previous count at the end of the effect
+    prevPendingCount.current = currentPendingCount;
+  }, [pendingForms]);
+
+
+
+  
 
   const handlePrint = () => {
     if (typeof window === 'undefined') return;
@@ -159,7 +211,7 @@ useEffect(() => {
     try {
       const response = await dispatch(saveConsentForm(updatedForm));
 
-      triggerRefresh(); 
+      triggerRefresh();
       //  Forcefully check for result === 'success'
       if (response.payload.result === 'success') {
         decrementPendingCount();
@@ -167,7 +219,7 @@ useEffect(() => {
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
 
-        
+
         onFormSigned(form.FormID, Signature);
         setCountdown(5);
       }
@@ -299,31 +351,31 @@ useEffect(() => {
 
 
       {
-  showAllSignedMessage && (
-    <Box
-      sx={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        transform: 'translate(-50%, -50%)',
-        bgcolor: 'white',
-        opacity: '0.95',
-        color: 'green',
-        p: 4,
-        borderRadius: 3,
-        boxShadow: '0px 4px 12px rgba(0,0,0,0.1)',
-        textAlign: 'center',
-        zIndex: 1000,
-        minWidth: 300,
-        transition: 'opacity 0.5s ease-in-out',
-      }}
-    >
-      <Typography variant="h6" fontWeight={600}>
-        🎉 You have completed all pending consent forms!
-      </Typography>
-    </Box>
-  )
-}
+        showAllSignedMessage && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              bgcolor: 'white',
+              opacity: '0.95',
+              color: 'green',
+              p: 4,
+              borderRadius: 3,
+              boxShadow: '0px 4px 12px rgba(0,0,0,0.1)',
+              textAlign: 'center',
+              zIndex: 1000,
+              minWidth: 300,
+              transition: 'opacity 0.5s ease-in-out',
+            }}
+          >
+            <Typography variant="h6" fontWeight={600}>
+              🎉 You have completed all pending consent forms!
+            </Typography>
+          </Box>
+        )
+      }
 
 
 
