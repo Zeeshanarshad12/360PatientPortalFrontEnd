@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from '@/store/index';
 import { GetConsentFormData, GetConsentFormContent } from '@/slices/patientprofileslice';
 import HeartProgressLoader from '@/components/ProgressLoaders/components/HeartLoader';
 import { useConsentFormContext } from '@/contexts/ConsentFormContext';
+import draftToHtml from 'draftjs-to-html';
 
 const HEADER_HEIGHT = 10;
 const SPACING = 0;
@@ -76,7 +77,6 @@ function ConsentFormsLayout() {
       FormID: formId
     }
     const response = await dispatch(GetConsentFormContent(Obj)).unwrap();
-    debugger;
     const data = await response.result;
     return data;
   };
@@ -148,8 +148,11 @@ function ConsentFormsLayout() {
     try {
       const detailedForms = await getConsentFormById(form.FormID); 
       const detailedForm = detailedForms[0];
+      // const rawContent = JSON.parse(detailedForm.content);
+      const rawContent = detailedForm?.content ? JSON.parse(detailedForm.content) : null;
+      const contenthtml = draftToHtml(rawContent);
       debugger;
-      const updatedForm = { ...form, Content: detailedForm.content, Signature:detailedForm.signature };
+      const updatedForm = { ...form, Content: contenthtml, Signature:detailedForm.signature };
 
       setForms(prev =>
         prev.map(f => (f.FormID === form.FormID ? updatedForm : f))

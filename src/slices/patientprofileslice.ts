@@ -60,7 +60,7 @@ export const GetPatientByEmail: any = createAsyncThunk(
       if (res?.status === 200 || res?.status === 201) {
         debugger;
         localStorage.setItem('pendingConsentFormCount', res?.pendingConsentFormCount);
-        Router.push('/patientportal/profile');
+        //Router.push('/patientportal/profile');
         return res?.data?.result;
       }
     } catch (error) {

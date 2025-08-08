@@ -40,42 +40,21 @@ const hasShownCompletionMessage = useRef<boolean>(false);
   const { decrementPendingCount } = useConsentFormContext();
 
   useEffect(() => {
-    if (form) {
-      const updatedContent = form.Content.replace(
-        '{{patient_signature}}',
-        form.Signature
-          ? `<img src="${form.Signature}" alt="Patient Signature" style="max-width: 100%; height: auto; margin-top: 20px;" />`
-          : '<div style="margin-top: 20px; height: 100px; border: 1px dashed #aaa; text-align: center; line-height: 100px;">Patient Signature</div>'
-      );
-      setRenderedContent(updatedContent);
-    }
-  }, [form]);
+  if (form) {
+    let updatedContent = form.Content;
 
-  //   useEffect(() => {
-  //   if (countdown === null || countdown <= 0) return;
+    // Replace ______________________ with signature if exists
+    updatedContent = updatedContent.replace(
+      /_{10,}/g, // match a long underscore line
+      form.Signature
+        ? `<img src="${form.Signature}" alt="Patient Signature" style="max-width: 250px; height: auto;" />`
+        : '___________________________' 
+    );
 
-  //   const timer = setTimeout(() => {
-  //     setCountdown(countdown - 1);
-  //   }, 1000);
+    setRenderedContent(updatedContent);
+  }
+}, [form]);
 
-  //   if (countdown === 1 && Array.isArray(pendingForms) && form?.FormID) {
-  //     const currentIndex = pendingForms.findIndex(f => f.FormID === form.FormID);
-
-  //     // Case 1: Try to go to the next one
-  //     if (currentIndex !== -1 && currentIndex + 1 < pendingForms.length) {
-  //       onSelectForm(pendingForms[currentIndex + 1]);
-  //     } 
-  //     // Case 2: Stay in list bounds and go to the first available one (excluding current)
-  //     else {
-  //       const otherPending = pendingForms.find(f => f.FormID !== form.FormID);
-  //       if (otherPending) {
-  //         onSelectForm(otherPending);
-  //       }
-  //     }
-  //   }
-
-  //   return () => clearTimeout(timer);
-  // }, [countdown, pendingForms, form]);
 
   const [hasMovedToNext, setHasMovedToNext] = useState(false);
   useEffect(() => {
