@@ -12,13 +12,38 @@ import {
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import { widgetContent } from '@/components/Dashboard/contexts/widgetData';
+import { useDispatch, useSelector } from '@/store/index';
+import { useState, useEffect, useMemo } from 'react';
+import { getpatientproblems } from '@/slices/patientprofileslice';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
 }
 
-const MyHealthConditions: React.FC<Props> = ({dragHandleProps}) => {
-  const healthConditions = widgetContent.myHealthConditions.data;
+const MyHealthConditions: React.FC<Props> = ({ dragHandleProps }) => {
+  // const healthConditions = widgetContent.myHealthConditions.data;
+  const dispatch = useDispatch();
+  const [healthConditions, sethealthConditions] = useState([]);
+
+  useEffect(() => {
+      const fetchData = async () => {
+        try {
+          const Obj = {
+            PatientId: localStorage.getItem('patientID'),
+          };
+  
+          const response = await dispatch(getpatientproblems(Obj)).unwrap();
+          const data = response.result;
+          sethealthConditions(data);
+        } catch (error) {
+          console.error("Error fetching medications:", error);
+        } 
+      };
+  
+      fetchData();
+    }, [dispatch]);
+
+
 
   return (
     <Card sx={{ minHeight: 250, borderRadius: 3 }}>
@@ -27,11 +52,11 @@ const MyHealthConditions: React.FC<Props> = ({dragHandleProps}) => {
         <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
           <Typography variant="h4" fontWeight="bold">
             {widgetContent.myHealthConditions.title}
-          <Chip
-            label={healthConditions.length}
-            size="small"
-            sx={{ fontWeight: 'bold', bgcolor: 'black', color: 'white', ml: 2 }}
-          />
+            <Chip
+              label={healthConditions.length}
+              size="small"
+              sx={{ fontWeight: 'bold', bgcolor: 'black', color: 'white', ml: 2 }}
+            />
           </Typography>
           <Box {...dragHandleProps}>
             <IconButton size="small" sx={{ cursor: 'grab' }}>
@@ -53,7 +78,7 @@ const MyHealthConditions: React.FC<Props> = ({dragHandleProps}) => {
             }}
           >
             <Box display="flex" justifyContent="space-between">
-              <Typography fontWeight="bold">{cond.condition}</Typography>
+              <Typography fontWeight="bold">{cond.icdCodeDescription}</Typography>
               <IconButton size="small">
                 <MoreVertIcon fontSize="small" />
               </IconButton>
@@ -63,7 +88,7 @@ const MyHealthConditions: React.FC<Props> = ({dragHandleProps}) => {
               Last reviewed: {cond.reviewed}
             </Typography>
             <Typography variant="subtitle1" color="text.primary">
-              Provider: {cond.provider} | Diagnosed: {cond.diagnosed}
+              Provider: {'Dr.Amir Shahzad'} | Diagnosed: {new Date(cond.createdAt).toLocaleDateString()}
             </Typography>
           </Box>
         ))}

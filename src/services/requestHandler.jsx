@@ -233,7 +233,7 @@ const GetConsentFormData = (data, flag) =>
     }
   );
 
-  const GetConsentFormContent = (data, flag) =>
+const GetConsentFormContent = (data, flag) =>
 
   get(
 
@@ -244,7 +244,57 @@ const GetConsentFormData = (data, flag) =>
       ApiVersion2Req: flag
     }
   );
-  
+
+
+const GetPatientActiveMedications = (data, flag) =>
+
+  get(
+
+    `${SERVICE_URLSV2.GetPatientActiveMedications}?&PatientId=${data?.PatientId}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
+const GetPatientAllergies = (data, flag) =>
+
+  get(
+
+    `${SERVICE_URLSV2.GetPatientAllergies}?&PatientId=${data?.PatientId}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
+
+const getpatientvitals = (data, flag) =>
+
+  get(
+
+    `${SERVICE_URLSV2.getpatientvitals}?&PatientId=${data?.PatientId}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
+const getpatientproblems = (data, flag) =>
+
+  get(
+
+    `${SERVICE_URLSV2.getpatientproblems}?&PatientId=${data?.PatientId}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
 
 
 
@@ -271,7 +321,10 @@ const apiServicesV2 = {
   UpdateSharingModulesData,
   saveConsentForm,
   GetConsentFormData,
-  GetConsentFormContent
-
+  GetConsentFormContent,
+  GetPatientActiveMedications,
+  GetPatientAllergies,
+  getpatientvitals,
+  getpatientproblems
 };
 export default apiServicesV2;

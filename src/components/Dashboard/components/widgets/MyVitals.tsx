@@ -19,6 +19,9 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { widgetContent } from '@/components/Dashboard/contexts/widgetData';
+import { useDispatch, useSelector } from '@/store/index';
+import { getpatientvitals } from '@/slices/patientprofileslice';
+import { Console } from 'console';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -26,37 +29,209 @@ interface Props {
 
 const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
   const [viewMode, setViewMode] = useState<'table' | 'chart'>('table');
-  const [selectedVital, setSelectedVital] = useState('BP');
+  const [selectedVital, setSelectedVital] = useState("BP");
   const [isClient, setIsClient] = useState(false);
-  const vitalsData = widgetContent.myVitals.data;
-
+  const dispatch = useDispatch();
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+
+
+  const [dates, setDates] = useState<string[]>([]);
+  const [vitals, setVitals] = useState<{ name: string; values: string[] }[]>([]);
+
+  // useEffect(() => {
+  //   const fetchData = async () => {
+  //     try {
+  //       const Obj = { PatientId: localStorage.getItem("patientID") };
+  //       const response = await dispatch(getpatientvitals(Obj)).unwrap();
+  //       const data = response.result;
+  //       debugger;
+  //       // Build Dates
+  //       const extractedDates = data.map(d => {
+  //         const dateObj = new Date(d.sessionDate);
+  //         const month = String(dateObj.getMonth() + 1).padStart(2, "0"); // 01–12
+  //         const day = String(dateObj.getDate()).padStart(2, "0");        // 01–31
+  //         return `${month}/${day}`;
+  //       });
+  //       setDates(extractedDates);
+
+  //       // Define which vitals you want to show
+  //       const allowedVitals = ["Blood Pressure", "BMI Percentile", "Body Weight", "Body Height", "Heart Rate", "Pain Level", "Temperature"];
+
+  //       const vitalsMap: Record<string, string[]> = {};
+
+  //       data.forEach(day => {
+  //         day.patientVitalViewModels.forEach(vital => {
+  //           const name = vital.vitalName;
+
+  //           // Show only allowed vitals
+  //           if (!allowedVitals.includes(name)) return;
+
+  //           let value;
+  //           if (name.toLowerCase() === "bp" || name.toLowerCase() === "blood pressure") {
+  //             const systolic = vital.listOfPatientVitals[0]?.value || "-";
+  //             const diastolic = vital.listOfPatientVitals[1]?.value || "-";
+  //             value = `${systolic}/${diastolic}`;
+  //           } else {
+  //             value = vital.listOfPatientVitals[0]?.value || "-";
+  //           }
+
+  //           if (!vitalsMap[name]) vitalsMap[name] = [];
+  //           vitalsMap[name].push(value);
+  //         });
+  //       });
+
+  //       // Convert vitalsMap to array and sort according to allowedVitals order
+  //       const vitalsArray = allowedVitals
+  //         .filter(name => vitalsMap[name]) // Only include ones that exist
+  //         .map(name => ({
+  //           name,
+  //           values: vitalsMap[name]
+  //         }));
+
+  //       setVitals(vitalsArray);
+
+
+
+  //     } catch (error) {
+  //       console.error("Error fetching vitals:", error);
+  //     }
+  //   };
+
+  //   fetchData();
+  // }, [dispatch]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const Obj = { PatientId: localStorage.getItem("patientID") };
+        const response = await dispatch(getpatientvitals(Obj)).unwrap();
+        const data = response.result;
+
+        // Build Dates
+        const extractedDates = data.map(d => {
+          const dateObj = new Date(d.sessionDate);
+          const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+          const day = String(dateObj.getDate()).padStart(2, "0");
+          return `${month}/${day}`;
+        });
+        setDates(extractedDates);
+
+        // Define which vitals you want to show
+        const allowedVitals = [
+          "Blood Pressure",
+          "BMI Percentile",
+          "Body Weight",
+          "Body Height",
+          "Heart Rate",
+          "Pain Level",
+          "Temperature"
+        ];
+
+        // Define mapping for abbreviations
+        const vitalNameMapping = {
+          "Blood Pressure": "BP",
+          "BMI Percentile": "BMI",
+          "Body Weight": "Weight (lbs)",
+          "Body Height": "Height (ft-in)",
+          "Heart Rate": "Heart Rate (bpm)",
+          "Pain Level": "Pain Scale",
+          "Temperature": "Temp (°F)"
+        };
+
+        const vitalsMap = {};
+
+        data.forEach(day => {
+          day.patientVitalViewModels.forEach(vital => {
+            let originalName = vital.vitalName;
+
+            // Show only allowed vitals
+            if (!allowedVitals.includes(originalName)) return;
+
+            // Replace with short form if in mapping
+            const displayName = vitalNameMapping[originalName] || originalName;
+
+            let value;
+            // if (
+            //   originalName.toLowerCase() === "bp" ||
+            //   originalName.toLowerCase() === "blood pressure"
+            // ) {
+            //   const systolic = vital.listOfPatientVitals[0]?.value || "-";
+            //   const diastolic = vital.listOfPatientVitals[1]?.value || "-";
+            //   value = `${systolic}/${diastolic}`;
+            // } else {
+            //   value = vital.listOfPatientVitals[0]?.value || "-";
+            // }
+    debugger;
+            if (
+              originalName.toLowerCase() === "bp" ||
+              originalName.toLowerCase() === "blood pressure"
+            ) {
+              const systolic = vital.listOfPatientVitals[0]?.value || "-";
+              const diastolic = vital.listOfPatientVitals[1]?.value || "-";
+              value = `${systolic}/${diastolic}`;
+            }
+            else if (
+              originalName.toLowerCase() === "body height" ||
+              originalName.toLowerCase() === "height"
+            ) {
+              const feet = vital.listOfPatientVitals[0]?.value || "-";
+              const inches = vital.listOfPatientVitals[1]?.value || "-";
+              value = `${feet}'${inches}"`;  // Example: 5'4"
+            }
+        
+            else if(
+              originalName.toLowerCase() === "pain level" ||
+              originalName.toLowerCase() === "pain level"
+            )
+            {
+              const PainScale = vital.listOfPatientVitals[0]?.value || "0";
+              const PainUnit = vital.listOfPatientVitals[0]?.painScale ;
+              value = `${PainScale} - ${PainUnit}`;
+            }
+            else {
+              value = vital.listOfPatientVitals[0]?.value || "-";
+            }
+
+
+            if (!vitalsMap[displayName]) vitalsMap[displayName] = [];
+            vitalsMap[displayName].push(value);
+          });
+        });
+
+        // Convert vitalsMap to array and sort according to allowedVitals order
+        const vitalsArray = allowedVitals
+          .map(name => vitalNameMapping[name] || name) // Map to display names
+          .filter(name => vitalsMap[name]) // Only include existing
+          .map(name => ({
+            name,
+            values: vitalsMap[name]
+          }));
+
+        setVitals(vitalsArray);
+      } catch (error) {
+        console.error("Error fetching vitals:", error);
+      }
+    };
+
+    fetchData();
+  }, [dispatch]);
 
   const renderTableView = () => (
     <TableContainer component={Paper} sx={{ boxShadow: 'none', bgcolor: 'transparent' }}>
       <Table size="small">
         <TableHead>
           <TableRow>
-            <TableCell sx={{ 
-              borderBottom: '1px solid #e0e0e0', 
-              color: 'text.secondary', 
-              fontWeight: 'bold', 
-              pb: 1 
-            }}>
+            <TableCell sx={{ borderBottom: '1px solid #e0e0e0', color: 'text.secondary', fontWeight: 'bold', pb: 1 }}>
               Vitals
             </TableCell>
-            {vitalsData.dates.map((date, index) => (
-              <TableCell 
-                key={index} 
-                align="center" 
-                sx={{ 
-                  borderBottom: '1px solid #e0e0e0', 
-                  color: 'text.secondary', 
-                  fontWeight: 'bold',
-                  pb: 1
-                }}
+            {dates.map((date, index) => (
+              <TableCell
+                key={index}
+                align="center"
+                sx={{ borderBottom: '1px solid #e0e0e0', color: 'text.secondary', fontWeight: 'bold', pb: 1 }}
               >
                 {date}
               </TableCell>
@@ -64,27 +239,16 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {vitalsData.vitals.map((vital, index) => (
+          {vitals.map((vital, index) => (
             <TableRow key={index}>
-              <TableCell 
-                sx={{ 
-                  borderBottom: '1px solid #e0e0e0', 
-                  color: 'text.primary',
-                  fontWeight: 'medium',
-                  py: 1
-                }}
-              >
+              <TableCell sx={{ borderBottom: '1px solid #e0e0e0', color: 'text.primary', fontWeight: 'medium', py: 1 }}>
                 {vital.name}
               </TableCell>
               {vital.values.map((value, valueIndex) => (
-                <TableCell 
-                  key={valueIndex} 
-                  align="center" 
-                  sx={{ 
-                    borderBottom: '1px solid #e0e0e0', 
-                    color: 'text.primary',
-                    py: 1
-                  }}
+                <TableCell
+                  key={valueIndex}
+                  align="center"
+                  sx={{ borderBottom: '1px solid #e0e0e0', color: 'text.primary', py: 1 }}
                 >
                   {value}
                 </TableCell>
@@ -96,187 +260,95 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
     </TableContainer>
   );
 
+  // Chart data ab direct vitals state & dates state se
   const getChartData = () => {
-    const vital = vitalsData.vitals.find(v => v.name === selectedVital);
+    debugger;
+    const vital = vitals.find(v => v.name === selectedVital);
     if (!vital) return { series: [], categories: [] };
 
-    // Convert string values to numbers for charting
     const numericValues = vital.values.map(value => {
-      if (vital.name === 'BP') {
-        // For BP, take the systolic value (first number before '/')
-        return parseInt(value.split('/')[0]);
-      } else if (vital.name === 'Temp') {
-        // For temperature, convert to number
-        return parseFloat(value);
-      } else {
-        // For others, convert to number
-        return parseFloat(value);
+      if (selectedVital.toLowerCase().includes('blood pressure')) {
+        return parseInt(value.split('/')[0]) || 0; // Systolic only
       }
+      return parseFloat(value) || 0;
     });
 
     return {
-      series: [{
-        name: vital.fullName,
-        data: numericValues
-      }],
-      categories: vitalsData.dates
+      series: [
+        {
+          name: vital.name,
+          data: numericValues
+        }
+      ],
+      categories: dates
     };
   };
-
+  
   const getChartOptions = (): any => {
-    const vital = vitalsData.vitals.find(v => v.name === selectedVital);
     const chartData = getChartData();
 
-    // Define colors for different vitals
-    const getVitalColor = () => {
-      switch (selectedVital) {
-        case 'BP': return '#2196F3'; // Blue for BP
-        case 'BMI': return '#4CAF50'; // Green for BMI
-        case 'Weight': return '#FF9800'; // Orange for Weight
-        case 'Height': return '#9C27B0'; // Purple for Height
-        case 'Heart Rate': return '#F44336'; // Red for Heart Rate
-        case 'Temp': return '#00BCD4'; // Cyan for Temperature
-        default: return '#2196F3';
-      }
+    const colorMap: Record<string, string> = {
+      'Blood Pressure': '#2196F3',
+      'BMI Percentile': '#4CAF50',
+      'Body Weight': '#FF9800',
+      'Body Height': '#9C27B0',
+      'Heart Rate': '#F44336',
+      'Temperature': '#00BCD4',
+      'Pain Level': '#795548'
     };
-
-    // Define Y-axis ranges for different vitals
-    const getYAxisRange = () => {
-      switch (selectedVital) {
-        case 'BP':
-          return { min: 80, max: 160 };
-        case 'BMI':
-          return { min: 0, max: 100 };
-        case 'Weight':
-          return { min: 50, max: 100 };
-        case 'Height':
-          return { min: 0, max: 40 };
-        case 'Heart Rate':
-          return { min: 60, max: 120 };
-        case 'Temp':
-          return { min: 95, max: 100 };
-        default:
-          return { min: 0, max: 100 };
-      }
-    };
-
-    const yAxisRange = getYAxisRange();
 
     return {
       chart: {
         type: 'line',
         height: 200,
-        toolbar: {
-          show: false
-        },
-        zoom: {
-          enabled: false
-        }
+        toolbar: { show: false },
+        zoom: { enabled: false }
       },
       series: chartData.series,
       xaxis: {
         categories: chartData.categories,
-        labels: {
-          style: {
-            colors: '#666',
-            fontSize: '12px'
-          }
-        },
-        axisBorder: {
-          show: false
-        },
-        axisTicks: {
-          show: false
-        },
-        tooltip: {
-          enabled: false
-        }
+        labels: { style: { colors: '#666', fontSize: '12px' } },
+        axisBorder: { show: false },
+        axisTicks: { show: false }
       },
       yaxis: {
-        min: yAxisRange.min,
-        max: yAxisRange.max,
         labels: {
-          style: {
-            colors: '#666',
-            fontSize: '12px'
-          },
-          formatter: (value) => {
-            if (selectedVital === 'Temp') {
-              return `${value.toFixed(1)}°F`;
-            } else if (selectedVital === 'Weight') {
-              return `${value} lbs`;
-            } else if (selectedVital === 'Height') {
-              return `${value} ft`;
-            } else if (selectedVital === 'Heart Rate') {
-              return `${value} bpm`;
-            } else if (selectedVital === 'BMI') {
-              return `${value}`;
-            } else {
-              return `${value}`;
-            }
-          }
-        },
-        axisBorder: {
-          show: false
-        },
-        axisTicks: {
-          show: false
+          style: { colors: '#666', fontSize: '12px' }
         }
       },
-      colors: [getVitalColor()],
-      stroke: {
-        curve: 'smooth',
-        width: 3
-      },
+      colors: [colorMap[selectedVital] || '#2196F3'],
+      stroke: { curve: 'smooth', width: 3 },
       markers: {
         size: 6,
-        colors: [getVitalColor()],
+        colors: [colorMap[selectedVital] || '#2196F3'],
         strokeColors: '#fff',
         strokeWidth: 2,
-        hover: {
-          size: 8
-        }
+        hover: { size: 8 }
       },
       grid: {
         borderColor: '#e0e0e0',
         strokeDashArray: 3,
-        xaxis: {
-          lines: {
-            show: true
-          }
-        },
-        yaxis: {
-          lines: {
-            show: true
-          }
-        }
+        xaxis: { lines: { show: true } },
+        yaxis: { lines: { show: true } }
       },
       tooltip: {
         theme: 'light',
-        x: { show: false },
         y: {
           formatter: (value) => {
-            if (selectedVital === 'Temp') {
-              return `${value}°F`;
-            } else if (selectedVital === 'Weight') {
-              return `${value} lbs`;
-            } else if (selectedVital === 'Height') {
-              return `${value} ft`;
-            } else if (selectedVital === 'Heart Rate') {
-              return `${value} bpm`;
-            } else if (selectedVital === 'BMI') {
-              return `${value}`;
-            } else {
-              return `${value}`;
-            }
+            debugger;
+            if (selectedVital.toLowerCase().includes('blood pressure')) return `${value} mmHg`;
+            if (selectedVital.toLowerCase().includes('temperature')) return `${value}°F`;
+            if (selectedVital.toLowerCase().includes('weight')) return `${value} lbs`;
+            if (selectedVital.toLowerCase().includes('height')) return `${value} ft`;
+            if (selectedVital.toLowerCase().includes('heart rate')) return `${value} bpm`;
+            return value;
           }
         }
       },
-      dataLabels: {
-        enabled: false
-      }
+      dataLabels: { enabled: false }
     };
   };
+
 
   const renderChartView = () => {
     if (!isClient) {
@@ -290,10 +362,10 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
     }
 
     const chartData = getChartData();
-    
+
     // Dynamic import for ReactApexChart
     const ReactApexChart = require('react-apexcharts').default;
-    
+
     return (
       <Box sx={{ height: 200, width: '100%' }}>
         <ReactApexChart
@@ -355,7 +427,7 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
                 <ShowChartIcon sx={{ fontSize: 20 }} />
               </Button>
             </ButtonGroup>
-            
+
             {/* Drag Handle */}
             <Box {...dragHandleProps}>
               <IconButton size="small" sx={{ cursor: 'grab' }}>
@@ -368,7 +440,7 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
         {/* Vital Selection for Chart View */}
         {viewMode === 'chart' && (
           <Box display="flex" gap={1} mb={2} flexWrap="wrap">
-            {vitalsData.vitals.map((vital) => (
+            {vitals.map((vital) => (
               <Button
                 key={vital.name}
                 variant={selectedVital === vital.name ? 'contained' : 'outlined'}
@@ -394,9 +466,9 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
         )}
 
         {/* Content Area */}
-        <Box sx={{ 
-          maxHeight: 350, 
-          overflowY: 'auto', 
+        <Box sx={{
+          maxHeight: 350,
+          overflowY: 'auto',
           pr: 1,
           minHeight: viewMode === 'chart' ? 200 : 'auto'
         }}>

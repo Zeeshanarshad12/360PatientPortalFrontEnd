@@ -21,6 +21,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     if (patient?.patientID) {
+      debugger;
       localStorage.setItem('patientID', patient?.patientID);
       localStorage.setItem('PracticeId', patient?.practiceId);
       localStorage.setItem('vdtAccess', patient?.vdtAccess);

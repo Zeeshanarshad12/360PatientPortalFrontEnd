@@ -21,5 +21,9 @@ export const SERVICE_URLSV2 = {
   GetServerTime:'dashboard/getservertime',
   saveConsentForm: 'patientportal/SubmitConsentForm',
   GetConsentFormData: 'patientportal/GetConsentFormData',
-  GetConsentFormContent: 'patientportal/getcontent'
+  GetConsentFormContent: 'patientportal/getcontent',
+  GetPatientActiveMedications: 'patientportal/GetPatientActiveMedications',
+  GetPatientAllergies : 'patientportal/getpatientallergies',
+  getpatientvitals : 'patientportal/getpatientvitals',
+  getpatientproblems : 'patientportal/getpatientproblems'
 };

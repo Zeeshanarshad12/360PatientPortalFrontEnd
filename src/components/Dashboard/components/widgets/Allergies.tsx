@@ -10,13 +10,38 @@ import {
 } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import { widgetContent } from '@/components/Dashboard/contexts/widgetData';
+import { useDispatch, useSelector } from '@/store/index';
+import { useState, useEffect, useMemo } from 'react';
+import { GetPatientAllergies } from '@/slices/patientprofileslice';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
 }
 
 const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
-  const allergies = widgetContent.allergies.data;
+  const dispatch = useDispatch();
+  // const allergies = widgetContent.allergies.data;
+
+
+ const [allergies, setAllergies] = useState([]);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const Obj = {
+          PatientId: localStorage.getItem('patientID'),
+        };
+
+        const response = await dispatch(GetPatientAllergies(Obj)).unwrap();
+        const data = response.result;
+        setAllergies(data);
+      } catch (error) {
+        console.error("Error fetching allergies:", error);
+      }
+    };
+
+    fetchData();
+  }, [dispatch]);
+
 
   const getSeverityColor = (severity: string) => {
     switch (severity.toLowerCase()) {
@@ -32,7 +57,7 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
           textColor: '#f57c00',
           chipColor: '#f57c00'
         };
-      case 'low':
+      case 'moderate':
         return {
           bgcolor: '#e8f5e8',
           textColor: '#2e7d32',
@@ -95,11 +120,11 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
                 }}
               >
                 {/* Allergy Details */}
-                <Typography 
+                <Typography  color="text.primary"
                   fontWeight="bold" 
-                  sx={{ color: colors.textColor, mb: 1 }}
+                  sx={{ color: colors.textColor, mb: 1, textTransform: 'capitalize' }}
                 >
-                  {allergy.name}
+                  {allergy.description}
 
                   {/* Severity Badge */}
                 <Chip
@@ -117,10 +142,10 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
                 />
                 </Typography>
                 <Typography variant="body2" color="text.primary" sx={{ mb: 0.5 }}>
-                  Onset: {allergy.onset}
+                  Onset: {new Date(allergy.onsetDate).toLocaleDateString()}
                 </Typography>
                 <Typography variant="body2" color="text.primary">
-                  Category: {allergy.category}
+                  Category: {allergy.categoryName}
                 </Typography>
               </Box>
             );

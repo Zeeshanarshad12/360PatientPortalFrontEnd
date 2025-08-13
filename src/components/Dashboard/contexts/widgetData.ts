@@ -3,11 +3,11 @@ export const savedLayout = [
   { header: 'myHealthConditions', column: 1, row: 2 },
   { header: 'labResults', column: 1, row: 3 },
 
-  { header: 'myVitals', column: 2, row: 1 },
+  { header: 'myVitals', column: 3, row: 1 },
   { header: 'myMedicalTimeline', column: 2, row: 2 },
-  { header: 'allergies', column: 2, row: 3 },
+  { header: 'allergies', column: 2, row: 1 },
 
-  { header: 'upcomingAppointments', column: 3, row: 1 },
+  { header: 'upcomingAppointments', column: 2, row: 3 },
   { header: 'notifications', column: 3, row: 2 },
   { header: 'billingInsurance', column: 3, row: 3 }
 ];

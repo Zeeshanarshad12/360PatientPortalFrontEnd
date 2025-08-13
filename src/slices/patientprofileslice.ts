@@ -55,11 +55,10 @@ export const ClearCahceNLogout: any = createAsyncThunk(
 export const GetPatientByEmail: any = createAsyncThunk(
   'GetPatientByEmail',
   async (data, thunkAPI) => {
+    debugger;
     const res = await apiServicesV2.GetPatientByEmail(data, 'ApiVersion2Req');
     try {
       if (res?.status === 200 || res?.status === 201) {
-        debugger;
-        localStorage.setItem('pendingConsentFormCount', res?.pendingConsentFormCount);
         //Router.push('/patientportal/profile');
         return res?.data?.result;
       }
@@ -419,6 +418,77 @@ export const GetConsentFormContent: any = createAsyncThunk(
     }
   }
 ) ;
+
+export const GetPatientActiveMedications: any = createAsyncThunk(
+  'GetPatientActiveMedications',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.GetPatientActiveMedications(data, 'ApiVersion2Req');
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+) ;
+
+export const GetPatientAllergies: any = createAsyncThunk(
+  'GetPatientAllergies',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.GetPatientAllergies(data, 'ApiVersion2Req');
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+) ;
+
+
+export const getpatientvitals: any = createAsyncThunk(
+  'getpatientvitals',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.getpatientvitals(data, 'ApiVersion2Req');
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+) ;
+
+
+export const getpatientproblems: any = createAsyncThunk(
+  'getpatientproblems',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.getpatientproblems(data, 'ApiVersion2Req');
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+) ;
+
 
 
 const patientProfileSlice = createSlice({
