@@ -41,68 +41,6 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
   const [dates, setDates] = useState<string[]>([]);
   const [vitals, setVitals] = useState<{ name: string; values: string[] }[]>([]);
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-  //     try {
-  //       const Obj = { PatientId: localStorage.getItem("patientID") };
-  //       const response = await dispatch(getpatientvitals(Obj)).unwrap();
-  //       const data = response.result;
-  //       debugger;
-  //       // Build Dates
-  //       const extractedDates = data.map(d => {
-  //         const dateObj = new Date(d.sessionDate);
-  //         const month = String(dateObj.getMonth() + 1).padStart(2, "0"); // 01–12
-  //         const day = String(dateObj.getDate()).padStart(2, "0");        // 01–31
-  //         return `${month}/${day}`;
-  //       });
-  //       setDates(extractedDates);
-
-  //       // Define which vitals you want to show
-  //       const allowedVitals = ["Blood Pressure", "BMI Percentile", "Body Weight", "Body Height", "Heart Rate", "Pain Level", "Temperature"];
-
-  //       const vitalsMap: Record<string, string[]> = {};
-
-  //       data.forEach(day => {
-  //         day.patientVitalViewModels.forEach(vital => {
-  //           const name = vital.vitalName;
-
-  //           // Show only allowed vitals
-  //           if (!allowedVitals.includes(name)) return;
-
-  //           let value;
-  //           if (name.toLowerCase() === "bp" || name.toLowerCase() === "blood pressure") {
-  //             const systolic = vital.listOfPatientVitals[0]?.value || "-";
-  //             const diastolic = vital.listOfPatientVitals[1]?.value || "-";
-  //             value = `${systolic}/${diastolic}`;
-  //           } else {
-  //             value = vital.listOfPatientVitals[0]?.value || "-";
-  //           }
-
-  //           if (!vitalsMap[name]) vitalsMap[name] = [];
-  //           vitalsMap[name].push(value);
-  //         });
-  //       });
-
-  //       // Convert vitalsMap to array and sort according to allowedVitals order
-  //       const vitalsArray = allowedVitals
-  //         .filter(name => vitalsMap[name]) // Only include ones that exist
-  //         .map(name => ({
-  //           name,
-  //           values: vitalsMap[name]
-  //         }));
-
-  //       setVitals(vitalsArray);
-
-
-
-  //     } catch (error) {
-  //       console.error("Error fetching vitals:", error);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, [dispatch]);
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -154,17 +92,7 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
             const displayName = vitalNameMapping[originalName] || originalName;
 
             let value;
-            // if (
-            //   originalName.toLowerCase() === "bp" ||
-            //   originalName.toLowerCase() === "blood pressure"
-            // ) {
-            //   const systolic = vital.listOfPatientVitals[0]?.value || "-";
-            //   const diastolic = vital.listOfPatientVitals[1]?.value || "-";
-            //   value = `${systolic}/${diastolic}`;
-            // } else {
-            //   value = vital.listOfPatientVitals[0]?.value || "-";
-            // }
-    debugger;
+          
             if (
               originalName.toLowerCase() === "bp" ||
               originalName.toLowerCase() === "blood pressure"
@@ -283,7 +211,7 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
       categories: dates
     };
   };
-  
+
   const getChartOptions = (): any => {
     const chartData = getChartData();
 

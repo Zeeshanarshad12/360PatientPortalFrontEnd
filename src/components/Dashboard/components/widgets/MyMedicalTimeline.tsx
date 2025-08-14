@@ -14,13 +14,46 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import { widgetContent } from '@/components/Dashboard/contexts/widgetData';
+import { useDispatch, useSelector } from '@/store/index';
+import { useState, useEffect, useMemo } from 'react';
+import { GetPatientEncounterDetails } from '@/slices/patientprofileslice';
+import moment from 'moment-timezone';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
 }
 
 const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
-  const timelineEvents = widgetContent.myMedicalTimeline.data;
+  //  const timelineEvents = widgetContent.myMedicalTimeline.data;
+  const dispatch = useDispatch();
+   const [timelineEvents, settimelineEvents] = useState([]);
+   const [fromDate, setFromDate] = useState(moment().format('YYYY-MM-DD'));
+     const [toDate, setToDate] = useState(moment().format('YYYY-MM-DD'));
+  
+    useEffect(() => {
+
+
+        const fetchData = async () => {
+          try {
+            const Obj = {
+              PatientId: localStorage.getItem('patientID'),
+              dateflag : false,
+              datefrom : fromDate,
+              dateto   : toDate
+            };
+            const response = await dispatch(GetPatientEncounterDetails(Obj)).unwrap();
+            const data = response;
+            settimelineEvents(data);
+            // console.log(timelineEvents);
+
+          } catch (error) {
+            console.error("Error fetching medications:", error);
+          } 
+        };
+    
+        fetchData();
+      }, [dispatch]);
+
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -82,7 +115,7 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
         {/* Scrollable Timeline Events List */}
         <Box sx={{ maxHeight: 350, overflowY: 'auto', pr: 1 }}>
           {timelineEvents.map((event: any, index: number) => {
-            const statusColors = getStatusColor(event.status);
+            const statusColors = getStatusColor('completed');
             return (
               <Box
                 key={index}
@@ -101,7 +134,7 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
 
                   {/* Status Badge */}
                 <Chip
-                  label={event.status}
+                  label={'Completed'}
                   size="small"
                   sx={{
                     position: 'absolute',
@@ -122,14 +155,14 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
                 <Box display="flex" alignItems="center" sx={{ mb: 0.5 }}>
                   <CalendarTodayIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
                   <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                    {event.date}
+                   {new Date(event.encounterDateTime).toLocaleDateString()}
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>
                     |
                   </Typography>
                   <AccessTimeIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
                   <Typography variant="body2" color="text.secondary">
-                    {event.time}
+                    {new Date(event.encounterDateTime).toLocaleTimeString()} 
                   </Typography>
                 </Box>
 
@@ -137,16 +170,16 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
                 <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
                   <LocationOnIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
                   <Typography variant="body2" color="text.secondary">
-                    {event.location}
+                    {event.locationName}
                   </Typography>
                 </Box>
 
                 {/* Description */}
-                {event.description && (
+                {/* {event.description && ( */}
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                    {event.description}
+                    {event.reasonString}
                   </Typography>
-                )}
+                {/* )} */}
 
                 {/* Associated Details Buttons */}
                 {event.associatedDetails && (

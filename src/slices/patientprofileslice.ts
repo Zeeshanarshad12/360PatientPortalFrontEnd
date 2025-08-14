@@ -55,7 +55,6 @@ export const ClearCahceNLogout: any = createAsyncThunk(
 export const GetPatientByEmail: any = createAsyncThunk(
   'GetPatientByEmail',
   async (data, thunkAPI) => {
-    debugger;
     const res = await apiServicesV2.GetPatientByEmail(data, 'ApiVersion2Req');
     try {
       if (res?.status === 200 || res?.status === 201) {
@@ -89,7 +88,9 @@ export const GetPatientDetailsById: any = createAsyncThunk(
 export const GetPatientEncounterDetails: any = createAsyncThunk(
   'GetPatientEncounterDetails',
   async (data, thunkAPI) => {
+
     const res = await apiServicesV2.GetPatientEncounterDetails(data, 'ApiVersion2Req');
+
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data?.result;
@@ -488,7 +489,6 @@ export const getpatientproblems: any = createAsyncThunk(
     }
   }
 ) ;
-
 
 
 const patientProfileSlice = createSlice({
