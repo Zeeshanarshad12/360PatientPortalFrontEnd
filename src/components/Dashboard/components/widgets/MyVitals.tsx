@@ -92,7 +92,7 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
             const displayName = vitalNameMapping[originalName] || originalName;
 
             let value;
-          
+
             if (
               originalName.toLowerCase() === "bp" ||
               originalName.toLowerCase() === "blood pressure"
@@ -109,14 +109,13 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
               const inches = vital.listOfPatientVitals[1]?.value || "-";
               value = `${feet}'${inches}"`;  // Example: 5'4"
             }
-        
-            else if(
+
+            else if (
               originalName.toLowerCase() === "pain level" ||
               originalName.toLowerCase() === "pain level"
-            )
-            {
+            ) {
               const PainScale = vital.listOfPatientVitals[0]?.value || "0";
-              const PainUnit = vital.listOfPatientVitals[0]?.painScale ;
+              const PainUnit = vital.listOfPatientVitals[0]?.painScale;
               value = `${PainScale} - ${PainUnit}`;
             }
             else {
@@ -200,6 +199,7 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
       }
       return parseFloat(value) || 0;
     });
+const originalValues = vital.values;
 
     return {
       series: [
@@ -208,7 +208,8 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
           data: numericValues
         }
       ],
-      categories: dates
+      categories: dates,
+      originalValues
     };
   };
 
@@ -259,20 +260,51 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
         xaxis: { lines: { show: true } },
         yaxis: { lines: { show: true } }
       },
+      // tooltip: {
+      //   theme: 'light',
+      //   y: {
+      //     formatter: (value) => {
+      //       debugger;
+      //       if (selectedVital.toLowerCase().includes('blood pressure')) return `${value} mmHg`;
+
+      //       formatter: (value, { dataPointIndex }) => {
+      //         if (selectedVital.toLowerCase().includes('blood pressure')) {
+      //           const fullValue = chartData.originalValues[dataPointIndex] || '0/0';
+      //           return `${fullValue} mmHg`;
+      //         }
+      //         if (selectedVital.toLowerCase().includes('temperature')) return `${value}°F`;
+      //         if (selectedVital.toLowerCase().includes('weight')) return `${value} lbs`;
+      //         if (selectedVital.toLowerCase().includes('height')) return `${value} ft`;
+      //         if (selectedVital.toLowerCase().includes('heart rate')) return `${value} bpm`;
+      //         return value;
+      //       }
+      //     }
+      //   }
       tooltip: {
         theme: 'light',
         y: {
-          formatter: (value) => {
+          formatter: (value, { dataPointIndex }) => {
             debugger;
-            if (selectedVital.toLowerCase().includes('blood pressure')) return `${value} mmHg`;
+            if (selectedVital.toLowerCase().includes("bp")) {
+              
+              const fullValue = chartData.originalValues[dataPointIndex] || '0/0';
+              return `${fullValue} mmHg`;
+            }
             if (selectedVital.toLowerCase().includes('temperature')) return `${value}°F`;
             if (selectedVital.toLowerCase().includes('weight')) return `${value} lbs`;
-            if (selectedVital.toLowerCase().includes('height')) return `${value} ft`;
+            if (selectedVital.toLowerCase().includes('height')) 
+              { 
+                 const fullValue = chartData.originalValues[dataPointIndex] || '0.0';
+                return `${fullValue} ft`
+              
+              };
             if (selectedVital.toLowerCase().includes('heart rate')) return `${value} bpm`;
             return value;
           }
         }
-      },
+      }
+
+      ,
       dataLabels: { enabled: false }
     };
   };

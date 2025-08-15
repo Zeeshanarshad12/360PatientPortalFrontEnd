@@ -128,8 +128,8 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
                   </Typography>
                   <br></br>
                   <Typography variant="body2" fontWeight="bold" color="text.primary">
-                    {/* Prescribe by {med.prescribedBy} */}
-                    Prescribe by Dr. Amir Shahzad
+                    Prescribe by {med.prescriberName}
+                    {/* Prescribe by Dr. Amir Shahzad */}
                   </Typography>
                   <Typography variant="subtitle1" color="text.primary">
                     From: {new Date(med.startDate).toLocaleDateString()} | End: {new Date(med.endDate).toLocaleDateString()}
