@@ -85,7 +85,7 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
               mb={2}
             >
               <Typography variant="h4" fontWeight="bold">
-                Allergies
+                {widgetContent.allergies.title}
               </Typography>
             </Box>
             <Box
