@@ -295,6 +295,18 @@ const getpatientproblems = (data, flag) =>
     }
   );
 
+const getpatientappointments = (data, flag) =>
+
+  get(
+
+    `${SERVICE_URLSV2.getpatientappointments}?&PatientId=${data?.PatientId}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
 
 
 
@@ -325,6 +337,7 @@ const apiServicesV2 = {
   GetPatientActiveMedications,
   GetPatientAllergies,
   getpatientvitals,
-  getpatientproblems
+  getpatientproblems,
+  getpatientappointments
 };
 export default apiServicesV2;

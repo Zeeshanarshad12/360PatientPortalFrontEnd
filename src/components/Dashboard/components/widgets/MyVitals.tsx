@@ -22,6 +22,7 @@ import { widgetContent } from '@/components/Dashboard/contexts/widgetData';
 import { useDispatch, useSelector } from '@/store/index';
 import { getpatientvitals } from '@/slices/patientprofileslice';
 import { Console } from 'console';
+import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -31,6 +32,7 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
   const [viewMode, setViewMode] = useState<'table' | 'chart'>('table');
   const [selectedVital, setSelectedVital] = useState("BP");
   const [isClient, setIsClient] = useState(false);
+  const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
   useEffect(() => {
     setIsClient(true);
@@ -140,6 +142,9 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
         setVitals(vitalsArray);
       } catch (error) {
         console.error("Error fetching vitals:", error);
+      }
+      finally {
+        setLoading(false);
       }
     };
 
@@ -260,26 +265,6 @@ const originalValues = vital.values;
         xaxis: { lines: { show: true } },
         yaxis: { lines: { show: true } }
       },
-      // tooltip: {
-      //   theme: 'light',
-      //   y: {
-      //     formatter: (value) => {
-      //       debugger;
-      //       if (selectedVital.toLowerCase().includes('blood pressure')) return `${value} mmHg`;
-
-      //       formatter: (value, { dataPointIndex }) => {
-      //         if (selectedVital.toLowerCase().includes('blood pressure')) {
-      //           const fullValue = chartData.originalValues[dataPointIndex] || '0/0';
-      //           return `${fullValue} mmHg`;
-      //         }
-      //         if (selectedVital.toLowerCase().includes('temperature')) return `${value}°F`;
-      //         if (selectedVital.toLowerCase().includes('weight')) return `${value} lbs`;
-      //         if (selectedVital.toLowerCase().includes('height')) return `${value} ft`;
-      //         if (selectedVital.toLowerCase().includes('heart rate')) return `${value} bpm`;
-      //         return value;
-      //       }
-      //     }
-      //   }
       tooltip: {
         theme: 'light',
         y: {
@@ -339,6 +324,31 @@ const originalValues = vital.values;
   };
 
   return (
+     <>
+          {loading ? (
+            <Card sx={{ borderRadius: 3 }}>
+              <CardContent sx={{ pb: 1 }}>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  mb={2}
+                >
+                  <Typography variant="h4" fontWeight="bold">
+                    {widgetContent.myVitals.title}
+                  </Typography>
+                </Box>
+                <Box
+                  display="flex"
+                  justifyContent="center"
+                  alignItems="center"
+                  height="100%"
+                >
+                  <CircularProgressLoader />
+                </Box>
+              </CardContent>
+            </Card>
+          ) : (
     <Card sx={{ minHeight: 250, borderRadius: 3 }}>
       <CardContent sx={{ pb: 1 }}>
         {/* Header with View Toggle */}
@@ -436,6 +446,8 @@ const originalValues = vital.values;
         </Box>
       </CardContent>
     </Card>
+      )}
+    </>
   );
 };
 

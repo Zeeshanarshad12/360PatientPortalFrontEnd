@@ -28,15 +28,16 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
     const fetchData = async () => {
       try {
         const Obj = {
-          PatientId: localStorage.getItem('patientID'),
+          PatientId: localStorage.getItem('patientID')
         };
 
-        const response = await dispatch(GetPatientActiveMedications(Obj)).unwrap();
+        const response = await dispatch(
+          GetPatientActiveMedications(Obj)
+        ).unwrap();
         const data = response.result;
         setMedications(data);
-        // console.log("Active Medications:", data);
       } catch (error) {
-        console.error("Error fetching medications:", error);
+        console.error('Error fetching medications:', error);
       } finally {
         setLoading(false);
       }
@@ -48,16 +49,26 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
   return (
     <>
       {loading ? (
-        <Card sx={{ minHeight: 250, borderRadius: 3 }}>
-          <CardContent
-            sx={{
-              height: '100%',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
-          >
-            <CircularProgressLoader />
+        <Card sx={{ borderRadius: 3 }}>
+          <CardContent sx={{ pb: 1 }}>
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              mb={2}
+            >
+              <Typography variant="h4" fontWeight="bold">
+                {widgetContent.currentMedications.title}
+              </Typography>
+            </Box>
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              height="100%"
+            >
+              <CircularProgressLoader />
+            </Box>
           </CardContent>
         </Card>
       ) : (
@@ -122,19 +133,32 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
                   )}
 
                   {/* Medication Details */}
-                  <Typography fontWeight="bold" sx={{textTransform: 'capitalize' }} >{med.drugInfo}</Typography>
-                  <Typography variant="body2" color="text.primary"  sx={{textTransform: 'capitalize' }}>
+                  <Typography
+                    fontWeight="bold"
+                    sx={{ textTransform: 'capitalize' }}
+                  >
+                    {med.drugInfo}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.primary"
+                    sx={{ textTransform: 'capitalize' }}
+                  >
                     {med.sigText}
                   </Typography>
                   <br></br>
-                  <Typography variant="body2" fontWeight="bold" color="text.primary">
+                  <Typography
+                    variant="body2"
+                    fontWeight="bold"
+                    color="text.primary"
+                  >
                     Prescribe by {med.prescriberName}
                     {/* Prescribe by Dr. Amir Shahzad */}
                   </Typography>
                   <Typography variant="subtitle1" color="text.primary">
-                    From: {new Date(med.startDate).toLocaleDateString()} | End: {new Date(med.endDate).toLocaleDateString()}
+                    From: {new Date(med.startDate).toLocaleDateString()} | End:{' '}
+                    {new Date(med.endDate).toLocaleDateString()}
                   </Typography>
-
                 </Box>
               ))}
             </Box>

@@ -490,6 +490,23 @@ export const getpatientproblems: any = createAsyncThunk(
   }
 ) ;
 
+export const getpatientappointments: any = createAsyncThunk(
+  'getpatientappointments',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.getpatientappointments(data, 'ApiVersion2Req');
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+) ;
+
 
 const patientProfileSlice = createSlice({
   name: 'Patient Profile Slice',

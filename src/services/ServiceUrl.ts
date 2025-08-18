@@ -25,5 +25,6 @@ export const SERVICE_URLSV2 = {
   GetPatientActiveMedications: 'patientportal/GetPatientActiveMedications',
   GetPatientAllergies : 'patientportal/getpatientallergies',
   getpatientvitals : 'patientportal/getpatientvitals',
-  getpatientproblems : 'patientportal/getpatientproblems'
+  getpatientproblems : 'patientportal/getpatientproblems',
+  getpatientappointments : 'patientportal/getpatientappointments'
 };
