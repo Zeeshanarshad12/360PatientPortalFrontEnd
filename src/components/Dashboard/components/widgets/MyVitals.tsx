@@ -199,11 +199,26 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
     if (!vital) return { series: [], categories: [] };
 
     const numericValues = vital.values.map(value => {
+
+      
       if (selectedVital.toLowerCase().includes('blood pressure')) {
         return parseInt(value.split('/')[0]) || 0; // Systolic only
       }
+
+       if (selectedVital.includes('Height (ft-in)')) {
+    // Example value: 5'4"
+    const match = value.match(/(\d+)'(\d+)?/); // feet and inches
+    if (match) {
+      const feet = parseInt(match[1]) || 0;
+      const inches = parseInt(match[2]) || 0;
+      return Math.round((feet + inches / 12) * 100) / 100;
+    }
+    return 0;
+  }
+
       return parseFloat(value) || 0;
     });
+
 const originalValues = vital.values;
 
     return {
