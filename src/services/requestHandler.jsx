@@ -307,6 +307,18 @@ const getpatientappointments = (data, flag) =>
     }
   );
 
+const getunsignedlabordertestbypatientid = (data, flag) =>
+
+  get(
+
+    `${SERVICE_URLSV2.getunsignedlabordertestbypatientid}?&PatientId=${data?.PatientId}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
 
 
 
@@ -338,6 +350,7 @@ const apiServicesV2 = {
   GetPatientAllergies,
   getpatientvitals,
   getpatientproblems,
-  getpatientappointments
+  getpatientappointments,
+  getunsignedlabordertestbypatientid
 };
 export default apiServicesV2;
