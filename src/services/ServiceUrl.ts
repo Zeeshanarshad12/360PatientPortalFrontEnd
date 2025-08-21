@@ -22,10 +22,10 @@ export const SERVICE_URLSV2 = {
   saveConsentForm: 'patientportal/SubmitConsentForm',
   GetConsentFormData: 'patientportal/GetConsentFormData',
   GetConsentFormContent: 'patientportal/getcontent',
-  GetPatientActiveMedications: 'patientportal/GetPatientActiveMedications',
-  GetPatientAllergies : 'patientportal/getpatientallergies',
-  getpatientvitals : 'patientportal/getpatientvitals',
-  getpatientproblems : 'patientportal/getpatientproblems',
+  GetPatientActiveMedications: 'patientportal/GetCurrentMedicationsWidget',
+  GetPatientAllergies : 'patientportal/GetAllergiesWidget',
+  getpatientvitals : 'patientportal/GetMyVitalsWidget',
+  getpatientproblems : 'patientportal/GetMyHealthConditionsWidget',
   getpatientappointments : 'patientportal/getpatientappointments',
-  getunsignedlabordertestbypatientid : 'patientportal/getunsignedlabordertestbypatientid'
+  getunsignedlabordertestbypatientid : 'patientportal/GetLabResultsWidget'
 };
