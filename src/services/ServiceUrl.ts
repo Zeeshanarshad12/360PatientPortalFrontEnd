@@ -4,7 +4,7 @@ export const SERVICE_URLSV2 = {
   ClearCahce: 'permissions/clearusersessioncache',
   GetPatientByEmail: 'patientportal/getpatientbyemail',
   GetPatientDetailsById: 'patientportal/getpatientdetailsbyid',
-  GetPatientEncounterDetails: 'patientportal/getpatientencounterdetails',
+  GetPatientEncounterDetails: 'patientportal/getpatientencounterdetails', //Also used for Dashboard  Widget TimelineWidget
   DownloadDocument: 'ccda/download',
   GetPatientCCDAActivityLog: 'patientportal/getpatientccdaactivitylog',
   InsertActivityLog: 'patientportal/insertactivitylog',
@@ -26,6 +26,6 @@ export const SERVICE_URLSV2 = {
   GetPatientAllergies : 'patientportal/GetAllergiesWidget',
   getpatientvitals : 'patientportal/GetMyVitalsWidget',
   getpatientproblems : 'patientportal/GetMyHealthConditionsWidget',
-  getpatientappointments : 'patientportal/getpatientappointments',
+  getpatientappointments : 'patientportal/GetUpcomingAppointmentsWidget',
   getunsignedlabordertestbypatientid : 'patientportal/GetLabResultsWidget'
 };
