@@ -96,6 +96,8 @@ const MyHealthConditions: React.FC<Props> = ({ dragHandleProps }) => {
             </Box>
 
             {/* List of conditions */}
+             {/* Scrollable Medications List */}
+                        <Box sx={{ maxHeight: 350, overflowY: 'auto', pr: 1 }}>
             {healthConditions.map((cond, index) => (
               <Box
                 key={index}
@@ -125,6 +127,7 @@ const MyHealthConditions: React.FC<Props> = ({ dragHandleProps }) => {
                 </Typography>
               </Box>
             ))}
+            </Box>
 
             {/* See all link */}
             <Box textAlign="center" mt={2}>
