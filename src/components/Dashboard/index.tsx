@@ -1,3 +1,4 @@
+import { useDispatch } from '@/store/index';
 import React, { useState, useEffect } from 'react';
 import { Box } from '@mui/material';
 import {
@@ -17,10 +18,11 @@ import {
   arrayMove,
   verticalListSortingStrategy
 } from '@dnd-kit/sortable';
-import { initialLayout, widgetContent } from './contexts/widgetData';
+import { useInitialLayout } from './contexts/widgetData';
 import SortableItem from './components/SortableItem';
 import WidgetWrapper from './components/WidgetWrapper';
 import HeartProgressLoader from '@/components/ProgressLoaders/components/HeartLoader';
+import { saveDashboardConfiguration } from '@/slices/patientprofileslice';
 
 const DroppableColumn = ({ id, children }: { id: string; children: React.ReactNode }) => {
   const { setNodeRef } = useDroppable({ id });
@@ -40,10 +42,15 @@ const DroppableColumn = ({ id, children }: { id: string; children: React.ReactNo
 
 const PatientDashboard = () => {
   const [heartLoading, setHeartLoading] = useState(true);
-  const [columns, setColumns] = useState(initialLayout);
-  const [activeId, setActiveId] = useState<string | null>(null);
-
+  const layout = useInitialLayout();
+  const [columns, setColumns] = useState(layout);
+  const [activeId, setActiveId] = useState<string | null>('');
+  const dispatch = useDispatch();
   const sensors = useSensors(useSensor(PointerSensor));
+
+  useEffect(() => {
+    setColumns(layout);
+  }, [layout]);
 
   const findColumn = (id: string): string | undefined => {
     return Object.keys(columns).find((key) =>
@@ -86,7 +93,12 @@ const PatientDashboard = () => {
     });
   };
 
+  const payload: any[] = [];
   const handleDragEnd = (event: DragEndEvent) => {
+
+    debugger;
+    
+
     const { active, over } = event;
     if (!over || active.id === over.id) {
       setActiveId(null);
@@ -118,6 +130,26 @@ const PatientDashboard = () => {
     }
 
     setActiveId(null);
+
+    Object.entries(columns).forEach(([columnKey, widgets]) => {
+      const column = parseInt(columnKey.replace("column", ""), 10);
+      widgets.forEach((header, rowIndex) => {
+        payload.push({
+          header,  
+          column,   
+          row: rowIndex + 1 
+        });
+      });
+    });
+
+
+     const obj = {
+          PatientID: localStorage.getItem('patientID'),
+          payload :  payload
+        };
+
+     dispatch(saveDashboardConfiguration(obj) );
+
   };
 
   useEffect(() => {

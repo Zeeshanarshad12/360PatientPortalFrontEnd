@@ -319,7 +319,32 @@ const getunsignedlabordertestbypatientid = (data, flag) =>
     }
   );
 
+  
+const getdashboardconfigurations = (data, flag) =>
 
+  get(
+
+    `${SERVICE_URLSV2.getdashboardconfigurations}?&Email=${data?.Email}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
+
+const saveDashboardConfiguration = (data, flag) =>
+  post(
+
+    SERVICE_URLSV2.saveDashboardConfiguration, data,
+    {
+
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
+  
 
 
 const apiServicesV2 = {
@@ -351,6 +376,8 @@ const apiServicesV2 = {
   getpatientvitals,
   getpatientproblems,
   getpatientappointments,
-  getunsignedlabordertestbypatientid
+  getunsignedlabordertestbypatientid,
+  getdashboardconfigurations,
+  saveDashboardConfiguration
 };
 export default apiServicesV2;

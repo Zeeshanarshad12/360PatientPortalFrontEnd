@@ -27,5 +27,7 @@ export const SERVICE_URLSV2 = {
   getpatientvitals : 'patientportal/GetMyVitalsWidget',
   getpatientproblems : 'patientportal/GetMyHealthConditionsWidget',
   getpatientappointments : 'patientportal/GetUpcomingAppointmentsWidget',
-  getunsignedlabordertestbypatientid : 'patientportal/GetLabResultsWidget'
+  getunsignedlabordertestbypatientid : 'patientportal/GetLabResultsWidget',
+  getdashboardconfigurations : 'patientportal/getdashboardconfigurations',
+  saveDashboardConfiguration : 'patientportal/savedashboardwidgetconfigurations'
 };

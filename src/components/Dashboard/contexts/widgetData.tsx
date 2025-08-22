@@ -1,43 +1,67 @@
-export const savedLayout = [
-  { header: 'currentMedications', column: 1, row: 1 },
-  { header: 'myHealthConditions', column: 1, row: 2 },
-  { header: 'labResults', column: 1, row: 3 },
-
-  { header: 'myVitals', column: 3, row: 1 },
-  { header: 'myMedicalTimeline', column: 2, row: 2 },
-  { header: 'allergies', column: 2, row: 1 },
-
-  { header: 'upcomingAppointments', column: 2, row: 3 },
-  { header: 'notifications', column: 3, row: 2 },
-  { header: 'billingInsurance', column: 3, row: 3 }
-];
-
-export const initialLayout = (() => {
-  const tempLayout: Record<string, { header: string; row: number }[]> = {
+import { useDispatch } from '@/store/index';
+import { useState, useEffect } from 'react';
+import { getdashboardconfigurations } from '@/slices/patientprofileslice';
+ 
+export const useInitialLayout = () => {
+  const [layout, setLayout] = useState<Record<string, string[]>>({
     column1: [],
     column2: [],
     column3: []
-  };
-
-  savedLayout.forEach(({ header, column, row }) => {
-    const columnKey = `column${column}`;
-    tempLayout[columnKey].push({ header, row });
   });
+ 
+  const dispatch = useDispatch();
+ 
+  useEffect(() => {
+    debugger;
+    const fetchData = async () => {
+      try {
+        const Obj = {
+          // PatientId: '27246' // later replace with localStorage if needed
+          Email: localStorage.getItem('Email')
+        };
+ 
+        const response = await dispatch(getdashboardconfigurations(Obj)).unwrap();
+        const savedLayout = response.result;
+ 
+        // Build layout from API result
+        const tempLayout: Record<string, { header: string; row: number }[]> = {
+          column1: [],
+          column2: [],
+          column3: []
+        };
+ 
+        savedLayout.forEach(({ header, column, row }: any) => {
+          const columnKey = `column${column}`;
+          if (tempLayout[columnKey]) {
+            tempLayout[columnKey].push({ header, row });
+          }
+        });
+ 
+        const finalLayout: Record<string, string[]> = {
+          column1: [],
+          column2: [],
+          column3: []
+        };
+ 
+        Object.entries(tempLayout).forEach(([columnKey, items]) => {
+          finalLayout[columnKey] = items
+            .sort((a, b) => a.row - b.row)
+            .map((item) => item.header);
+        });
+ 
+        setLayout(finalLayout);
+      } catch (error) {
+        console.error('Error fetching Layout:', error);
+      }
+    };
+ 
+    fetchData();
+  }, [dispatch]);
+ 
+  return layout;
+};
 
-  const finalLayout: Record<string, string[]> = {
-    column1: [],
-    column2: [],
-    column3: []
-  };
 
-  Object.entries(tempLayout).forEach(([columnKey, items]) => {
-    finalLayout[columnKey] = items
-      .sort((a, b) => a.row - b.row)
-      .map(item => item.header);
-  });
-
-  return finalLayout;
-})();
 
 export const widgetContent: Record<string, any> = {
   currentMedications: {
