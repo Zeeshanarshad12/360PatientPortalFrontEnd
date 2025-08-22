@@ -93,64 +93,151 @@ const PatientDashboard = () => {
     });
   };
 
-  const payload: any[] = [];
-  const handleDragEnd = (event: DragEndEvent) => {
+  // const payload: any[] = [];
+  // const handleDragEnd = (event: DragEndEvent) => {
 
-    debugger;
+  //   debugger;
     
 
-    const { active, over } = event;
-    if (!over || active.id === over.id) {
-      setActiveId(null);
-      return;
-    }
+  //   const { active, over } = event;
+  //   if (!over || active.id === over.id) {
+  //     setActiveId(null);
+  //     return;
+  //   }
 
-    const activeId = active.id as string;
-    const overId = over.id as string;
+  //   const activeId = active.id as string;
+  //   const overId = over.id as string;
 
-    const sourceColumn = findColumn(activeId);
-    const targetColumn =
-      columns[overId] !== undefined ? overId : findColumn(overId);
+  //   const sourceColumn = findColumn(activeId);
+  //   const targetColumn =
+  //     columns[overId] !== undefined ? overId : findColumn(overId);
 
-    if (!sourceColumn || !targetColumn) {
-      setActiveId(null);
-      return;
-    }
+  //   if (!sourceColumn || !targetColumn) {
+  //     setActiveId(null);
+  //     return;
+  //   }
 
-    if (sourceColumn === targetColumn) {
-      const items = columns[sourceColumn];
-      const oldIndex = items.indexOf(activeId);
-      const newIndex = items.indexOf(overId);
-      const newItems = arrayMove(items, oldIndex, newIndex);
+  //   if (sourceColumn === targetColumn) {
+  //     const items = columns[sourceColumn];
+  //     const oldIndex = items.indexOf(activeId);
+  //     const newIndex = items.indexOf(overId);
+  //     const newItems = arrayMove(items, oldIndex, newIndex);
 
-      setColumns((prev) => ({
-        ...prev,
-        [sourceColumn]: newItems
-      }));
-    }
+  //     setColumns((prev) => ({
+  //       ...prev,
+  //       [sourceColumn]: newItems
+  //     }));
+  //   }
 
+  //   setActiveId(null);
+
+  //   const payload: any[] = [];
+  //   Object.entries(columns).forEach(([columnKey, widgets]) => {
+  //     const column = parseInt(columnKey.replace("column", ""), 10);
+  //     widgets.forEach((header, rowIndex) => {
+  //       payload.push({
+  //         header,  
+  //         column,   
+  //         row: rowIndex + 1 
+  //       });
+  //     });
+  //   });
+
+
+  //    const obj = {
+  //         PatientID: localStorage.getItem('patientID'),
+  //         payload :  payload
+  //       };
+
+  //    dispatch(saveDashboardConfiguration(obj) );
+
+  // };
+
+
+  const handleDragEnd = (event: DragEndEvent) => {
+  const { active, over } = event;
+  if (!over || active.id === over.id) {
     setActiveId(null);
+    return;
+  }
 
-    Object.entries(columns).forEach(([columnKey, widgets]) => {
-      const column = parseInt(columnKey.replace("column", ""), 10);
-      widgets.forEach((header, rowIndex) => {
-        payload.push({
-          header,  
-          column,   
-          row: rowIndex + 1 
-        });
+  const activeId = active.id as string;
+  const overId = over.id as string;
+
+  const sourceColumn = findColumn(activeId);
+  const targetColumn =
+    columns[overId] !== undefined ? overId : findColumn(overId);
+
+  if (!sourceColumn || !targetColumn) {
+    setActiveId(null);
+    return;
+  }
+
+  let newColumns = { ...columns };
+
+  if (sourceColumn === targetColumn) {
+    const items = columns[sourceColumn];
+    const oldIndex = items.indexOf(activeId);
+    const newIndex = items.indexOf(overId);
+    const newItems = arrayMove(items, oldIndex, newIndex);
+
+    newColumns = {
+      ...columns,
+      [sourceColumn]: newItems,
+    };
+    setColumns(newColumns);
+  }
+
+  setActiveId(null);
+
+  // const payload: any[] = [];
+  // Object.entries(newColumns).forEach(([columnKey, widgets]) => {
+  //   const column = parseInt(columnKey.replace("column", ""), 10);
+  //   widgets.forEach((header, rowIndex) => {
+  //     payload.push({
+  //       header,
+  //       column,
+  //       row: rowIndex + 1,
+  //     });
+  //   });
+  // });
+
+  // const obj = {
+  //   PatientID: localStorage.getItem("patientID"),
+  //   payload: payload,
+  // };
+
+  // // dispatch(saveDashboardConfiguration(obj));
+
+  //  const response = dispatch(saveDashboardConfiguration(obj)).unwrap();
+};
+
+
+
+useEffect(() => {
+  if (!columns) return;
+
+  const payload: any[] = [];
+  Object.entries(columns).forEach(([columnKey, widgets]) => {
+    const column = parseInt(columnKey.replace("column", ""), 10);
+    widgets.forEach((header, rowIndex) => {
+      payload.push({
+        header,
+        column,
+        row: rowIndex + 1,
       });
     });
+  });
 
-
-     const obj = {
-          PatientID: localStorage.getItem('patientID'),
-          payload :  payload
-        };
-
-     dispatch(saveDashboardConfiguration(obj) );
-
+  const obj = {
+    PatientID: localStorage.getItem("patientID"),
+    payload,
   };
+
+  dispatch(saveDashboardConfiguration(obj));
+}, [columns]); 
+
+
 
   useEffect(() => {
     const timer = setTimeout(() => {
