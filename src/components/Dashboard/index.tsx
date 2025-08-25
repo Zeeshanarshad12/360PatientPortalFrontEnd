@@ -24,7 +24,13 @@ import WidgetWrapper from './components/WidgetWrapper';
 import HeartProgressLoader from '@/components/ProgressLoaders/components/HeartLoader';
 import { saveDashboardConfiguration } from '@/slices/patientprofileslice';
 
-const DroppableColumn = ({ id, children }: { id: string; children: React.ReactNode }) => {
+const DroppableColumn = ({
+  id,
+  children
+}: {
+  id: string;
+  children: React.ReactNode;
+}) => {
   const { setNodeRef } = useDroppable({ id });
   return (
     <div
@@ -70,8 +76,7 @@ const PatientDashboard = () => {
     const overId = over.id as string;
 
     const activeCol = findColumn(activeId);
-    const overCol =
-      columns[overId] !== undefined ? overId : findColumn(overId);
+    const overCol = columns[overId] !== undefined ? overId : findColumn(overId);
 
     if (!activeCol || !overCol || activeCol === overCol) return;
 
@@ -93,164 +98,69 @@ const PatientDashboard = () => {
     });
   };
 
-//   const handleDragEnd = (event: DragEndEvent) => {
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) {
+      setActiveId(null);
+      return;
+    }
 
-//     debugger;
-    
+    const activeId = active.id as string;
+    const overId = over.id as string;
 
-//     const { active, over } = event;
-//     if (!over || active.id === over.id) {
-//       setActiveId(null);
-//       return;
-//     }
+    const sourceColumn = findColumn(activeId);
+    const targetColumn =
+      columns[overId] !== undefined ? overId : findColumn(overId);
 
-//     const activeId = active.id as string;
-//     const overId = over.id as string;
+    if (!sourceColumn || !targetColumn) {
+      setActiveId(null);
+      return;
+    }
 
-//     const sourceColumn = findColumn(activeId);
-//     const targetColumn =
-//       columns[overId] !== undefined ? overId : findColumn(overId);
+    let newColumns = { ...columns };
 
-//     if (!sourceColumn || !targetColumn) {
-//       setActiveId(null);
-//       return;
-//     }
+    if (sourceColumn === targetColumn) {
+      const items = [...newColumns[sourceColumn]];
+      const oldIndex = items.indexOf(activeId);
+      const newIndex = items.indexOf(overId);
+      newColumns[sourceColumn] = arrayMove(items, oldIndex, newIndex);
+    } else {
+      const activeItems = [...newColumns[sourceColumn]];
+      const overItems = [...newColumns[targetColumn]];
+      const activeIndex = activeItems.indexOf(activeId);
+      activeItems.splice(activeIndex, 1);
+      overItems.push(activeId);
+      newColumns[sourceColumn] = activeItems;
+      newColumns[targetColumn] = overItems;
+    }
 
-//     if (sourceColumn === targetColumn) {
-//       const items = columns[sourceColumn];
-//       const oldIndex = items.indexOf(activeId);
-//       const newIndex = items.indexOf(overId);
-//       const newItems = arrayMove(items, oldIndex, newIndex);
-
-//       setColumns((prev) => ({
-//         ...prev,
-//         [sourceColumn]: newItems
-//       }));
-//     }
-
-//     setActiveId(null);
-
-//     const payload: any[] = [];
-//     Object.entries(columns).forEach(([columnKey, widgets]) => {
-//       const column = parseInt(columnKey.replace("column", ""), 10);
-//       widgets.forEach((header, rowIndex) => {
-//         payload.push({
-//           header,  
-//           column,   
-//           row: rowIndex + 1 
-//         });
-//       });
-//     });
-
-
-//      const obj = {
-//           PatientID: localStorage.getItem('patientID'),
-//           payload :  payload
-//         };
-
-//      dispatch(saveDashboardConfiguration(obj) );
-
-//   };
-
-
-
-
-
-// useEffect(() => {
-//   debugger;
-//   // if (!columns) return;
-//   if (!localStorage.getItem("patientID")) return;
-
-//   const payload: any[] = [];
-//   Object.entries(columns).forEach(([columnKey, widgets]) => {
-//     const column = parseInt(columnKey.replace("column", ""), 10);
-//     widgets.forEach((header, rowIndex) => {
-//       payload.push({
-//         header,
-//         column,
-//         row: rowIndex + 1,
-//       });
-//     });
-//   });
-
-//   const obj = {
-//     PatientID: localStorage.getItem("patientID"),
-//     payload,
-//   };
-
-//   dispatch(saveDashboardConfiguration(obj));
-// }, [columns]); 
-
-
-// Drag End pe sirf state update karo
-const handleDragEnd = (event: DragEndEvent) => {
-  const { active, over } = event;
-  if (!over || active.id === over.id) {
+    setColumns(newColumns);
     setActiveId(null);
-    return;
-  }
-
-  const activeId = active.id as string;
-  const overId = over.id as string;
-
-  const sourceColumn = findColumn(activeId);
-  const targetColumn =
-    columns[overId] !== undefined ? overId : findColumn(overId);
-
-  if (!sourceColumn || !targetColumn) {
-    setActiveId(null);
-    return;
-  }
-
-  let newColumns = { ...columns };
-
-  if (sourceColumn === targetColumn) {
-    const items = [...newColumns[sourceColumn]];
-    const oldIndex = items.indexOf(activeId);
-    const newIndex = items.indexOf(overId);
-    newColumns[sourceColumn] = arrayMove(items, oldIndex, newIndex);
-  } else {
-    const activeItems = [...newColumns[sourceColumn]];
-    const overItems = [...newColumns[targetColumn]];
-    const activeIndex = activeItems.indexOf(activeId);
-    activeItems.splice(activeIndex, 1);
-    overItems.push(activeId);
-    newColumns[sourceColumn] = activeItems;
-    newColumns[targetColumn] = overItems;
-  }
-
-  setColumns(newColumns); // ✅ abhi sirf update karna hai
-  setActiveId(null);
-};
-
-useEffect(() => {
-  if (!columns) return;
-  if (!localStorage.getItem("patientID")) return;
-
-  const payload: any[] = [];
-  Object.entries(columns).forEach(([columnKey, widgets]) => {
-    const column = parseInt(columnKey.replace("column", ""), 10);
-    widgets.forEach((header, rowIndex) => {
-      payload.push({
-        header,
-        column,
-        row: rowIndex + 1,
-      });
-    });
-  });
-
-  const obj = {
-    PatientID: localStorage.getItem("patientID"),
-    payload,
   };
 
-  // ✅ Sirf jab state settle ho jaaye uske baad save kare
-  dispatch(saveDashboardConfiguration(obj));
+  useEffect(() => {
+    if (!columns) return;
+    if (!localStorage.getItem('patientID')) return;
 
-}, [columns, dispatch]); // 🔑 depend only on columns
+    const payload: any[] = [];
+    Object.entries(columns).forEach(([columnKey, widgets]) => {
+      const column = parseInt(columnKey.replace('column', ''), 10);
+      widgets.forEach((header, rowIndex) => {
+        payload.push({
+          header,
+          column,
+          row: rowIndex + 1
+        });
+      });
+    });
 
+    const obj = {
+      PatientID: localStorage.getItem('patientID'),
+      payload
+    };
 
-
+    dispatch(saveDashboardConfiguration(obj));
+  }, [columns, dispatch]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -290,8 +200,7 @@ useEffect(() => {
                     {widgets.length > 0 ? (
                       widgets.map((widgetId) => (
                         <SortableItem key={widgetId} id={widgetId}>
-                          <WidgetWrapper id={widgetId}>
-                          </WidgetWrapper>
+                          <WidgetWrapper id={widgetId}></WidgetWrapper>
                         </SortableItem>
                       ))
                     ) : (
@@ -302,8 +211,7 @@ useEffect(() => {
                           textAlign: 'center',
                           lineHeight: '100px'
                         }}
-                      >
-                      </div>
+                      ></div>
                     )}
                   </SortableContext>
                 </DroppableColumn>
@@ -311,10 +219,7 @@ useEffect(() => {
             </div>
 
             <DragOverlay>
-              {activeId ? (
-                <WidgetWrapper id={activeId}>
-                </WidgetWrapper>
-              ) : null}
+              {activeId ? <WidgetWrapper id={activeId}></WidgetWrapper> : null}
             </DragOverlay>
           </DndContext>
         </Box>

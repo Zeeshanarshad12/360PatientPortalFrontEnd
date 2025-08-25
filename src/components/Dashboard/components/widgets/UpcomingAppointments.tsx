@@ -24,7 +24,6 @@ interface Props {
 
 const getStatusColor = (appointmentStatus: string) => {
   switch (appointmentStatus.toLowerCase()) {
-
     case 'scheduled':
       return { bgcolor: '#fff3e0', textColor: '#f57c00' };
     case 'completed':
@@ -35,8 +34,6 @@ const getStatusColor = (appointmentStatus: string) => {
 };
 
 const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
-  // const appointments = widgetContent.upcomingAppointments.data;
-
   const dispatch = useDispatch();
   const [appointments, setappointments] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -45,14 +42,14 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
     const fetchData = async () => {
       try {
         const Obj = {
-          PatientId: localStorage.getItem('patientID'),
+          PatientId: localStorage.getItem('patientID')
         };
 
         const response = await dispatch(getpatientappointments(Obj)).unwrap();
         const data = response.result;
         setappointments(data);
       } catch (error) {
-        console.error("Error fetching medications:", error);
+        console.error('Error fetching medications:', error);
       } finally {
         setLoading(false);
       }
@@ -60,9 +57,6 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
 
     fetchData();
   }, [dispatch]);
-
-
-
 
   return (
     <>
@@ -93,7 +87,12 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
         <Card sx={{ minHeight: 250, borderRadius: 3 }}>
           <CardContent sx={{ pb: 1 }}>
             {/* Header with Schedule Link */}
-            <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+            <Box
+              display="flex"
+              alignItems="center"
+              justifyContent="space-between"
+              mb={2}
+            >
               <Typography variant="h4" fontWeight="bold">
                 {widgetContent.upcomingAppointments.title}
               </Typography>
@@ -152,25 +151,43 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                         }}
                       />
                     </Typography>
-                    <Typography variant="body2" color="text.primary" sx={{ mb: 1 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.primary"
+                      sx={{ mb: 1 }}
+                    >
                       {appt.providerName}
                     </Typography>
                     {/* Date, Time, Location */}
                     <Box display="flex" alignItems="center" sx={{ mb: 0.5 }}>
-                      <CalendarTodayIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-                      <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                      <CalendarTodayIcon
+                        sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }}
+                      />
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mr: 1 }}
+                      >
                         {appt.appointmentDate}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mr: 0.5 }}
+                      >
                         |
                       </Typography>
-                      <AccessTimeIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
+                      <AccessTimeIcon
+                        sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }}
+                      />
                       <Typography variant="body2" color="text.secondary">
                         {appt.startTime} - {appt.endTime}
                       </Typography>
                     </Box>
                     <Box display="flex" alignItems="center">
-                      <LocationOnIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
+                      <LocationOnIcon
+                        sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }}
+                      />
                       <Typography variant="body2" color="text.secondary">
                         {appt.address}
                       </Typography>

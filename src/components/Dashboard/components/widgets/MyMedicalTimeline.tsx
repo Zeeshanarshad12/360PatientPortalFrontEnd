@@ -25,7 +25,6 @@ interface Props {
 }
 
 const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
-  //  const timelineEvents = widgetContent.myMedicalTimeline.data;
   const dispatch = useDispatch();
   const [timelineEvents, settimelineEvents] = useState([]);
   const [fromDate, setFromDate] = useState(moment().format('YYYY-MM-DD'));
@@ -33,8 +32,6 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-
-
     const fetchData = async () => {
       try {
         const Obj = {
@@ -43,22 +40,20 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
           datefrom: fromDate,
           dateto: toDate
         };
-        const response = await dispatch(GetPatientEncounterDetails(Obj)).unwrap();
+        const response = await dispatch(
+          GetPatientEncounterDetails(Obj)
+        ).unwrap();
         const data = response;
         settimelineEvents(data);
-        // console.log(timelineEvents);
-
       } catch (error) {
-        console.error("Error fetching medications:", error);
-      }
-      finally {
+        console.error('Error fetching medications:', error);
+      } finally {
         setLoading(false);
       }
     };
 
     fetchData();
   }, [dispatch]);
-
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -177,20 +172,36 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
                         }}
                       />
                     </Typography>
-                    <Typography variant="body2" color="text.primary" sx={{ mb: 1 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.primary"
+                      sx={{ mb: 1 }}
+                    >
                       {event.provider}
                     </Typography>
 
                     {/* Date and Time */}
                     <Box display="flex" alignItems="center" sx={{ mb: 0.5 }}>
-                      <CalendarTodayIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
-                      <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                      <CalendarTodayIcon
+                        sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }}
+                      />
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mr: 1 }}
+                      >
                         {new Date(event.encounterDateTime).toLocaleDateString()}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mr: 0.5 }}
+                      >
                         |
                       </Typography>
-                      <AccessTimeIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
+                      <AccessTimeIcon
+                        sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }}
+                      />
                       <Typography variant="body2" color="text.secondary">
                         {new Date(event.encounterDateTime).toLocaleTimeString()}
                       </Typography>
@@ -198,7 +209,9 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
 
                     {/* Location */}
                     <Box display="flex" alignItems="center" sx={{ mb: 1 }}>
-                      <LocationOnIcon sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }} />
+                      <LocationOnIcon
+                        sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }}
+                      />
                       <Typography variant="body2" color="text.secondary">
                         {event.locationName}
                       </Typography>
@@ -206,7 +219,11 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
 
                     {/* Description */}
                     {/* {event.description && ( */}
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 1 }}
+                    >
                       {event.reasonString}
                     </Typography>
                     {/* )} */}
@@ -214,24 +231,26 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
                     {/* Associated Details Buttons */}
                     {event.associatedDetails && (
                       <Box display="flex" gap={1} sx={{ mb: 1 }}>
-                        {event.associatedDetails.map((detail: string, detailIndex: number) => (
-                          <Button
-                            key={detailIndex}
-                            variant="outlined"
-                            size="small"
-                            sx={{
-                              borderRadius: '20px',
-                              borderColor: '#e0e0e0',
-                              color: 'text.secondary',
-                              fontSize: '0.75rem',
-                              py: 0.5,
-                              px: 1.5,
-                              minWidth: 'auto'
-                            }}
-                          >
-                            {detail}
-                          </Button>
-                        ))}
+                        {event.associatedDetails.map(
+                          (detail: string, detailIndex: number) => (
+                            <Button
+                              key={detailIndex}
+                              variant="outlined"
+                              size="small"
+                              sx={{
+                                borderRadius: '20px',
+                                borderColor: '#e0e0e0',
+                                color: 'text.secondary',
+                                fontSize: '0.75rem',
+                                py: 0.5,
+                                px: 1.5,
+                                minWidth: 'auto'
+                              }}
+                            >
+                              {detail}
+                            </Button>
+                          )
+                        )}
                       </Box>
                     )}
 
