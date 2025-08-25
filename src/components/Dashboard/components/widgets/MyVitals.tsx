@@ -202,9 +202,9 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
     const numericValues = vital.values.map(value => {
 
       
-      if (selectedVital.toLowerCase().includes('bp')) {
-        return parseInt(value.split('/')[0]) || 0; // Systolic only
-      }
+      // if (selectedVital.toLowerCase().includes('bp')) {
+      //   return parseInt(value.split('/')[0]) || 0; // Systolic only
+      // }
 
        if (selectedVital.includes('Height (ft-in)')) {
     // Example value: 5'4"
