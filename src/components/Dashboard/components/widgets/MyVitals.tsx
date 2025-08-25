@@ -62,6 +62,7 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
         // Define which vitals you want to show
         const allowedVitals = [
           "Blood Pressure",
+          //"BMI Percentile",
           "BMI Percentile",
           "Body Weight",
           "Body Height",
@@ -201,7 +202,7 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
     const numericValues = vital.values.map(value => {
 
       
-      if (selectedVital.toLowerCase().includes('blood pressure')) {
+      if (selectedVital.toLowerCase().includes('bp')) {
         return parseInt(value.split('/')[0]) || 0; // Systolic only
       }
 
@@ -210,8 +211,9 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
     const match = value.match(/(\d+)'(\d+)?/); // feet and inches
     if (match) {
       const feet = parseInt(match[1]) || 0;
-      const inches = parseInt(match[2]) || 0;
-      return Math.round((feet + inches / 12) * 100) / 100;
+    const inches = parseInt(match[2]) || 0;
+    const decimalFeet = feet + inches / 12;
+    return Math.round(decimalFeet * 10) / 10;
     }
     return 0;
   }

@@ -70,7 +70,7 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
               mb={2}
             >
               <Typography variant="h4" fontWeight="bold">
-                {widgetContent.currentMedications.title}
+                {widgetContent.labResults.title}
               </Typography>
             </Box>
             <Box
@@ -108,6 +108,7 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
               </Box>
             </Box>
 
+              
             <Box sx={{ maxHeight: 400, overflowY: 'auto', pr: 1 }}>
               {labGroups.map((group, index) => (
                 <Box key={index} mb={2}>

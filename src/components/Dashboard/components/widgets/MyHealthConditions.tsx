@@ -62,7 +62,7 @@ const MyHealthConditions: React.FC<Props> = ({ dragHandleProps }) => {
               mb={2}
             >
               <Typography variant="h4" fontWeight="bold">
-                {widgetContent.myMedicalTimeline.title}
+                {widgetContent.myHealthConditions.title}
               </Typography>
             </Box>
             <Box
