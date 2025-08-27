@@ -17,6 +17,7 @@ import { useDispatch, useSelector } from '@/store/index';
 import { useState, useEffect, useMemo } from 'react';
 import { getpatientappointments } from '@/slices/patientprofileslice';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
+import moment from 'moment';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -97,7 +98,7 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                 {widgetContent.upcomingAppointments.title}
               </Typography>
               <Box display="flex" alignItems="center" gap={1}>
-                <Link
+                {/* <Link
                   href="#"
                   underline="hover"
                   color="primary"
@@ -106,7 +107,7 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                   sx={{ mr: 1 }}
                 >
                   Schedule Appointment
-                </Link>
+                </Link> */}
                 <Box {...dragHandleProps}>
                   <IconButton size="small" sx={{ cursor: 'grab' }}>
                     <DragIndicatorIcon />
@@ -168,7 +169,7 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                         color="text.secondary"
                         sx={{ mr: 1 }}
                       >
-                        {appt.appointmentDate}
+                        {moment(appt.appointmentDate).format('MM/DD/YYYY')}
                       </Typography>
                       <Typography
                         variant="body2"
@@ -181,7 +182,8 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                         sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }}
                       />
                       <Typography variant="body2" color="text.secondary">
-                        {appt.startTime} - {appt.endTime}
+                        {moment(appt.startTime).format('hh:mm A')} -
+                        {moment(appt.endTime).format('hh:mm A')}
                       </Typography>
                     </Box>
                     <Box display="flex" alignItems="center">
@@ -198,7 +200,7 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
             </Box>
 
             {/* View All Link */}
-            <Box textAlign="center" mt={2}>
+            {/* <Box textAlign="center" mt={2}>
               <Link
                 href="#"
                 underline="hover"
@@ -208,7 +210,7 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
               >
                 View all Appointments
               </Link>
-            </Box>
+            </Box> */}
           </CardContent>
         </Card>
       )}

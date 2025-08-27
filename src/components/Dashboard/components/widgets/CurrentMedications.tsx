@@ -164,7 +164,7 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
             </Box>
 
             {/* See All Link */}
-            <Box textAlign="center" mt={2}>
+            {/* <Box textAlign="center" mt={2}>
               <Link
                 href="#"
                 underline="hover"
@@ -174,7 +174,7 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
               >
                 See all Medications
               </Link>
-            </Box>
+            </Box> */}
           </CardContent>
         </Card>
       )}

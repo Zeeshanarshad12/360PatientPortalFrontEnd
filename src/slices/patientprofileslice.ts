@@ -2,7 +2,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import apiServicesV2 from '@/services/requestHandler';
 import SnackbarUtils from '../content/snackbar';
-import { setToken } from "@/utils/functions";
+import { setToken } from '@/utils/functions';
 import Router from 'next/router';
 
 const initialState = {
@@ -21,7 +21,7 @@ const initialState = {
   InsertActivityLogData: null,
   InsertActivityLogLoader: false,
   clearcache: false,
-  EncounterId:null,
+  EncounterId: null,
   ShareDocumentData: null,
   ShareDocumentLoader: false,
   CreateAuthorizedUserData: null,
@@ -35,10 +35,10 @@ const initialState = {
   GetTokenData: null,
   GetTokenLoader: false,
   GetSharingModulesDataList: null,
-  GetSharingModulesDataLoader: false,  
-  getServerTimeData:null,
+  GetSharingModulesDataLoader: false,
+  getServerTimeData: null,
   GetConsentFormDataList: null,
-  GetConsentFormDataLoader: false, 
+  GetConsentFormDataLoader: false
 };
 
 export const ClearCahceNLogout: any = createAsyncThunk(
@@ -49,7 +49,7 @@ export const ClearCahceNLogout: any = createAsyncThunk(
       if (res?.status === 200 || res?.status === 201) {
         return res?.data?.result;
       }
-    } catch (error) { }
+    } catch (error) {}
   }
 );
 export const GetPatientByEmail: any = createAsyncThunk(
@@ -72,7 +72,10 @@ export const GetPatientByEmail: any = createAsyncThunk(
 export const GetPatientDetailsById: any = createAsyncThunk(
   'GetPatientDetailsById',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.GetPatientDetailsById(data, 'ApiVersion2Req');
+    const res = await apiServicesV2.GetPatientDetailsById(
+      data,
+      'ApiVersion2Req'
+    );
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data?.result;
@@ -88,8 +91,10 @@ export const GetPatientDetailsById: any = createAsyncThunk(
 export const GetPatientEncounterDetails: any = createAsyncThunk(
   'GetPatientEncounterDetails',
   async (data, thunkAPI) => {
-
-    const res = await apiServicesV2.GetPatientEncounterDetails(data, 'ApiVersion2Req');
+    const res = await apiServicesV2.GetPatientEncounterDetails(
+      data,
+      'ApiVersion2Req'
+    );
 
     try {
       if (res?.status === 200 || res?.status === 201) {
@@ -109,7 +114,6 @@ export const GetPatientCCDADetail: any = createAsyncThunk(
     const res = await apiServicesV2.GetPatientCCDADetail(data);
     try {
       if (res?.status === 200 || res?.status === 201) {
-
         return res?.data;
       }
     } catch (error) {
@@ -126,7 +130,6 @@ export const GetPatientCCDADetailCCDF: any = createAsyncThunk(
     const res = await apiServicesV2.GetPatientCCDADetailCCDF(data);
     try {
       if (res?.status === 200 || res?.status === 201) {
-
         return res?.data;
       }
     } catch (error) {
@@ -140,10 +143,12 @@ export const GetPatientCCDADetailCCDF: any = createAsyncThunk(
 export const GetPatientCCDAActivityLog: any = createAsyncThunk(
   'GetPatientCCDAActivityLog',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.GetPatientCCDAActivityLog(data, 'ApiVersion2Req');
+    const res = await apiServicesV2.GetPatientCCDAActivityLog(
+      data,
+      'ApiVersion2Req'
+    );
     try {
       if (res?.status === 200 || res?.status === 201) {
-
         return res?.data;
       }
     } catch (error) {
@@ -153,11 +158,11 @@ export const GetPatientCCDAActivityLog: any = createAsyncThunk(
       }
     }
   }
-) ;
+);
 export const InsertActivityLog: any = createAsyncThunk(
   'InsertActivityLog',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.InsertActivityLog(data, 'ApiVersion2Req'); 
+    const res = await apiServicesV2.InsertActivityLog(data, 'ApiVersion2Req');
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data.result;
@@ -173,7 +178,7 @@ export const InsertActivityLog: any = createAsyncThunk(
 export const GetServerTime: any = createAsyncThunk(
   'GetServerTime',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.GetServerTime(data); 
+    const res = await apiServicesV2.GetServerTime(data);
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data.result;
@@ -189,7 +194,7 @@ export const GetServerTime: any = createAsyncThunk(
 export const CreateAuthorizedUser: any = createAsyncThunk(
   'CreateAuthorizedUser',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.CreateAuthorizedUser(data); 
+    const res = await apiServicesV2.CreateAuthorizedUser(data);
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data.result;
@@ -205,10 +210,12 @@ export const CreateAuthorizedUser: any = createAsyncThunk(
 export const GetPatientAuthorizedUser: any = createAsyncThunk(
   'GetPatientAuthorizedUser',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.GetPatientAuthorizedUser(data, 'ApiVersion2Req');
+    const res = await apiServicesV2.GetPatientAuthorizedUser(
+      data,
+      'ApiVersion2Req'
+    );
     try {
       if (res?.status === 200 || res?.status === 201) {
-
         return res?.data;
       }
     } catch (error) {
@@ -218,14 +225,16 @@ export const GetPatientAuthorizedUser: any = createAsyncThunk(
       }
     }
   }
-) ;
+);
 export const UpdatePatientAuthorizedUserAccess: any = createAsyncThunk(
   'UpdatePatientAuthorizedUserAccess',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.UpdatePatientAuthorizedUserAccess(data, 'ApiVersion2Req');
+    const res = await apiServicesV2.UpdatePatientAuthorizedUserAccess(
+      data,
+      'ApiVersion2Req'
+    );
     try {
       if (res?.status === 200 || res?.status === 201) {
-
         return res?.data;
       }
     } catch (error) {
@@ -235,7 +244,7 @@ export const UpdatePatientAuthorizedUserAccess: any = createAsyncThunk(
       }
     }
   }
-) ;
+);
 
 export const GetPatientUserRequestByCode: any = createAsyncThunk(
   'GetPatientUserRequestByCode',
@@ -243,7 +252,6 @@ export const GetPatientUserRequestByCode: any = createAsyncThunk(
     const res = await apiServicesV2.GetPatientUserRequestByCode(data);
     try {
       if (res?.status === 200 || res?.status === 201) {
-
         return res?.data;
       }
     } catch (error) {
@@ -253,7 +261,7 @@ export const GetPatientUserRequestByCode: any = createAsyncThunk(
       }
     }
   }
-) ;
+);
 
 export const GenerateOtp: any = createAsyncThunk(
   'GenerateOtp',
@@ -261,7 +269,6 @@ export const GenerateOtp: any = createAsyncThunk(
     const res = await apiServicesV2.GenerateOtp(data);
     try {
       if (res?.status === 200 || res?.status === 201) {
-
         return res?.data;
       }
     } catch (error) {
@@ -271,13 +278,12 @@ export const GenerateOtp: any = createAsyncThunk(
       }
     }
   }
-) ;
+);
 
 export const AddPatientUser: any = createAsyncThunk(
   'AddPatientUser',
   async (data, thunkAPI) => {
-
-    const res = await apiServicesV2.AddPatientUser(data); 
+    const res = await apiServicesV2.AddPatientUser(data);
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data.result;
@@ -292,17 +298,22 @@ export const AddPatientUser: any = createAsyncThunk(
 );
 
 export const GetToken: any = createAsyncThunk(
-  
   'GetToken',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.GetToken(data); 
+    const res = await apiServicesV2.GetToken(data);
     try {
       if (res?.status === 200 || res?.status === 201) {
-        setToken(res?.data?.result?.access_token,res?.data?.result?.Email,res?.data?.result?.FirstName,res?.data?.result?.LastName,res?.data?.result?.UserAccessType,res?.data?.result?.PracticeName);
-        if(res?.data?.result?.access_token)
-        {
-        Router.push('/patientportal/dashboard');
-        return res?.data.result;
+        setToken(
+          res?.data?.result?.access_token,
+          res?.data?.result?.Email,
+          res?.data?.result?.FirstName,
+          res?.data?.result?.LastName,
+          res?.data?.result?.UserAccessType,
+          res?.data?.result?.PracticeName
+        );
+        if (res?.data?.result?.access_token) {
+          Router.push('/patientportal/dashboard');
+          return res?.data.result;
         }
         return res?.data.result;
       }
@@ -315,14 +326,32 @@ export const GetToken: any = createAsyncThunk(
   }
 );
 
-
 export const ShareDocument: any = createAsyncThunk(
   'ShareDocument',
+  async (data) => {
+    try {
+      const res = await apiServicesV2.ShareDocument(data);
+      if (res?.status === 200 || res?.status === 201) {
+        return res.data;
+      } else {
+        return res.data;
+      }
+    } catch (error: any) {
+      // Optional: log or transform the error
+      return error?.data;
+    }
+  }
+);
+
+export const GetSharingModulesData: any = createAsyncThunk(
+  'GetSharingModulesData',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.ShareDocument(data);
+    const res = await apiServicesV2.GetSharingModulesData(
+      data,
+      'ApiVersion2Req'
+    );
     try {
       if (res?.status === 200 || res?.status === 201) {
-
         return res?.data;
       }
     } catch (error) {
@@ -334,27 +363,13 @@ export const ShareDocument: any = createAsyncThunk(
   }
 );
 
-export const GetSharingModulesData: any = createAsyncThunk(
-  'GetSharingModulesData',
-  async (data, thunkAPI) => {
-    const res = await apiServicesV2.GetSharingModulesData(data, 'ApiVersion2Req');
-    try {
-      if (res?.status === 200 || res?.status === 201) {
-        return res?.data;
-      }
-    } catch (error) {
-      const err: any = thunkAPI.rejectWithValue(error);
-      if (err?.payload?.status !== 200) {
-        SnackbarUtils.error(err?.payload?.data?.message, false);
-      }
-    }
-  }
-) ;
-
 export const UpdateSharingModulesData: any = createAsyncThunk(
   'UpdateSharingModulesData',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.UpdateSharingModulesData(data, 'ApiVersion2Req');
+    const res = await apiServicesV2.UpdateSharingModulesData(
+      data,
+      'ApiVersion2Req'
+    );
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data;
@@ -366,12 +381,11 @@ export const UpdateSharingModulesData: any = createAsyncThunk(
       }
     }
   }
-) ;
+);
 
-export const saveConsentForm : any = createAsyncThunk(
+export const saveConsentForm: any = createAsyncThunk(
   'saveConsentForm',
   async (data, thunkAPI) => {
-
     const res = await apiServicesV2.saveConsentForm(data, 'ApiVersion2Req');
     try {
       if (res?.status === 200 || res?.status === 201) {
@@ -384,7 +398,7 @@ export const saveConsentForm : any = createAsyncThunk(
       }
     }
   }
-) ;
+);
 
 export const GetConsentFormData: any = createAsyncThunk(
   'GetConsentFormData',
@@ -401,12 +415,15 @@ export const GetConsentFormData: any = createAsyncThunk(
       }
     }
   }
-) ;
+);
 
 export const GetConsentFormContent: any = createAsyncThunk(
   'GetConsentFormContent',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.GetConsentFormContent(data, 'ApiVersion2Req');
+    const res = await apiServicesV2.GetConsentFormContent(
+      data,
+      'ApiVersion2Req'
+    );
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data;
@@ -418,12 +435,15 @@ export const GetConsentFormContent: any = createAsyncThunk(
       }
     }
   }
-) ;
+);
 
 export const GetPatientActiveMedications: any = createAsyncThunk(
   'GetPatientActiveMedications',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.GetPatientActiveMedications(data, 'ApiVersion2Req');
+    const res = await apiServicesV2.GetPatientActiveMedications(
+      data,
+      'ApiVersion2Req'
+    );
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data;
@@ -435,7 +455,7 @@ export const GetPatientActiveMedications: any = createAsyncThunk(
       }
     }
   }
-) ;
+);
 
 export const GetPatientAllergies: any = createAsyncThunk(
   'GetPatientAllergies',
@@ -452,8 +472,7 @@ export const GetPatientAllergies: any = createAsyncThunk(
       }
     }
   }
-) ;
-
+);
 
 export const getpatientvitals: any = createAsyncThunk(
   'getpatientvitals',
@@ -470,8 +489,7 @@ export const getpatientvitals: any = createAsyncThunk(
       }
     }
   }
-) ;
-
+);
 
 export const getpatientproblems: any = createAsyncThunk(
   'getpatientproblems',
@@ -488,12 +506,15 @@ export const getpatientproblems: any = createAsyncThunk(
       }
     }
   }
-) ;
+);
 
 export const getpatientappointments: any = createAsyncThunk(
   'getpatientappointments',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.getpatientappointments(data, 'ApiVersion2Req');
+    const res = await apiServicesV2.getpatientappointments(
+      data,
+      'ApiVersion2Req'
+    );
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data;
@@ -505,13 +526,15 @@ export const getpatientappointments: any = createAsyncThunk(
       }
     }
   }
-) ;
-
+);
 
 export const getunsignedlabordertestbypatientid: any = createAsyncThunk(
   'getunsignedlabordertestbypatientid',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.getunsignedlabordertestbypatientid(data, 'ApiVersion2Req');
+    const res = await apiServicesV2.getunsignedlabordertestbypatientid(
+      data,
+      'ApiVersion2Req'
+    );
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data;
@@ -523,13 +546,16 @@ export const getunsignedlabordertestbypatientid: any = createAsyncThunk(
       }
     }
   }
-) ;
-
+);
 
 export const getdashboardconfigurations: any = createAsyncThunk(
   'getdashboardconfigurations',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.getdashboardconfigurations(data, 'ApiVersion2Req');
+    debugger;
+    const res = await apiServicesV2.getdashboardconfigurations(
+      data,
+      'ApiVersion2Req'
+    );
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data;
@@ -541,13 +567,16 @@ export const getdashboardconfigurations: any = createAsyncThunk(
       }
     }
   }
-) ;
+);
 
 export const saveDashboardConfiguration: any = createAsyncThunk(
   'saveDashboardConfiguration',
   async (data, thunkAPI) => {
     debugger;
-    const res = await apiServicesV2.saveDashboardConfiguration(data, 'ApiVersion2Req');
+    const res = await apiServicesV2.saveDashboardConfiguration(
+      data,
+      'ApiVersion2Req'
+    );
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data;
@@ -559,17 +588,16 @@ export const saveDashboardConfiguration: any = createAsyncThunk(
       }
     }
   }
-) ;
-
-
-
+);
 
 const patientProfileSlice = createSlice({
   name: 'Patient Profile Slice',
   initialState: initialState,
-  reducers: {setEncounterId: (state: any, { payload }) => {
-    state.EncounterId = payload;
-  },},
+  reducers: {
+    setEncounterId: (state: any, { payload }) => {
+      state.EncounterId = payload;
+    }
+  },
   extraReducers: {
     [GetPatientByEmail.pending]: (state: any) => {
       state.PatientByEmailDataLoader = true;
@@ -638,7 +666,6 @@ const patientProfileSlice = createSlice({
       state.PatientCCDAActivityLogLoader = false;
     },
 
-    
     [InsertActivityLog.pending]: (state: any) => {
       state.InsertActivityLogLoader = true;
     },
@@ -660,7 +687,7 @@ const patientProfileSlice = createSlice({
     [CreateAuthorizedUser.rejected]: (state: any) => {
       state.CreateAuthorizedUserLoader = false;
     },
-    
+
     [ShareDocument.pending]: (state: any) => {
       state.ShareDocumentLoader = true;
     },
@@ -694,7 +721,7 @@ const patientProfileSlice = createSlice({
     [GetServerTime.rejected]: (state: any) => {
       state.getServerTimeData = null;
     },
-    
+
     [GetPatientUserRequestByCode.pending]: (state: any) => {
       state.GetPatientUserRequestByCodeLoader = true;
     },
@@ -705,7 +732,6 @@ const patientProfileSlice = createSlice({
     [GetPatientUserRequestByCode.rejected]: (state: any) => {
       state.GetPatientUserRequestByCodeLoader = false;
     },
-    
 
     [GenerateOtp.pending]: (state: any) => {
       state.GenerateOtpLoader = true;
@@ -717,7 +743,7 @@ const patientProfileSlice = createSlice({
     [GenerateOtp.rejected]: (state: any) => {
       state.GenerateOtpLoader = false;
     },
-      
+
     [GetToken.pending]: (state: any) => {
       state.GetTokenLoader = true;
     },
@@ -729,7 +755,6 @@ const patientProfileSlice = createSlice({
       state.GetTokenLoader = false;
     },
 
-          
     [GetSharingModulesData.pending]: (state: any) => {
       state.GetSharingModulesDataLoader = true;
     },
@@ -740,7 +765,7 @@ const patientProfileSlice = createSlice({
     [GetSharingModulesData.rejected]: (state: any) => {
       state.GetSharingModulesDataLoader = false;
     },
-    
+
     [GetConsentFormData.pending]: (state: any) => {
       state.GetConsentFormDataLoader = true;
     },

@@ -142,7 +142,7 @@ const MyHealthConditions: React.FC<Props> = ({ dragHandleProps }) => {
             </Box>
 
             {/* See all link */}
-            <Box textAlign="center" mt={2}>
+            {/* <Box textAlign="center" mt={2}>
               <Link
                 href="#"
                 underline="hover"
@@ -152,7 +152,7 @@ const MyHealthConditions: React.FC<Props> = ({ dragHandleProps }) => {
               >
                 See all Conditions
               </Link>
-            </Box>
+            </Box> */}
           </CardContent>
         </Card>
       )}

@@ -255,7 +255,7 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
                     )}
 
                     {/* View Clinical Details Link */}
-                    <Link
+                    {/* <Link
                       href="#"
                       underline="hover"
                       color="primary"
@@ -263,14 +263,14 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
                       fontWeight="bold"
                     >
                       View Clinical Details
-                    </Link>
+                    </Link> */}
                   </Box>
                 );
               })}
             </Box>
 
             {/* See All Link */}
-            <Box textAlign="center" mt={2}>
+            {/* <Box textAlign="center" mt={2}>
               <Link
                 href="#"
                 underline="hover"
@@ -280,7 +280,7 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
               >
                 See all Medical History
               </Link>
-            </Box>
+            </Box> */}
           </CardContent>
         </Card>
       )}

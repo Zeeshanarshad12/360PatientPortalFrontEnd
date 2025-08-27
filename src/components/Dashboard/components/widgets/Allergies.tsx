@@ -188,7 +188,7 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
             </Box>
 
             {/* See All Link */}
-            <Box textAlign="center" mt={2}>
+            {/* <Box textAlign="center" mt={2}>
               <Link
                 href="#"
                 underline="hover"
@@ -198,7 +198,7 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
               >
                 See all Allergies
               </Link>
-            </Box>
+            </Box> */}
           </CardContent>
         </Card>
       )}

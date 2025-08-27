@@ -35,7 +35,12 @@ const BillingInsurance: React.FC<Props> = ({ dragHandleProps }) => {
     <Card sx={{ minHeight: 250, borderRadius: 3 }}>
       <CardContent sx={{ pb: 1 }}>
         {/* Header */}
-        <Box display="flex" alignItems="center" justifyContent="space-between" mb={2}>
+        <Box
+          display="flex"
+          alignItems="center"
+          justifyContent="space-between"
+          mb={2}
+        >
           <Typography variant="h4" fontWeight="bold">
             {widgetContent.billingInsurance.title}
           </Typography>
@@ -58,7 +63,12 @@ const BillingInsurance: React.FC<Props> = ({ dragHandleProps }) => {
             position: 'relative'
           }}
         >
-          <Box display="flex" alignItems="center" justifyContent="space-between" mb={1}>
+          <Box
+            display="flex"
+            alignItems="center"
+            justifyContent="space-between"
+            mb={1}
+          >
             <Typography fontWeight="bold" color="text.primary">
               Primary Insurance
             </Typography>
@@ -137,7 +147,12 @@ const BillingInsurance: React.FC<Props> = ({ dragHandleProps }) => {
                   position: 'relative'
                 }}
               >
-                <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.5}>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  mb={0.5}
+                >
                   <Box display="flex" alignItems="center" gap={1}>
                     <Typography fontWeight="bold" color="text.primary">
                       {claim.service}
@@ -159,19 +174,40 @@ const BillingInsurance: React.FC<Props> = ({ dragHandleProps }) => {
                     {claim.amount}
                   </Typography>
                 </Box>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
-                  <Typography variant="body2" fontWeight="bold" color="text.primary" sx={{ mb: 0.5 }}>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Typography
+                    variant="body2"
+                    fontWeight="bold"
+                    color="text.primary"
+                    sx={{ mb: 0.5 }}
+                  >
                     {claim.provider}
                   </Typography>
-                  <Typography variant="body2" fontWeight="bold" color="text.primary">
+                  <Typography
+                    variant="body2"
+                    fontWeight="bold"
+                    color="text.primary"
+                  >
                     {claim.date}
                   </Typography>
                 </Box>
-                <Box display="flex" alignItems="center" justifyContent="space-between">
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
                   <Typography variant="body2" color="text.secondary">
                     Claim ID: {claim.claimId}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mt: 0.5 }}
+                  >
                     Coverage: {claim.coverage}
                   </Typography>
                 </Box>
