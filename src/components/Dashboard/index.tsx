@@ -1,5 +1,5 @@
 import { useDispatch } from '@/store/index';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box } from '@mui/material';
 import {
   DndContext,
@@ -54,6 +54,9 @@ const PatientDashboard = () => {
   const dispatch = useDispatch();
   const sensors = useSensors(useSensor(PointerSensor));
 
+  // Tracks if an item moved across columns during drag-over
+  const movedAcrossColumnsRef = useRef(false);
+
   useEffect(() => {
     setColumns(layout);
   }, [layout]);
@@ -64,8 +67,34 @@ const PatientDashboard = () => {
     );
   };
 
+  const saveColumns = (cols: Record<string, string[]>) => {
+    if (!cols) return;
+    const patientId = localStorage.getItem('patientID');
+    if (!patientId) return;
+
+    const payload: any[] = [];
+    Object.entries(cols).forEach(([columnKey, widgets]) => {
+      const column = parseInt(columnKey.replace('column', ''), 10);
+      widgets.forEach((header, rowIndex) => {
+        payload.push({
+          header,
+          column,
+          row: rowIndex + 1
+        });
+      });
+    });
+
+    dispatch(
+      saveDashboardConfiguration({
+        PatientID: patientId,
+        payload
+      })
+    );
+  };
+
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(event.active.id as string);
+    movedAcrossColumnsRef.current = false;
   };
 
   const handleDragOver = (event: DragOverEvent) => {
@@ -88,7 +117,9 @@ const PatientDashboard = () => {
       if (activeIndex === -1) return prev;
 
       activeItems.splice(activeIndex, 1);
-      overItems.push(activeId); // Add to end of target column
+      overItems.push(activeId);
+
+      movedAcrossColumnsRef.current = true;
 
       return {
         ...prev,
@@ -100,7 +131,14 @@ const PatientDashboard = () => {
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
+
+    // If the item was moved across columns during dragOver and the drop resolves
+    // to itself or null, we still save using current state (already updated).
     if (!over || active.id === over.id) {
+      if (movedAcrossColumnsRef.current) {
+        saveColumns(columns);
+        movedAcrossColumnsRef.current = false;
+      }
       setActiveId(null);
       return;
     }
@@ -114,6 +152,7 @@ const PatientDashboard = () => {
 
     if (!sourceColumn || !targetColumn) {
       setActiveId(null);
+      movedAcrossColumnsRef.current = false;
       return;
     }
 
@@ -123,6 +162,13 @@ const PatientDashboard = () => {
       const items = [...newColumns[sourceColumn]];
       const oldIndex = items.indexOf(activeId);
       const newIndex = items.indexOf(overId);
+
+      if (oldIndex === newIndex) {
+        setActiveId(null);
+        movedAcrossColumnsRef.current = false;
+        return; // no-op drag, don't save
+      }
+
       newColumns[sourceColumn] = arrayMove(items, oldIndex, newIndex);
     } else {
       const activeItems = [...newColumns[sourceColumn]];
@@ -134,33 +180,13 @@ const PatientDashboard = () => {
       newColumns[targetColumn] = overItems;
     }
 
+    // Persist only on actual change
+    saveColumns(newColumns);
+    movedAcrossColumnsRef.current = false;
+
     setColumns(newColumns);
     setActiveId(null);
   };
-
-  useEffect(() => {
-    if (!columns) return;
-    if (!localStorage.getItem('patientID')) return;
-
-    const payload: any[] = [];
-    Object.entries(columns).forEach(([columnKey, widgets]) => {
-      const column = parseInt(columnKey.replace('column', ''), 10);
-      widgets.forEach((header, rowIndex) => {
-        payload.push({
-          header,
-          column,
-          row: rowIndex + 1
-        });
-      });
-    });
-
-    const obj = {
-      PatientID: localStorage.getItem('patientID'),
-      payload
-    };
-
-    dispatch(saveDashboardConfiguration(obj));
-  }, [columns, dispatch]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
