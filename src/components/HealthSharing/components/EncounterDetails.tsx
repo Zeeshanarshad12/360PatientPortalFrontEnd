@@ -45,11 +45,10 @@ function EncounterDetailsReport() {
   const [messageSnackbar, setMessageSnackbar] = useState('');
   const [isTouched, setIsTouched] = useState(false); // Track if user has clicked Send
   const [emailError, setEmailError] = useState(false);
-  const [includeCCD, setIncludeCCD] = useState(true);
+  const [includeCCD, setIncludeCCD] = useState(false);
   const [parseJson, setParsedJson] = useState(null);
   const [jsonError, setJsonError] = useState(null);
   const [isSending, setIsSending] = useState(false);
-
 
   //Save ActivityLog Obj
   const Logobj = {
