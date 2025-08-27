@@ -42,11 +42,14 @@ function EncounterDetailsReport() {
   const [message, setMessage] = useState('');
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [severity, setSeverity] = useState<AlertColor>('error');
+  const [messageSnackbar, setMessageSnackbar] = useState('');
   const [isTouched, setIsTouched] = useState(false); // Track if user has clicked Send
   const [emailError, setEmailError] = useState(false);
   const [includeCCD, setIncludeCCD] = useState(true);
   const [parseJson, setParsedJson] = useState(null);
   const [jsonError, setJsonError] = useState(null);
+  const [isSending, setIsSending] = useState(false);
+
 
   //Save ActivityLog Obj
   const Logobj = {
@@ -82,11 +85,13 @@ function EncounterDetailsReport() {
       return; // stop here if any field is invalid
     }
 
+    setIsSending(true);
+
     try {
       const emailResponse = await dispatch(ShareDocument(Emailobj)).unwrap();
       if (emailResponse === true) {
         handleClose();
-        setMessage('Email Sent Successfully!');
+        setMessageSnackbar('Email Sent Successfully!');
         setSeverity('success');
         setOpenSnackbar(true);
 
@@ -97,16 +102,18 @@ function EncounterDetailsReport() {
         };
         dispatch(InsertActivityLog(LogEmailobj));
       } else {
-        setMessage(
+        setMessageSnackbar(
           'Secure Email can only be sent to authorized Email addresses!'
         );
         setSeverity('error');
         setOpenSnackbar(true);
       }
     } catch (err: any) {
-      setMessage(err?.data?.message || 'Something went wrong!');
+      setMessageSnackbar(err?.data?.message || 'Something went wrong!');
       setSeverity('error');
       setOpenSnackbar(true);
+    } finally {
+      setIsSending(false);
     }
   };
 
@@ -847,7 +854,6 @@ function EncounterDetailsReport() {
         { explicitArray: false, mergeAttrs: true },
         (err, result) => {
           if (err) {
-            console.error('Failed to parse XML:', err);
             setParsedJson(null);
             setJsonError('Failed to parse XML content.');
           } else {
@@ -886,11 +892,6 @@ function EncounterDetailsReport() {
           }}
         >
           <MapXMLDirectly XmlToJson={parseJson} />
-          {/* <iframe
-          title="Patient Report"
-          srcDoc={PatientCCDADetail}
-          style={{ width: '100%', height: '100%', border: 'none' }}
-        /> */}
         </Box>
       )}
 
@@ -1113,8 +1114,9 @@ function EncounterDetailsReport() {
               }
             }}
             onClick={handleSendEmail}
+            disabled={isSending}
           >
-            Send
+            {isSending ? 'Please wait...' : 'Send'}
           </Button>
         </DialogActions>
       </Dialog>
@@ -1131,7 +1133,7 @@ function EncounterDetailsReport() {
           severity={severity}
           variant="filled"
         >
-          {message}
+          {messageSnackbar}
         </Alert>
       </Snackbar>
     </Box>

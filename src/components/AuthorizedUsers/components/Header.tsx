@@ -67,7 +67,7 @@ function AuthorizedUserHeader() {
     const response = await dispatch(
       UpdateSharingModulesData(togglesJson)
     ).unwrap();
-    console.log(response.result);
+    
     if (response.result === 'Success') {
       setOpenSnackbar(true);
       setsnackbarmsg('Changes Saved.');
@@ -667,11 +667,6 @@ function AuthorizedUserHeader() {
                 outlineOffset: '2px'
               }
             }}
-            // onClick={() => {
-            //   console.log('Selected options:', togglesJson);
-            //   const response = dispatch(UpdateSharingModulesData(togglesJson)).unwrap();
-            // }}
-
             onClick={handleSaveCDS}
           >
             Save

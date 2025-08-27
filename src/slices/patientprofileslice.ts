@@ -551,7 +551,6 @@ export const getunsignedlabordertestbypatientid: any = createAsyncThunk(
 export const getdashboardconfigurations: any = createAsyncThunk(
   'getdashboardconfigurations',
   async (data, thunkAPI) => {
-    debugger;
     const res = await apiServicesV2.getdashboardconfigurations(
       data,
       'ApiVersion2Req'
@@ -572,7 +571,6 @@ export const getdashboardconfigurations: any = createAsyncThunk(
 export const saveDashboardConfiguration: any = createAsyncThunk(
   'saveDashboardConfiguration',
   async (data, thunkAPI) => {
-    debugger;
     const res = await apiServicesV2.saveDashboardConfiguration(
       data,
       'ApiVersion2Req'

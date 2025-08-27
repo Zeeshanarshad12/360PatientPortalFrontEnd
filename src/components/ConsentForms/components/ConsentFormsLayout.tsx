@@ -59,7 +59,6 @@ function ConsentFormsLayout() {
         setForms(mappedForms);
         const pending = mappedForms.filter((f) => f.Status === 'Pending');
         setPendingCount(pending.length);
-        console.log('Fetched consent forms:', mappedForms);
       } catch (error) {
         console.error('Failed to fetch consent forms:', error);
       }
@@ -104,7 +103,6 @@ function ConsentFormsLayout() {
       const pending = mappedForms.filter((f) => f.Status === 'Pending');
       setPendingCount(pending.length);
       setForms(mappedForms);
-      console.log('Refetched consent forms:', mappedForms);
     } catch (error) {
       console.error('Failed to refresh consent forms:', error);
     }
@@ -151,7 +149,6 @@ function ConsentFormsLayout() {
       // const rawContent = JSON.parse(detailedForm.content);
       const rawContent = detailedForm?.content ? JSON.parse(detailedForm.content) : null;
       const contenthtml = draftToHtml(rawContent);
-      debugger;
       const updatedForm = { ...form, Content: contenthtml, Signature:detailedForm.signature };
 
       setForms(prev =>

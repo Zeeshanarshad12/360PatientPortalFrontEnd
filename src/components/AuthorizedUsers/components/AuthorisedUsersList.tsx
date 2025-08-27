@@ -44,7 +44,6 @@ function AuthorisedUsersList() {
 
     try {
       // Dispatch the action to update the backend with the AccessObj data
-      // debugger;
       const response = await dispatch(UpdatePatientAuthorizedUserAccess(AccessObj)).unwrap();
 
       // Optionally refetch the updated user data after toggling the status

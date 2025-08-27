@@ -12,7 +12,6 @@ export const useInitialLayout = () => {
   const dispatch = useDispatch();
  
   useEffect(() => {
-    debugger;
     const fetchData = async () => {
       try {
         const Obj = {

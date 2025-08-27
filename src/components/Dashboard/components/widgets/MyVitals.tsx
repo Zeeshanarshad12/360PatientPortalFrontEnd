@@ -215,7 +215,6 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
 
   // Chart data ab direct vitals state & dates state se
   const getChartData = () => {
-    debugger;
     const vital = vitals.find((v) => v.name === selectedVital);
     if (!vital) return { series: [], categories: [] };
 
@@ -300,7 +299,6 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
         theme: 'light',
         y: {
           formatter: (value, { dataPointIndex }) => {
-            debugger;
             if (selectedVital.toLowerCase().includes('bp')) {
               const fullValue =
                 chartData.originalValues[dataPointIndex] || '0/0';

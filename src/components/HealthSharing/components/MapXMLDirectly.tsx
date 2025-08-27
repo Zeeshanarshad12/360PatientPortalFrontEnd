@@ -17,7 +17,6 @@ import DocumentDetails from './DocumentDetails';
 import { formatDateCCDADate, isNull } from '@/utils/functions';
 import moment from 'moment';
 
-
 const extractNodeText = (node: any): string => {
   let value = '';
 
@@ -250,10 +249,6 @@ const renderCcdaContentList = (node: any): React.ReactNode => {
 const MapXMLDirectly = ({ XmlToJson }) => {
   const components =
     XmlToJson?.ClinicalDocument?.component?.structuredBody?.component || [];
-
-console.log("XmlToJson?.ClinicalDocument",XmlToJson?.ClinicalDocument);
-
-    
 
   const getFullName = (nameData: any): string => {
     if (!nameData) return '';
@@ -596,9 +591,7 @@ console.log("XmlToJson?.ClinicalDocument",XmlToJson?.ClinicalDocument);
         if (typeof text === 'string') {
           return (
             <Box key={idx} mb={4}>
-               <h3 style={{ marginBottom: 2 }}>
-                {section.title}
-              </h3>
+              <h3 style={{ marginBottom: 2 }}>{section.title}</h3>
               <Typography
                 variant="body1"
                 sx={{
@@ -617,9 +610,7 @@ console.log("XmlToJson?.ClinicalDocument",XmlToJson?.ClinicalDocument);
           const extractedText = extractFromNestedContent(text.content);
           return (
             <Box key={idx} mb={4}>
-              <h3 style={{ marginBottom: 2 }}>
-                {section.title}
-              </h3>
+              <h3 style={{ marginBottom: 2 }}>{section.title}</h3>
               <Typography
                 variant="body1"
                 sx={{
@@ -637,9 +628,7 @@ console.log("XmlToJson?.ClinicalDocument",XmlToJson?.ClinicalDocument);
         if (text?.content || text?._ || text?.list || text?.paragraph) {
           return (
             <Box key={idx} mb={4}>
-              <h3 style={{ marginBottom: 2 }}>
-                {section.title}
-              </h3>
+              <h3 style={{ marginBottom: 2 }}>{section.title}</h3>
               {renderCcdaContentList(text)}
             </Box>
           );
