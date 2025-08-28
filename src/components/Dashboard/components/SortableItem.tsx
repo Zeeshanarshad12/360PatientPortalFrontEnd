@@ -1,9 +1,6 @@
-// components/SortableItem.tsx
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import IconButton from '@mui/material/IconButton';
 
 interface SortableItemProps {
   id: string;
@@ -35,11 +32,6 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, children }) => {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes}>
-      {/* Drag handle must be a specific child with listeners
-      <IconButton {...listeners} size="small" style={{ cursor: 'grab' }}>
-        <DragIndicatorIcon />
-      </IconButton>
-      <div>{children}</div> */}
       {childWithProps}
     </div>
   );

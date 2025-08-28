@@ -82,10 +82,19 @@ const NotificationsAlerts: React.FC<Props> = ({ dragHandleProps }) => {
 
               {/* Notification Content */}
               <Box sx={{ flex: 1 }}>
-                <Typography variant="body2" fontWeight="bold" color="text.primary" sx={{ mb: 0.5 }}>
+                <Typography
+                  variant="body2"
+                  fontWeight="bold"
+                  color="text.primary"
+                  sx={{ mb: 0.5 }}
+                >
                   {notification.message}
                 </Typography>
-                <Typography variant="body2" color="text.primary" fontSize="0.8rem">
+                <Typography
+                  variant="body2"
+                  color="text.primary"
+                  fontSize="0.8rem"
+                >
                   {notification.timestamp}
                 </Typography>
               </Box>

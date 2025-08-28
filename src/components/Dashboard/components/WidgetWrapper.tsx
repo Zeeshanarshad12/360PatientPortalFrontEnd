@@ -1,5 +1,4 @@
 import React from 'react';
-import { Box } from '@mui/material';
 
 import CurrentMedications from './widgets/CurrentMedications';
 import MyVitals from './widgets/MyVitals';

@@ -15,7 +15,6 @@ export const useInitialLayout = () => {
     const fetchData = async () => {
       try {
         const Obj = {
-          // PatientId: '27246' // later replace with localStorage if needed
           Email: localStorage.getItem('Email')
         };
  

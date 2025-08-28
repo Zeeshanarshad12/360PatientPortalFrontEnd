@@ -21,7 +21,6 @@ import ShowChartIcon from '@mui/icons-material/ShowChart';
 import { widgetContent } from '@/components/Dashboard/contexts/widgetData';
 import { useDispatch, useSelector } from '@/store/index';
 import { getpatientvitals } from '@/slices/patientprofileslice';
-import { Console } from 'console';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
 
 interface Props {
