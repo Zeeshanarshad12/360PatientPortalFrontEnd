@@ -58,16 +58,20 @@ function SidebarMenu() {
     }
   };
 
-const [localPendingCount, setLocalPendingCount] = useState<number>(0);
+  const [localPendingCount, setLocalPendingCount] = useState<number>(0);
 
-useEffect(() => {
+  useEffect(() => {
     // Initial read from localStorage on first render
-    const storedCount = Number(localStorage.getItem("pendingConsentFormCount") || "0");
+    const storedCount = Number(
+      localStorage.getItem('pendingConsentFormCount') || '0'
+    );
     setLocalPendingCount(storedCount);
 
     // Recheck after 500ms (half second) for updated value
     const timer = setTimeout(() => {
-      const updatedCount = Number(localStorage.getItem("pendingConsentFormCount") || "0");
+      const updatedCount = Number(
+        localStorage.getItem('pendingConsentFormCount') || '0'
+      );
       setLocalPendingCount(updatedCount);
     }, 2000);
 
@@ -106,45 +110,45 @@ useEffect(() => {
         pathname === '/patientportal/authorizedUser'
           ? '/statics/aufill.svg'
           : '/statics/auout.svg'
-    },
-    {
-      name: 'Consent Forms',
-      link: '/patientportal/consentforms',
-      icon:
-        pathname === '/patientportal/consentforms'
-          ? '/statics/ConsentFormfill.svg'
-          : '/statics/ConsentFormout.svg'
-    },
-    {
-      name: 'Find A Doctor',
-      link: '/patientportal/findAdoc',
-      icon: pathname.includes('findAdoc')
-        ? '/statics/docfill.svg'
-        : '/statics/docout.svg'
-    },
-    {
-      name: 'Patient Visits',
-      link: '/patientportal/patientvisits',
-      icon: pathname.includes('patientvisits')
-        ? '/statics/pvfill.svg'
-        : '/statics/pvout.svg'
-    },
-    {
-      name: 'Patient Documents',
-      link: '/patientportal/documents',
-      icon:
-        pathname === '/patientportal/documents'
-          ? '/statics/docufill.svg'
-          : '/statics/docuout.svg'
-    },
-    {
-      name: 'Health Education',
-      link: '/patientportal/educationAndresources',
-      icon:
-        pathname === '/patientportal/educationAndresources'
-          ? '/statics/edufill.svg'
-          : '/statics/eduout.svg'
     }
+    // {
+    //   name: 'Consent Forms',
+    //   link: '/patientportal/consentforms',
+    //   icon:
+    //     pathname === '/patientportal/consentforms'
+    //       ? '/statics/ConsentFormfill.svg'
+    //       : '/statics/ConsentFormout.svg'
+    // },
+    // {
+    //   name: 'Find A Doctor',
+    //   link: '/patientportal/findAdoc',
+    //   icon: pathname.includes('findAdoc')
+    //     ? '/statics/docfill.svg'
+    //     : '/statics/docout.svg'
+    // },
+    // {
+    //   name: 'Patient Visits',
+    //   link: '/patientportal/patientvisits',
+    //   icon: pathname.includes('patientvisits')
+    //     ? '/statics/pvfill.svg'
+    //     : '/statics/pvout.svg'
+    // },
+    // {
+    //   name: 'Patient Documents',
+    //   link: '/patientportal/documents',
+    //   icon:
+    //     pathname === '/patientportal/documents'
+    //       ? '/statics/docufill.svg'
+    //       : '/statics/docuout.svg'
+    // },
+    // {
+    //   name: 'Health Education',
+    //   link: '/patientportal/educationAndresources',
+    //   icon:
+    //     pathname === '/patientportal/educationAndresources'
+    //       ? '/statics/edufill.svg'
+    //       : '/statics/eduout.svg'
+    // }
   ];
 
   return (
@@ -221,7 +225,12 @@ useEffect(() => {
                             height={20}
                           />
                           <Typography
-                            sx={{ ml: '15px', display: 'flex', alignItems: 'center', gap: 1 }}
+                            sx={{
+                              ml: '15px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1
+                            }}
                             variant="subtitle2"
                             component="h5"
                           >
@@ -241,7 +250,6 @@ useEffect(() => {
                                 }}
                               >
                                 {pendingCount || localPendingCount}
-
                               </Box>
                             )}
                           </Typography>
@@ -263,7 +271,6 @@ useEffect(() => {
                           </Typography>
                         </>
                       )}
-
                     </Box>
                   </ListItem>
                 </List>
