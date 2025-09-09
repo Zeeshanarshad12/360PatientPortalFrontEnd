@@ -44,7 +44,6 @@ function SignUp() {
   const [openSnackbar, setOpenSnackbar] = useState(false);
 
   useEffect(() => {
-    //if (router.asPath) {
     const queryString = router.asPath.split('?')[1];
     if (queryString) {
       const urlParams = new URLSearchParams(queryString);
@@ -55,7 +54,6 @@ function SignUp() {
         setCode(newCode);
       }
     }
-    //}
   }, []); // This will run when router.asPath changes
 
   useEffect(() => {
@@ -103,24 +101,33 @@ function SignUp() {
   };
 
   // Handle Verify Button Click
-  const handleVerifyOtp = () => {
+  const handleVerifyOtp = async () => {
     if (otp.some((digit) => digit === '')) {
       setError(true);
       return;
     }
 
-    const joinotp = otp.join('');
-    if (joinotp == GenerateOtpData?.result) {
+    const patientUserResponse = await dispatch(
+      GetPatientUserRequestByCode(code)
+    ).unwrap();
+
+    if (patientUserResponse.result != null) {
+      const joinotp = otp.join('');
+      if (joinotp == patientUserResponse.result.otp) {
+      } else {
+        // GenerateOtpData?.result
+        setOpenSnackbar(true);
+        return;
+      }
+      setLoading(true); // Show loading indicator
+      setTimeout(() => {
+        setLoading(false);
+        setStep(3);
+      }, 2000); // 2-second delay before proceeding
     } else {
-      // alert('Invalid OTP');
       setOpenSnackbar(true);
       return;
     }
-    setLoading(true); // Show loading indicator
-    setTimeout(() => {
-      setLoading(false);
-      setStep(3);
-    }, 2000); // 2-second delay before proceeding
   };
 
   const handleSendCode = () => {
@@ -152,9 +159,16 @@ function SignUp() {
       setConfirmPasswordError('Passwords do not match.');
       return;
     }
+
+    if (otp.some((digit) => digit === '')) {
+      setError(true);
+      return;
+    }
+
+    const joinotp = otp.join('');
     const signupobj = {
       Code: code,
-      Otp: GenerateOtpData?.result.toString(),
+      Otp: joinotp,
       Password: password.toString(),
       CreatedBy: 'System'
     };
@@ -379,7 +393,8 @@ function SignUp() {
         {step === 3 && (
           <>
             <Typography
-              variant="h4" component="h4"
+              variant="h4"
+              component="h4"
               sx={{ fontWeight: 'bold', mt: 2, textAlign: 'left' }}
             >
               Create Password
@@ -413,7 +428,16 @@ function SignUp() {
                     }}
                   >
                     {showPassword ? <VisibilityOff /> : <Visibility />}
-                    <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>
+                    <span
+                      style={{
+                        position: 'absolute',
+                        width: 1,
+                        height: 1,
+                        overflow: 'hidden',
+                        clip: 'rect(0 0 0 0)',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
                       {showPassword ? 'Hide' : 'Show'}
                     </span>
                   </IconButton>
@@ -450,7 +474,16 @@ function SignUp() {
                     }}
                   >
                     {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                    <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>
+                    <span
+                      style={{
+                        position: 'absolute',
+                        width: 1,
+                        height: 1,
+                        overflow: 'hidden',
+                        clip: 'rect(0 0 0 0)',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
                       {showPassword ? 'Hide' : 'Show'}
                     </span>
                   </IconButton>
