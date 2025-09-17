@@ -134,7 +134,7 @@ const MyHealthConditions: React.FC<Props> = ({ dragHandleProps }) => {
                       : new Date(cond.createdAt).toLocaleDateString()}
                   </Typography>
                   <Typography variant="subtitle1" color="text.primary">
-                    Provider: {'Dr.Amir Shahzad'} | Diagnosed:{' '}
+                    Provider: {cond.providerName} | Diagnosed:{' '}
                     {new Date(cond.createdAt).toLocaleDateString()}
                   </Typography>
                 </Box>
