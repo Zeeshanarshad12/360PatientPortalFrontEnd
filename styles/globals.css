@@ -49,15 +49,74 @@ html {
   /* scroll-behavior: smooth !important; */
 }
 #app-content {
-  margin: 85px 5px 5px 85px;
   overflow-y: hidden;
   background-color: #f7f8fa;
 }
 
 #app-com-content {
-  /* height: calc(100vh - 66px); sch */
-  height: calc(100vh - 79px);
+  height: calc(100vh - 75px);
 }
 .test .MuiFormControl-root div fieldset {
     border-color: rgba(0, 0, 0, 0.897) !important;
+}
+
+/* Mobile-specific improvements */
+@media (max-width: 768px) {
+  /* Improve touch targets */
+  button, .MuiButton-root, .MuiIconButton-root {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Better scrolling on mobile */
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Hide scrollbars on mobile for cleaner look */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+  
+  /* Sidebar overlay backdrop */
+  .MuiDrawer-modal .MuiBackdrop-root {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+  
+  /* Responsive app content margins */
+  #app-content {
+    margin: 85px 0 0 -5px;
+    background-color: #f7f8fa;
+  }
+  
+  #app-com-content {
+    height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+  
+  /* Touch-friendly form inputs */
+  .MuiTextField-root input, 
+  .MuiTextField-root textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+  
+  /* Better spacing for mobile */
+  .MuiContainer-root {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+}
+
+/* Tablet-specific adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  #app-content {
+    margin-top: 70px;
+  }
+}
+
+/* Desktop remains unchanged */
+@media (min-width: 1025px) {
+  #app-content {
+    margin-top: 70px;
+  }
 }

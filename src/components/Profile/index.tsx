@@ -51,9 +51,9 @@ const PatientProfile = () => {
             flexGrow: 1,
             padding: 1,
             overflowY: 'auto',
-            height: 'calc(100vh - 100px)'
+            height: 'calc(98vh - 60px)'
           }}
-          tabIndex={0} 
+          tabIndex={1} 
         >
           <Card sx={{ marginBottom: 1 }}>
             <ContactInfo></ContactInfo>

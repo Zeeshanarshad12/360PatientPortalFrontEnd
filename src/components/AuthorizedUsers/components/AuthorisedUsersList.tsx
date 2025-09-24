@@ -94,7 +94,7 @@ function AuthorisedUsersList() {
       { field: 'AccessStatus', headerName: 'Access Status', flex: 1,
         renderCell: (params) => {
           const rowid = params.row.rowid; // Use rowid from the row data
-          const isActive = toggleStates[rowid]; // Fetch the correct state for this row
+          const isActive = toggleStates[rowid] ?? false; // Fetch the correct state for this row
           const isDisabled = false; //localStorage.getItem("UserAccessType") !== "Self"; // condition for disabling switch
 
           return (
@@ -124,7 +124,7 @@ function AuthorisedUsersList() {
       { field: 'vdtAccess', headerName: 'Access PHI', flex: 1,
         renderCell: (params) => {
           const rowid = params.row.rowid;
-          const isActive = togglePHIStates[rowid];
+          const isActive = togglePHIStates[rowid] ?? false;
 
           return (
             <Switch

@@ -34,8 +34,7 @@ function Contacts() {
 
       <Grid container spacing={2}>
         {Object.entries(contactDetailsInfo).map(([key, value]) => (
-          <Grid item xs={key === 'current address' ? 6 : 3} key={key}>
-            {/* Label uses heading semantics */}
+          <Grid item xs={(key === 'current address' || key === 'email') ? 12 : 6} md={3} key={key}>
             <Typography sx={{ marginBottom: 1 }} variant="subtitle2" component="h4">
               {key.charAt(0).toUpperCase() + key.slice(1)}
             </Typography>

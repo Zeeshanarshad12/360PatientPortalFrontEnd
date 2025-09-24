@@ -6,13 +6,13 @@ import { getConsentForms } from '@/services/consentFormService';
 import ConsentFormList from './ConsentFormList';
 import ConsentFormViewer from './ConsentFormViewer';
 import { useDispatch, useSelector } from '@/store/index';
-import { GetConsentFormData, GetConsentFormContent } from '@/slices/patientprofileslice';
+import {
+  GetConsentFormData,
+  GetConsentFormContent
+} from '@/slices/patientprofileslice';
 import HeartProgressLoader from '@/components/ProgressLoaders/components/HeartLoader';
 import { useConsentFormContext } from '@/contexts/ConsentFormContext';
 import draftToHtml from 'draftjs-to-html';
-
-const HEADER_HEIGHT = 10;
-const SPACING = 0;
 
 function ConsentFormsLayout() {
   const [heartLoading, setHeartLoading] = useState(true);
@@ -39,7 +39,6 @@ function ConsentFormsLayout() {
   useEffect(() => {
     const fetchConsentForms = async () => {
       try {
-
         const patientId = localStorage.getItem('patientID');
         if (!patientId) return;
 
@@ -53,7 +52,7 @@ function ConsentFormsLayout() {
           Content: '',
           Status: form.status,
           SignedDate: form.signedDate,
-          Signature: form.signature,
+          Signature: form.signature
         }));
 
         setForms(mappedForms);
@@ -65,24 +64,18 @@ function ConsentFormsLayout() {
     };
 
     fetchConsentForms();
-
   }, [dispatch, refreshTrigger]);
 
   // consentFormService.ts
   const getConsentFormById = async (formId: string) => {
-
     const Obj = {
       PatientId: localStorage.getItem('patientID'),
       FormID: formId
-    }
+    };
     const response = await dispatch(GetConsentFormContent(Obj)).unwrap();
     const data = await response.result;
     return data;
   };
-
-
-
-
 
   const refreshForms = async () => {
     try {
@@ -108,8 +101,6 @@ function ConsentFormsLayout() {
     }
   };
 
-
-
   const pendingForms = useMemo(
     () => forms.filter((f) => f.Status === 'Pending'),
     [forms]
@@ -118,7 +109,7 @@ function ConsentFormsLayout() {
   useEffect(() => {
     if (forms.length > 0 && !selectedForm) {
       // setSelectedForm(forms[0]);
-       handleSelectForm(forms[0]);
+      handleSelectForm(forms[0]);
     }
   }, [forms]);
 
@@ -142,27 +133,33 @@ function ConsentFormsLayout() {
   };
 
   const handleSelectForm = async (form: ConsentForm) => {
-  if (!form.Content) {
-    try {
-      const detailedForms = await getConsentFormById(form.FormID); 
-      const detailedForm = detailedForms[0];
-      // const rawContent = JSON.parse(detailedForm.content);
-      const rawContent = detailedForm?.content ? JSON.parse(detailedForm.content) : null;
-      const contenthtml = draftToHtml(rawContent);
-      const updatedForm = { ...form, Content: contenthtml, Signature:detailedForm.signature };
+    if (!form.Content) {
+      try {
+        const detailedForms = await getConsentFormById(form.FormID);
+        const detailedForm = detailedForms[0];
+        // const rawContent = JSON.parse(detailedForm.content);
+        const rawContent = detailedForm?.content
+          ? JSON.parse(detailedForm.content)
+          : null;
+        const contenthtml = draftToHtml(rawContent);
+        const updatedForm = {
+          ...form,
+          Content: contenthtml,
+          Signature: detailedForm.signature
+        };
 
-      setForms(prev =>
-        prev.map(f => (f.FormID === form.FormID ? updatedForm : f))
-      );
+        setForms((prev) =>
+          prev.map((f) => (f.FormID === form.FormID ? updatedForm : f))
+        );
 
-      setSelectedForm(updatedForm);
-    } catch (error) {
-      console.error('Failed to load form content:', error);
+        setSelectedForm(updatedForm);
+      } catch (error) {
+        console.error('Failed to load form content:', error);
+      }
+    } else {
+      setSelectedForm(form); // Already has content
     }
-  } else {
-    setSelectedForm(form); // Already has content
-  }
-};
+  };
 
   useEffect(() => {
     if (!justSigned || selectedForm?.Status !== 'Signed') return;
@@ -184,83 +181,91 @@ function ConsentFormsLayout() {
     return () => clearTimeout(timer);
   }, [forms, selectedForm, justSigned]);
 
-  const triggerRefresh = () => setRefreshTrigger(prev => !prev);
+  const triggerRefresh = () => setRefreshTrigger((prev) => !prev);
 
   return (
     <>
       {heartLoading ? (
         <HeartProgressLoader />
       ) : (
-        <Grid
-          container
-          spacing={2}
-          sx={{ padding: 1, paddingTop: `${SPACING + 1}px` }}
+        <Box
+          sx={{
+            flexGrow: 1,
+            padding: 1,
+            overflowY: 'auto',
+            height: 'calc(100vh - 60px)'
+          }}
+          tabIndex={0}
         >
-          {/* Left Sidebar */}
-          <Grid item xs={3}>
-            <Box sx={{ height: `calc(100vh - ${HEADER_HEIGHT + SPACING}px)` }}>
-              <Card
-                variant="outlined"
-                sx={{
-                  height: '85%',
-                  overflowY: 'auto',
-                  borderRadius: 2,
-                  boxShadow: 3,
-                  backgroundColor: '#fff',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'space-between',
-                  pb: 2
-                }}
-              >
-                <CardContent>
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                    Consent Forms{' '}
-                    <Badge
-                      badgeContent={pendingForms.length}
-                      color="primary"
-                      sx={{ ml: 2 }}
+          <Grid container spacing={2}>
+            {/* Left Sidebar */}
+            <Grid item xs={12} md={3}>
+              <Box sx={{ height: 'calc(100vh - 60px)' }}>
+                <Card
+                  variant="outlined"
+                  sx={{
+                    height: '96%',
+                    overflowY: 'auto',
+                    borderRadius: 2,
+                    boxShadow: 3,
+                    backgroundColor: '#fff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    pb: 2
+                  }}
+                >
+                  <CardContent>
+                    <Typography
+                      variant="h4"
+                      component="h4"
+                      sx={{ fontWeight: 700, mb: 2 }}
+                    >
+                      Consent Forms{' '}
+                      <Badge
+                        badgeContent={pendingForms.length}
+                        color="primary"
+                        sx={{ ml: 2 }}
+                      />
+                    </Typography>
+                    <ConsentFormList
+                      forms={forms}
+                      selectedId={selectedForm?.FormID}
+                      // onSelect={setSelectedForm}
+                      onSelect={handleSelectForm}
                     />
-                  </Typography>
-                  <ConsentFormList
-                    forms={forms}
-                    selectedId={selectedForm?.FormID}
-                    // onSelect={setSelectedForm}
-                    onSelect={handleSelectForm}
+                  </CardContent>
+                </Card>
+              </Box>
+            </Grid>
+
+            {/* Right Viewer Panel */}
+            <Grid item xs={12} md={9}>
+              <Box sx={{ height: 'calc(100vh - 60px)' }}>
+                <Card
+                  variant="outlined"
+                  sx={{
+                    height: '96%',
+                    borderRadius: 2,
+                    boxShadow: 3,
+                    backgroundColor: '#fff',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    overflow: 'hidden'
+                  }}
+                >
+                  <ConsentFormViewer
+                    form={selectedForm}
+                    onFormSigned={handleFormSigned}
+                    pendingForms={pendingForms}
+                    onSelectForm={handleSelectForm}
+                    triggerRefresh={triggerRefresh}
                   />
-                </CardContent>
-              </Card>
-            </Box>
+                </Card>
+              </Box>
+            </Grid>
           </Grid>
-
-          {/* Right Viewer Panel */}
-          <Grid item xs={9}>
-            <Box sx={{ height: `calc(100vh - ${HEADER_HEIGHT + SPACING}px)` }}>
-              <Card
-                variant="outlined"
-                sx={{
-                  height: '85%',
-                  borderRadius: 2,
-                  boxShadow: 3,
-                  backgroundColor: '#fff',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  overflow: 'hidden'
-                }}
-              >
-
-                <ConsentFormViewer
-                  form={selectedForm}
-                  onFormSigned={handleFormSigned}
-                  pendingForms={pendingForms}
-                  onSelectForm={handleSelectForm}
-                  triggerRefresh={triggerRefresh}
-                />
-
-              </Card>
-            </Box>
-          </Grid>
-        </Grid>
+        </Box>
       )}
     </>
   );

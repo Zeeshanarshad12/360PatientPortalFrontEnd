@@ -1,6 +1,6 @@
 import { useDispatch } from '@/store/index';
 import React, { useState, useEffect, useRef } from 'react';
-import { Box } from '@mui/material';
+import { Box, useTheme, useMediaQuery } from '@mui/material';
 import {
   DndContext,
   closestCorners,
@@ -26,19 +26,23 @@ import { saveDashboardConfiguration } from '@/slices/patientprofileslice';
 
 const DroppableColumn = ({
   id,
-  children
+  children,
+  isMobile
 }: {
   id: string;
   children: React.ReactNode;
+  isMobile: boolean;
 }) => {
   const { setNodeRef } = useDroppable({ id });
   return (
     <div
       ref={setNodeRef}
       style={{
-        flex: 1,
-        minWidth: '300px',
-        minHeight: '200px'
+        flex: isMobile ? '1 1 100%' : 1,
+        minWidth: isMobile ? '100%' : '300px',
+        maxWidth: isMobile ? '100%' : 'none',
+        minHeight: '200px',
+        marginBottom: isMobile ? '16px' : '0'
       }}
     >
       {children}
@@ -52,6 +56,9 @@ const PatientDashboard = () => {
   const [columns, setColumns] = useState(layout);
   const [activeId, setActiveId] = useState<string | null>('');
   const dispatch = useDispatch();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(theme.breakpoints.down('lg'));
   const sensors = useSensors(useSensor(PointerSensor));
 
   // Tracks if an item moved across columns during drag-over
@@ -203,9 +210,10 @@ const PatientDashboard = () => {
         <Box
           sx={{
             flexGrow: 1,
-            padding: 1,
+            padding: isMobile ? 1 : 1,
             overflowY: 'auto',
-            height: 'calc(100vh - 100px)'
+            height: 'calc(98vh - 60px)', // Account for header height
+            backgroundColor: '#f5f5f5'
           }}
           tabIndex={0}
         >
@@ -216,9 +224,17 @@ const PatientDashboard = () => {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
           >
-            <div style={{ display: 'flex', gap: '25px', paddingRight: '10px' }}>
+            <div 
+              style={{ 
+                display: 'flex', 
+                flexDirection: isMobile ? 'column' : 'row',
+                gap: isMobile ? '16px' : '25px', 
+                paddingRight: isMobile ? '0' : '10px',
+                paddingBottom: isMobile ? '20px' : '0'
+              }}
+            >
               {Object.entries(columns).map(([columnKey, widgets]) => (
-                <DroppableColumn key={columnKey} id={columnKey}>
+                <DroppableColumn key={columnKey} id={columnKey} isMobile={isMobile}>
                   <SortableContext
                     items={widgets}
                     strategy={verticalListSortingStrategy}
@@ -235,9 +251,14 @@ const PatientDashboard = () => {
                           minHeight: '100px',
                           color: '#aaa',
                           textAlign: 'center',
-                          lineHeight: '100px'
+                          lineHeight: '100px',
+                          borderRadius: '8px',
+                          border: '2px dashed #ddd',
+                          backgroundColor: '#fafafa'
                         }}
-                      ></div>
+                      >
+                        {isMobile ? 'Drag widgets here' : ''}
+                      </div>
                     )}
                   </SortableContext>
                 </DroppableColumn>

@@ -29,5 +29,9 @@ export const SERVICE_URLSV2 = {
   getpatientappointments : 'patientportal/GetUpcomingAppointmentsWidget',
   getunsignedlabordertestbypatientid : 'patientportal/GetLabResultsWidget',
   getdashboardconfigurations : 'patientportal/getdashboardconfigurations',
-  saveDashboardConfiguration : 'patientportal/savedashboardwidgetconfigurations'
+  saveDashboardConfiguration : 'patientportal/savedashboardwidgetconfigurations',
+  getAllDocumentTypes : 'patientportal/getalldocumenttype',
+  getAllSelectedDocuments : 'patientportal/getallunsigneddocument',
+  getPatientDocumentInfo : 'patientportal/getpatientdocument',
+  getDownloadPatientDocument : 'patientportal/downloadpatientdocument'
 };

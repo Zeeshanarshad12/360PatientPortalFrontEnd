@@ -319,7 +319,7 @@ const getunsignedlabordertestbypatientid = (data, flag) =>
     }
   );
 
-  
+
 const getdashboardconfigurations = (data, flag) =>
 
   get(
@@ -344,7 +344,49 @@ const saveDashboardConfiguration = (data, flag) =>
     }
   );
 
-  
+
+const getAllDocumentTypes = (data, flag) =>
+  post(
+    SERVICE_URLSV2.getAllDocumentTypes, data,
+    {
+
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
+
+const getAllSelectedDocuments = (data, flag) =>
+  post(
+    SERVICE_URLSV2.getAllSelectedDocuments, data,
+    {
+
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
+const getPatientDocumentInfo = (data, flag) =>
+  get(
+    `${SERVICE_URLSV2.getPatientDocumentInfo}?&DocumentId=${data?.id}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
+const getDownloadPatientDocument = (data, flag) =>
+  get(
+    `${SERVICE_URLSV2.getDownloadPatientDocument}?&fileName=${data?.documentUri}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    },
+    { feature: featureConstants.static, ApiVersion2Req: flag },
+    { responseType: 'blob' }
+  );
 
 
 const apiServicesV2 = {
@@ -378,6 +420,11 @@ const apiServicesV2 = {
   getpatientappointments,
   getunsignedlabordertestbypatientid,
   getdashboardconfigurations,
-  saveDashboardConfiguration
+  saveDashboardConfiguration,
+  getAllDocumentTypes,
+  getAllSelectedDocuments,
+  getPatientDocumentInfo,
+  getDownloadPatientDocument
 };
+
 export default apiServicesV2;

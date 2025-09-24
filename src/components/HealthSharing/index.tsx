@@ -34,8 +34,9 @@ const HealthSharingData = () => {
               flexGrow: 1,
               padding: 1,
               overflowY: 'auto',
-              height: 'calc(100vh - 100px)'
+              height: 'calc(98vh - 60px)'
             }}
+            tabIndex={2}
           >
             <HealthRecordHeader></HealthRecordHeader>
             {!isActivityLog ? <HealthRecordFilter /> : <ActivityLogFilter />}

@@ -9,7 +9,9 @@ import {
   IconButton,
   Snackbar,
   Alert,
-  CircularProgress
+  CircularProgress,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Image from 'next/image';
@@ -42,6 +44,9 @@ function SignUp() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [openSnackbar, setOpenSnackbar] = useState(false);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   useEffect(() => {
     const queryString = router.asPath.split('?')[1];
@@ -177,246 +182,306 @@ function SignUp() {
   };
 
   return (
-    <Container
-      maxWidth="xs"
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: '100vh',
-        textAlign: 'center'
-      }}
-    >
+    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Orange Emergency Banner */}
       <Box
         sx={{
-          p: 4,
-          boxShadow: 3,
-          borderRadius: 2,
-          bgcolor: 'white',
-          width: '100%',
-          position: 'relative'
+          bgcolor: '#ff9800',
+          color: 'white',
+          py: 1,
+          px: 2,
+          textAlign: 'center',
+          fontSize: '0.9rem',
+          fontWeight: 'medium'
         }}
       >
-        {step === 2 && (
-          <IconButton
-            onClick={() => setStep(1)}
-            sx={{
-              position: 'absolute',
-              top: 10,
-              left: 10,
-              '&:focus': {
-                outline: '2px solid #1976d2',
-                outlineOffset: '2px'
-              },
-              '&:focus-visible': {
-                outline: '2px solid #1976d2',
-                outlineOffset: '2px'
-              }
-            }}
-            aria-label="Back to previous step"
-          >
-            <ArrowBackIcon />
-            <span
-              style={{
-                position: 'absolute',
-                width: 1,
-                height: 1,
-                overflow: 'hidden',
-                clip: 'rect(0 0 0 0)',
-                whiteSpace: 'nowrap'
-              }}
-            >
-              Go Back
-            </span>
-          </IconButton>
-        )}
+        This portal is not for emergencies. If you need urgent medical
+        attention, call 911 or go to the closest emergency facility.
+      </Box>
+
+      {/* Main Content */}
+      <Box sx={{ flex: 1, display: 'flex', bgcolor: 'white' }}>
+        {/* Left Section - Background Image Original Size */}
         <Box
           sx={{
+            flex: 2,
+            position: 'relative',
+            display: isMobile ? 'none' : 'block',
+            overflow: 'hidden'
+          }}
+        >
+          {/* Background Image */}
+          <Image
+            src="/img/login-page-bg.jpg"
+            alt="Healthcare professionals"
+            fill
+            style={{
+              objectFit: 'cover',
+              objectPosition: 'center',
+              borderBottomRightRadius: '150px'
+            }}
+          />
+
+          {/* Logo Overlay */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 40,
+              left: 40,
+              zIndex: 2
+            }}
+          >
+            <Image
+              src="/img/dataq-logo.png"
+              alt="DataQ HEALTH"
+              width={150}
+              height={60}
+              style={{ filter: 'brightness(0) invert(1)' }} // Make logo white
+            />
+          </Box>
+
+          {/* Slogan Overlay */}
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 40,
+              left: 230,
+              zIndex: 2,
+              opacity: 0.9
+            }}
+          >
+            <Typography
+              variant="h1"
+              fontSize={{ xs: '2.5rem', md: '3.0rem' }}
+              sx={{
+                color: 'white',
+                fontWeight: 'bold',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+              }}
+            >
+              Connecting
+            </Typography>
+            <Typography
+              variant="h1"
+              fontSize={{ xs: '2.5rem', md: '2.6rem' }}
+              sx={{
+                color: 'white',
+                fontWeight: 'bold',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.5)'
+              }}
+            >
+              You to Better Health
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Right Section - Sign Up Form Original Size */}
+        <Box
+          sx={{
+            flex: 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: 1,
-            mb: 4
+            position: 'relative'
           }}
         >
-          <Image src="/statics/Logo.svg" alt="Logo" width={50} height={50} />
-          <Typography variant="h3" component="h3" sx={{ fontWeight: 'bold' }}>
-            Patient Portal
-          </Typography>
-        </Box>
-        {step === 1 && (
-          <>
-            <Typography
-              variant="h4"
-              component="h4"
-              sx={{ fontWeight: 'bold', mt: 2, textAlign: 'left' }}
-            >
-              Sign Up
-            </Typography>
-            <Typography
-              component="h6"
-              sx={{ color: '#4a4a4a', mt: 1, textAlign: 'justify', mb: 2 }}
-            >
-              Click ‘Get Code’ to receive a one-time verification code on your
-              registered email.
-            </Typography>
-            <TextField
-              id="email"
-              fullWidth
-              variant="outlined"
-              margin="normal"
-              label="Email"
-              value={email}
-              disabled
-              inputProps={{ 'aria-label': 'Email' }}
-            />
-            <Button
-              fullWidth
-              variant="contained"
-              color="primary"
+          {/* Sign Up Container - Keep existing structure */}
+          <Container
+            maxWidth="xs"
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              textAlign: 'center'
+            }}
+          >
+            <Box
               sx={{
-                mt: 2,
-                borderRadius: '5px',
-                '&:focus': {
-                  outline: '2px solid #1976d2',
-                  outlineOffset: '2px'
-                },
-                '&:focus-visible': {
-                  outline: '2px solid #1976d2',
-                  outlineOffset: '2px'
-                }
+                boxShadow: 3,
+                borderRadius: 2,
+                width: '100%',
+                position: 'relative'
               }}
-              onClick={handleSendCode}
             >
-              Get Code
-            </Button>
-          </>
-        )}
-        {step === 2 && (
-          <>
-            <Typography
-              variant="h4"
-              component="h4"
-              sx={{ fontWeight: 'bold', mt: 2, textAlign: 'left' }}
-            >
-              Verification Code
-            </Typography>
-            <Typography
-              component="h6"
-              sx={{ color: '#4a4a4a', mt: 1, textAlign: 'justify' }}
-            >
-              Enter the code from your email to continue.
-            </Typography>
-            <Grid container spacing={1} justifyContent="center" sx={{ mt: 2 }}>
-              {otp.map((digit, index) => (
-                <Grid item key={index}>
-                  <Typography
-                    component="label"
-                    htmlFor={`otp-${index}`}
-                    sx={{
-                      position: 'absolute',
-                      width: '1px',
-                      height: '1px',
-                      padding: 0,
-                      margin: '-1px',
+              {step === 2 && (
+                <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'left',
+                  mb: 3
+                }}
+                >
+                <IconButton
+                  onClick={() => setStep(1)}
+                  sx={{
+                    right: 3,
+                    '&:focus': {
+                      outline: '2px solid #1976d2',
+                      outlineOffset: '2px'
+                    },
+                    '&:focus-visible': {
+                      outline: '2px solid #1976d2',
+                      outlineOffset: '2px'
+                    }
+                  }}
+                  aria-label="Back to previous step"
+                >
+                  <ArrowBackIcon />
+                  <span
+                    style={{
+                      width: 1,
+                      height: 1,
                       overflow: 'hidden',
                       clip: 'rect(0 0 0 0)',
-                      whiteSpace: 'nowrap',
-                      border: 0
+                      whiteSpace: 'nowrap'
                     }}
                   >
-                    Enter OTP digit {index} of 6
+                    Go Back
+                  </span>
+                </IconButton>
+                </Box>
+              )}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: isMobile ? 'center' : 'left',
+                  gap: 1,
+                  mb: 4
+                }}
+              >
+                <Image
+                  src="/statics/Logo.svg"
+                  alt="Logo"
+                  width={70}
+                  height={70}
+                />
+                <Typography
+                  variant="h3"
+                  component="h3"
+                  sx={{ fontWeight: 'bold' }}
+                >
+                  Patient Portal
+                </Typography>
+              </Box>
+              {step === 1 && (
+                <>
+                  <Typography
+                    variant="h4"
+                    component="h4"
+                    sx={{ fontWeight: 'bold', mt: 2, textAlign: 'left' }}
+                  >
+                    Sign Up
+                  </Typography>
+                  <Typography
+                    component="h6"
+                    sx={{
+                      color: '#4a4a4a',
+                      mt: 1,
+                      textAlign: 'justify',
+                      mb: 2
+                    }}
+                  >
+                    Click ‘Get Code’ to receive a one-time verification code on
+                    your registered email.
                   </Typography>
                   <TextField
-                    id={`otp-${index}`}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(index, e.target.value)}
-                    onPaste={handlePaste}
-                    inputProps={{
-                      maxLength: 1,
-                      style: { textAlign: 'center' }
-                    }}
-                    sx={{ width: 40 }}
-                    error={error && digit === ''}
+                    id="email"
+                    fullWidth
+                    variant="outlined"
+                    margin="normal"
+                    label="Email"
+                    value={email}
+                    disabled
+                    inputProps={{ 'aria-label': 'Email' }}
                   />
-                </Grid>
-              ))}
-            </Grid>
-
-            <Button
-              fullWidth
-              variant="contained"
-              color="primary"
-              sx={{
-                mt: 2,
-                '&:focus': {
-                  outline: '2px solid #1976d2',
-                  outlineOffset: '2px'
-                },
-                '&:focus-visible': {
-                  outline: '2px solid #1976d2',
-                  outlineOffset: '2px'
-                }
-              }}
-              onClick={handleVerifyOtp}
-              disabled={loading || otp.some((digit) => digit === '')}
-            >
-              {loading ? (
-                <CircularProgress size={24} sx={{ color: 'white' }} />
-              ) : (
-                'Verify'
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                      mt: 2,
+                      borderRadius: '5px',
+                      '&:focus': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      },
+                      '&:focus-visible': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      }
+                    }}
+                    onClick={handleSendCode}
+                  >
+                    Get Code
+                  </Button>
+                </>
               )}
-            </Button>
+              {step === 2 && (
+                <>
+                  <Typography
+                    variant="h4"
+                    component="h4"
+                    sx={{ fontWeight: 'bold', mt: 2, textAlign: 'left' }}
+                  >
+                    Verification Code
+                  </Typography>
+                  <Typography
+                    component="h6"
+                    sx={{ color: '#4a4a4a', mt: 1, textAlign: 'justify' }}
+                  >
+                    Enter the code from your email to continue.
+                  </Typography>
+                  <Grid
+                    container
+                    spacing={1}
+                    justifyContent="center"
+                    sx={{ mt: 2 }}
+                  >
+                    {otp.map((digit, index) => (
+                      <Grid item key={index}>
+                        <Typography
+                          component="label"
+                          htmlFor={`otp-${index}`}
+                          sx={{
+                            position: 'absolute',
+                            width: '1px',
+                            height: '1px',
+                            padding: 0,
+                            margin: '-1px',
+                            overflow: 'hidden',
+                            clip: 'rect(0 0 0 0)',
+                            whiteSpace: 'nowrap',
+                            border: 0
+                          }}
+                        >
+                          Enter OTP digit {index} of 6
+                        </Typography>
+                        <TextField
+                          id={`otp-${index}`}
+                          value={digit}
+                          onChange={(e) =>
+                            handleOtpChange(index, e.target.value)
+                          }
+                          onPaste={handlePaste}
+                          inputProps={{
+                            maxLength: 1,
+                            style: { textAlign: 'center' }
+                          }}
+                          sx={{ width: 40 }}
+                          error={error && digit === ''}
+                        />
+                      </Grid>
+                    ))}
+                  </Grid>
 
-            <Button
-              fullWidth
-              variant="outlined"
-              color="primary"
-              sx={{
-                mt: 1,
-                borderRadius: '5px',
-                '&:focus': {
-                  outline: '2px solid #1976d2',
-                  outlineOffset: '2px'
-                },
-                '&:focus-visible': {
-                  outline: '2px solid #1976d2',
-                  outlineOffset: '2px'
-                }
-              }}
-              onClick={handleSendCode}
-            >
-              Resend Code
-            </Button>
-          </>
-        )}
-        {step === 3 && (
-          <>
-            <Typography
-              variant="h4"
-              component="h4"
-              sx={{ fontWeight: 'bold', mt: 2, textAlign: 'left' }}
-            >
-              Create Password
-            </Typography>
-            <TextField
-              fullWidth
-              variant="outlined"
-              margin="normal"
-              label="Create Password"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              error={!!passwordError}
-              helperText={passwordError}
-              InputProps={{
-                endAdornment: (
-                  <IconButton
-                    onClick={togglePasswordVisibility}
-                    aria-label={
-                      showPassword ? 'Hide password' : 'Show password'
-                    }
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color="primary"
                     sx={{
+                      mt: 2,
                       '&:focus': {
                         outline: '2px solid #1976d2',
                         outlineOffset: '2px'
@@ -426,43 +491,23 @@ function SignUp() {
                         outlineOffset: '2px'
                       }
                     }}
+                    onClick={handleVerifyOtp}
+                    disabled={loading || otp.some((digit) => digit === '')}
                   >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
-                    <span
-                      style={{
-                        position: 'absolute',
-                        width: 1,
-                        height: 1,
-                        overflow: 'hidden',
-                        clip: 'rect(0 0 0 0)',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      {showPassword ? 'Hide' : 'Show'}
-                    </span>
-                  </IconButton>
-                )
-              }}
-              inputProps={{ 'aria-label': 'Email' }}
-            />
-            <TextField
-              fullWidth
-              variant="outlined"
-              margin="normal"
-              label="Confirm Password"
-              type={showConfirmPassword ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              error={!!confirmPasswordError}
-              helperText={confirmPasswordError}
-              InputProps={{
-                endAdornment: (
-                  <IconButton
-                    onClick={toggleConfirmPasswordVisibility}
-                    aria-label={
-                      showConfirmPassword ? 'Hide password' : 'Show password'
-                    }
+                    {loading ? (
+                      <CircularProgress size={24} sx={{ color: 'white' }} />
+                    ) : (
+                      'Verify'
+                    )}
+                  </Button>
+
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    color="primary"
                     sx={{
+                      mt: 1,
+                      borderRadius: '5px',
                       '&:focus': {
                         outline: '2px solid #1976d2',
                         outlineOffset: '2px'
@@ -472,71 +517,169 @@ function SignUp() {
                         outlineOffset: '2px'
                       }
                     }}
+                    onClick={handleSendCode}
                   >
-                    {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
-                    <span
-                      style={{
-                        position: 'absolute',
-                        width: 1,
-                        height: 1,
-                        overflow: 'hidden',
-                        clip: 'rect(0 0 0 0)',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      {showPassword ? 'Hide' : 'Show'}
-                    </span>
-                  </IconButton>
-                )
-              }}
-              inputProps={{ 'aria-label': 'Email' }}
-            />
-            <Button
-              fullWidth
-              variant="contained"
-              color="primary"
-              sx={{
-                mt: 2,
-                borderRadius: '5px',
-                '&:focus': {
-                  outline: '2px solid #1976d2',
-                  outlineOffset: '2px'
-                },
-                '&:focus-visible': {
-                  outline: '2px solid #1976d2',
-                  outlineOffset: '2px'
-                }
-              }}
-              onClick={handleSignUp}
+                    Resend Code
+                  </Button>
+                </>
+              )}
+              {step === 3 && (
+                <>
+                  <Typography
+                    variant="h4"
+                    component="h4"
+                    sx={{ fontWeight: 'bold', mt: 2, textAlign: 'left' }}
+                  >
+                    Create Password
+                  </Typography>
+                  <TextField
+                    fullWidth
+                    variant="outlined"
+                    margin="normal"
+                    label="Create Password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    error={!!passwordError}
+                    helperText={passwordError}
+                    InputProps={{
+                      endAdornment: (
+                        <IconButton
+                          onClick={togglePasswordVisibility}
+                          aria-label={
+                            showPassword ? 'Hide password' : 'Show password'
+                          }
+                          sx={{
+                            '&:focus': {
+                              outline: '2px solid #1976d2',
+                              outlineOffset: '2px'
+                            },
+                            '&:focus-visible': {
+                              outline: '2px solid #1976d2',
+                              outlineOffset: '2px'
+                            }
+                          }}
+                        >
+                          {showPassword ? <VisibilityOff /> : <Visibility />}
+                          <span
+                            style={{
+                              position: 'absolute',
+                              width: 1,
+                              height: 1,
+                              overflow: 'hidden',
+                              clip: 'rect(0 0 0 0)',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {showPassword ? 'Hide' : 'Show'}
+                          </span>
+                        </IconButton>
+                      )
+                    }}
+                    inputProps={{ 'aria-label': 'Email' }}
+                  />
+                  <TextField
+                    fullWidth
+                    variant="outlined"
+                    margin="normal"
+                    label="Confirm Password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    error={!!confirmPasswordError}
+                    helperText={confirmPasswordError}
+                    InputProps={{
+                      endAdornment: (
+                        <IconButton
+                          onClick={toggleConfirmPasswordVisibility}
+                          aria-label={
+                            showConfirmPassword
+                              ? 'Hide password'
+                              : 'Show password'
+                          }
+                          sx={{
+                            '&:focus': {
+                              outline: '2px solid #1976d2',
+                              outlineOffset: '2px'
+                            },
+                            '&:focus-visible': {
+                              outline: '2px solid #1976d2',
+                              outlineOffset: '2px'
+                            }
+                          }}
+                        >
+                          {showConfirmPassword ? (
+                            <VisibilityOff />
+                          ) : (
+                            <Visibility />
+                          )}
+                          <span
+                            style={{
+                              position: 'absolute',
+                              width: 1,
+                              height: 1,
+                              overflow: 'hidden',
+                              clip: 'rect(0 0 0 0)',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {showPassword ? 'Hide' : 'Show'}
+                          </span>
+                        </IconButton>
+                      )
+                    }}
+                    inputProps={{ 'aria-label': 'Email' }}
+                  />
+                  <Button
+                    fullWidth
+                    variant="contained"
+                    color="primary"
+                    sx={{
+                      mt: 2,
+                      borderRadius: '5px',
+                      '&:focus': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      },
+                      '&:focus-visible': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      }
+                    }}
+                    onClick={handleSignUp}
+                  >
+                    Sign Up & Login
+                  </Button>
+                </>
+              )}
+              <Typography
+                variant="subtitle2"
+                component="p"
+                sx={{ fontWeight: 'bold', mt: 6, textAlign: 'center' }}
+              >
+                © {new Date().getFullYear()} DataQ Health. All rights reserved.
+              </Typography>
+            </Box>
+
+            {/* Snackbar for Danger Message of invalid OTP */}
+            <Snackbar
+              open={openSnackbar}
+              autoHideDuration={3000}
+              onClose={() => setOpenSnackbar(false)}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
             >
-              Sign Up & Login
-            </Button>
-          </>
-        )}
-        <Typography
-          variant="subtitle2"
-          sx={{ fontWeight: 'bold', mt: 6, textAlign: 'center' }}
-        >
-          © {new Date().getFullYear()} All rights reserved.
-        </Typography>
+              <Alert
+                onClose={() => setOpenSnackbar(false)}
+                severity="error"
+                variant="filled"
+              >
+                Invalid OTP!
+              </Alert>
+            </Snackbar>
+          </Container>
+        </Box>
       </Box>
-
-      {/* Snackbar for Danger Message of invalid OTP */}
-      <Snackbar
-        open={openSnackbar}
-        autoHideDuration={3000}
-        onClose={() => setOpenSnackbar(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={() => setOpenSnackbar(false)}
-          severity="error"
-          variant="filled"
-        >
-          Invalid OTP!
-        </Alert>
-      </Snackbar>
-    </Container>
+    </Box>
   );
 }
 

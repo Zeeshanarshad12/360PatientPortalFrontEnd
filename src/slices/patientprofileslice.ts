@@ -588,6 +588,86 @@ export const saveDashboardConfiguration: any = createAsyncThunk(
   }
 );
 
+export const getAllDocumentTypes: any = createAsyncThunk(
+  'getAllDocumentTypes',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.getAllDocumentTypes(
+      data,
+      'ApiVersion2Req'
+    );
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+);
+
+export const getAllSelectedDocuments: any = createAsyncThunk(
+  'getAllSelectedDocuments',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.getAllSelectedDocuments(
+      data,
+      'ApiVersion2Req'
+    );
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+);
+
+export const getPatientDocumentInfo: any = createAsyncThunk(
+  'getPatientDocumentInfo',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.getPatientDocumentInfo(
+      data,
+      'ApiVersion2Req'
+    );
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+);
+
+export const getDownloadPatientDocument: any = createAsyncThunk(
+  'getDownloadPatientDocument',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.getDownloadPatientDocument(
+      data,
+      'ApiVersion2Req'
+    );
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+);
+
 const patientProfileSlice = createSlice({
   name: 'Patient Profile Slice',
   initialState: initialState,

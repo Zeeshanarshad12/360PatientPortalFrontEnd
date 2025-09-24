@@ -24,7 +24,11 @@ import { useConsentFormContext } from '@/contexts/ConsentFormContext';
 const MenuWrapper = styled(Box)(``);
 const SubMenuWrapper = styled(Box)(``);
 
-function SidebarMenu() {
+interface SidebarMenuProps {
+  onItemClick?: () => void;
+}
+
+function SidebarMenu({ onItemClick }: SidebarMenuProps) {
   const [mounted, setMounted] = useState(false);
   const [vdtAccess, setVdtAccess] = useState(false);
   const [showAccessDenied, setShowAccessDenied] = useState(false);
@@ -55,6 +59,10 @@ function SidebarMenu() {
       setShowAccessDenied(true); // Show popup
     } else {
       router.push(link);
+      // Close mobile menu after navigation
+      if (onItemClick) {
+        onItemClick();
+      }
     }
   };
 
@@ -96,7 +104,7 @@ function SidebarMenu() {
         : '/statics/paout.svg'
     },
     {
-      name: 'Health Records',
+      name: 'My Health Record',
       link: '/patientportal/healthsharing',
       icon:
         pathname === '/patientportal/healthsharing'
@@ -110,6 +118,14 @@ function SidebarMenu() {
         pathname === '/patientportal/authorizedUser'
           ? '/statics/aufill.svg'
           : '/statics/auout.svg'
+    },
+    {
+      name: 'Documents',
+      link: '/patientportal/documents',
+      icon:
+        pathname === '/patientportal/documents'
+          ? '/statics/docufill.svg'
+          : '/statics/docuout.svg'
     }
     // {
     //   name: 'Consent Forms',
@@ -153,7 +169,13 @@ function SidebarMenu() {
 
   return (
     <>
-      <Box sx={{ my: 10 }} />
+      <Box sx={{ 
+        my: 4.5,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+      </Box>
       {menu.map((item) => (
         <Fragment key={uuidv4()}>
           <MenuWrapper>
@@ -164,7 +186,12 @@ function SidebarMenu() {
                   component="div"
                   id={uuidv4()}
                 >
-                  <ListItem component="div" key={item.name} id={item.name}>
+                  <ListItem 
+                    component="div" 
+                    key={item.name} 
+                    id={item.name}
+                    sx={{ px: 2, py: 0.5 }}
+                  >
                     <Box
                       onClick={(e) => handleProtectedClick(e, item.link)}
                       className={
@@ -174,48 +201,52 @@ function SidebarMenu() {
                         display: 'flex',
                         alignItems: 'center',
                         width: '100%',
-                        borderRadius: '10px',
-                        px: 1.5,
-                        py: 1,
+                        borderRadius: '12px',
+                        px: 2,
+                        py: 1.5,
                         cursor: 'pointer',
+                        minHeight: '48px', // Touch-friendly minimum height
+                        transition: 'all 0.2s ease-in-out',
+                        color: 'rgba(0, 0, 0, 0.7)',
                         '&:hover': {
                           backgroundColor: '#E3F2FD',
                           color: '#0D47A1',
+                          transform: 'translateX(4px)',
                           '& .MuiTypography-root': {
                             color: '#0D47A1'
                           },
                           '& img': {
-                            filter:
-                              'brightness(0) saturate(100%) invert(34%) sepia(85%) saturate(2104%) hue-rotate(188deg) brightness(91%) contrast(92%)'
+                            filter: 'brightness(0) saturate(100%) invert(34%) sepia(85%) saturate(2104%) hue-rotate(188deg) brightness(91%) contrast(92%)'
                           }
+                        },
+                        '&:active': {
+                          transform: 'translateX(2px)',
+                          backgroundColor: '#BBDEFB',
                         },
                         ...(pathname === item.link && {
                           backgroundColor: '#E3F2FD',
                           color: '#0D47A1',
                           '& .MuiTypography-root': {
-                            color: '#0D47A1'
+                            color: '#0D47A1',
+                            fontWeight: 600
                           },
                           '& img': {
-                            filter:
-                              'brightness(0) saturate(100%) invert(34%) sepia(85%) saturate(2104%) hue-rotate(188deg) brightness(91%) contrast(92%)'
+                            filter: 'brightness(0) saturate(100%) invert(34%) sepia(85%) saturate(2104%) hue-rotate(188deg) brightness(91%) contrast(92%)'
+                          },
+                          '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            left: 0,
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            width: '4px',
+                            height: '24px',
+                            backgroundColor: '#1976d2',
+                            borderRadius: '0 2px 2px 0'
                           }
                         })
                       }}
                     >
-                      {/* <Image
-                        src={item.icon}
-                        alt={item.name}
-                        width={25}
-                        height={25}
-                      />
-                      <Typography
-                        sx={{ ml: '15px' }}
-                        variant="subtitle2"
-                        component="h5"
-                      >
-                        {item.name}
-                      </Typography> */}
-
                       {item.name === 'Consent Forms' ? (
                         <>
                           <Image
@@ -263,7 +294,12 @@ function SidebarMenu() {
                             height={20}
                           />
                           <Typography
-                            sx={{ ml: '15px' }}
+                            sx={{ 
+                              ml: '15px',
+                              fontSize: '0.95rem',
+                              fontWeight: 500,
+                              letterSpacing: '0.5px'
+                            }}
                             variant="subtitle2"
                             component="h5"
                           >

@@ -24,7 +24,13 @@ const bounce = keyframes`
   100% { transform: scale(1); opacity: 0.8; }
 `;
 
-const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm, triggerRefresh }: Props) => {
+const ConsentFormViewer = ({
+  form,
+  onFormSigned,
+  pendingForms,
+  onSelectForm,
+  triggerRefresh
+}: Props) => {
   const dispatch = useDispatch();
   const contentRef = useRef<HTMLDivElement>(null);
   const [signatureOpen, setSignatureOpen] = useState(false);
@@ -32,51 +38,56 @@ const ConsentFormViewer = ({ form, onFormSigned, pendingForms, onSelectForm, tri
   const [countdown, setCountdown] = useState<number | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
-  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>(
+    'success'
+  );
   const [showAllSignedMessage, setShowAllSignedMessage] = useState(false);
-const prevPendingCount = useRef<number>(0);
-const hasShownCompletionMessage = useRef<boolean>(false);
+  const prevPendingCount = useRef<number>(0);
+  const hasShownCompletionMessage = useRef<boolean>(false);
 
   const { decrementPendingCount } = useConsentFormContext();
 
   useEffect(() => {
-  if (form) {
-    let updatedContent = form.Content;
+    if (form) {
+      let updatedContent = form.Content;
 
-    // Replace ______________________ with signature if exists
-    updatedContent = updatedContent.replace(
-      /_{10,}/g, // match a long underscore line
-      form.Signature
-        ? `<img src="${form.Signature}" alt="Patient Signature" style="max-width: 250px; height: auto;" />`
-        : '___________________________' 
-    );
+      // Replace ______________________ with signature if exists
+      updatedContent = updatedContent.replace(
+        /_{10,}/g, // match a long underscore line
+        form.Signature
+          ? `<img src="${form.Signature}" alt="Patient Signature" style="max-width: 250px; height: auto;" />`
+          : '___________________________'
+      );
 
-    setRenderedContent(updatedContent);
-  }
-}, [form]);
-
+      setRenderedContent(updatedContent);
+    }
+  }, [form]);
 
   const [hasMovedToNext, setHasMovedToNext] = useState(false);
   useEffect(() => {
     if (countdown === null || countdown <= 0 || !form?.FormID) return;
 
     const timer = setTimeout(() => {
-      setCountdown(prev => (prev !== null ? prev - 1 : null));
+      setCountdown((prev) => (prev !== null ? prev - 1 : null));
     }, 1000);
 
     if (countdown === 1) {
       setTimeout(() => {
-        const remainingPending = pendingForms.filter(f => f.Status === 'Pending');
+        const remainingPending = pendingForms.filter(
+          (f) => f.Status === 'Pending'
+        );
         const currentFormID = form.FormID;
 
         if (remainingPending.length === 0) return;
 
-        const currentIndex = remainingPending.findIndex(f => f.FormID === currentFormID);
+        const currentIndex = remainingPending.findIndex(
+          (f) => f.FormID === currentFormID
+        );
 
         let nextForm: ConsentForm | undefined;
 
         if (currentIndex !== -1 && currentIndex + 1 < remainingPending.length) {
-          nextForm = remainingPending[currentIndex + 1]; 
+          nextForm = remainingPending[currentIndex + 1];
         } else {
           nextForm = remainingPending[0];
         }
@@ -86,12 +97,11 @@ const hasShownCompletionMessage = useRef<boolean>(false);
         if (nextForm) {
           onSelectForm(nextForm);
         }
-      }, 300); 
+      }, 300);
     }
 
     return () => clearTimeout(timer);
   }, [countdown, pendingForms, form?.FormID]);
-
 
   // Reset flag when new countdown starts
   useEffect(() => {
@@ -100,33 +110,31 @@ const hasShownCompletionMessage = useRef<boolean>(false);
     }
   }, [countdown]);
 
+  useEffect(() => {
+    const currentPendingCount = pendingForms.filter(
+      (f) => f.Status === 'Pending'
+    ).length;
+    const allSigned = currentPendingCount === 0 && prevPendingCount.current > 0;
 
-useEffect(() => {
-  const currentPendingCount = pendingForms.filter(f => f.Status === 'Pending').length;
-  const allSigned = currentPendingCount === 0 && prevPendingCount.current > 0;
+    let timer: NodeJS.Timeout | null = null;
 
-  let timer: NodeJS.Timeout | null = null;
-
-  if (allSigned && !hasShownCompletionMessage.current) {
-    setShowAllSignedMessage(true);
-    hasShownCompletionMessage.current = true;
- localStorage.setItem('pendingConsentFormCount', '0');
-   
-  }
+    if (allSigned && !hasShownCompletionMessage.current) {
+      setShowAllSignedMessage(true);
+      hasShownCompletionMessage.current = true;
+      localStorage.setItem('pendingConsentFormCount', '0');
+    }
     // Start countdown to hide message
     timer = setTimeout(() => {
       setShowAllSignedMessage(false);
     }, 3000);
-  // Always update previous pending count
-  prevPendingCount.current = currentPendingCount;
+    // Always update previous pending count
+    prevPendingCount.current = currentPendingCount;
 
-  // Cleanup timeout
-  return () => {
-    if (timer) clearTimeout(timer);
-  };
-}, [pendingForms]);
-
-
+    // Cleanup timeout
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [pendingForms]);
 
   const handlePrint = () => {
     if (typeof window === 'undefined') return;
@@ -169,7 +177,7 @@ useEffect(() => {
       filename: `${form.Title.replace(/\s+/g, '_')}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2 },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
     };
 
     html2pdf().set(opt).from(contentRef.current).save();
@@ -186,7 +194,7 @@ useEffect(() => {
       ...form,
       Signature,
       Status: 'Signed',
-      SignedDate: new Date().toISOString(),
+      SignedDate: new Date().toISOString()
     };
 
     try {
@@ -200,11 +208,9 @@ useEffect(() => {
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
 
-
         onFormSigned(form.FormID, Signature);
         setCountdown(5);
-      }
-      else {
+      } else {
         setSnackbarMessage(response.payload.result);
         setSnackbarSeverity('error');
         setSnackbarOpen(true);
@@ -218,17 +224,19 @@ useEffect(() => {
     setSignatureOpen(false);
   };
 
-
-
-
   if (!form) {
     return (
-      <Box height="100%" display="flex" alignItems="center" justifyContent="center" color="text.secondary">
+      <Box
+        height="100%"
+        display="flex"
+        alignItems="center"
+        justifyContent="center"
+        color="text.secondary"
+      >
         <Typography variant="body1">Please select a form to view.</Typography>
       </Box>
     );
   }
-
 
   if (!form) {
     return (
@@ -238,7 +246,7 @@ useEffect(() => {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'text.secondary',
+          color: 'text.secondary'
         }}
       >
         <Typography variant="body1">Please select a form to view.</Typography>
@@ -246,10 +254,8 @@ useEffect(() => {
     );
   }
 
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-
       {/* Header */}
       <Box
         sx={{
@@ -260,7 +266,7 @@ useEffect(() => {
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          zIndex: 2,
+          zIndex: 2
         }}
       >
         <Typography variant="h6" fontWeight={600}>
@@ -268,7 +274,12 @@ useEffect(() => {
         </Typography>
         <Box>
           {form.Status === 'Signed' && (
-            <Button onClick={handleDownloadPDF} size="small" startIcon={<DownloadIcon />} sx={{ mr: 1 }}>
+            <Button
+              onClick={handleDownloadPDF}
+              size="small"
+              startIcon={<DownloadIcon />}
+              sx={{ mr: 1 }}
+            >
               Download PDF
             </Button>
           )}
@@ -287,14 +298,14 @@ useEffect(() => {
           py: 2,
           background: 'linear-gradient(to right, #fefefe, #f5f7fa)', // Soft gradient background
           borderRadius: 2,
-          position: 'relative',
+          position: 'relative'
         }}
       >
         <div dangerouslySetInnerHTML={{ __html: renderedContent }} />
 
-        {
-          countdown !== null && countdown > 0 &&
-          pendingForms.some(f => f.Status === 'Pending') && (
+        {countdown !== null &&
+          countdown > 0 &&
+          pendingForms.some((f) => f.Status === 'Pending') && (
             <Box
               sx={{
                 position: 'absolute',
@@ -309,7 +320,7 @@ useEffect(() => {
                 boxShadow: '0px 4px 12px rgba(0,0,0,0.1)',
                 textAlign: 'center',
                 zIndex: 1000,
-                minWidth: 300,
+                minWidth: 300
               }}
             >
               <Typography variant="body1" fontWeight={500}>
@@ -320,46 +331,39 @@ useEffect(() => {
                 variant="h2"
                 sx={{
                   mt: 1,
-                  animation: `${bounce} 1s ease-in-out infinite`,
+                  animation: `${bounce} 1s ease-in-out infinite`
                 }}
               >
                 {countdown}
               </Typography>
             </Box>
-          )
-        }
+          )}
       </Box>
 
-
-      {
-        showAllSignedMessage && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              bgcolor: 'white',
-              opacity: '0.95',
-              color: 'green',
-              p: 4,
-              borderRadius: 3,
-              boxShadow: '0px 4px 12px rgba(0,0,0,0.1)',
-              textAlign: 'center',
-              zIndex: 1000,
-              minWidth: 300,
-              transition: 'opacity 0.5s ease-in-out',
-            }}
-          >
-            <Typography variant="h6" fontWeight={600}>
-              🎉 You have completed all pending consent forms!
-            </Typography>
-          </Box>
-        )
-      }
-
-
-
+      {showAllSignedMessage && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            bgcolor: 'white',
+            opacity: '0.95',
+            color: 'green',
+            p: 4,
+            borderRadius: 3,
+            boxShadow: '0px 4px 12px rgba(0,0,0,0.1)',
+            textAlign: 'center',
+            zIndex: 1000,
+            minWidth: 300,
+            transition: 'opacity 0.5s ease-in-out'
+          }}
+        >
+          <Typography variant="h6" fontWeight={600}>
+            🎉 You have completed all pending consent forms!
+          </Typography>
+        </Box>
+      )}
 
       {/* Footer */}
       <Box
@@ -371,7 +375,7 @@ useEffect(() => {
           position: 'sticky',
           bottom: 0,
           zIndex: 2,
-          textAlign: 'right',
+          textAlign: 'right'
         }}
       >
         {form.Status === 'Pending' && (
@@ -386,9 +390,11 @@ useEffect(() => {
         )}
       </Box>
 
-
-      <SignatureDialog open={signatureOpen} onClose={handleCloseSignature} onSave={handleSaveSignature} />
-
+      <SignatureDialog
+        open={signatureOpen}
+        onClose={handleCloseSignature}
+        onSave={handleSaveSignature}
+      />
 
       <Snackbar
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
@@ -404,11 +410,8 @@ useEffect(() => {
           {snackbarMessage}
         </Alert>
       </Snackbar>
-
     </Box>
   );
 };
 
 export default ConsentFormViewer;
-
-

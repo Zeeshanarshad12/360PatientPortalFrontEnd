@@ -8,7 +8,8 @@ import {
   IconButton,
   Alert,
   CircularProgress,
-  Tooltip
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import Image from 'next/image';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
@@ -26,6 +27,10 @@ const Login = () => {
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
   const { GetTokenData } = useSelector((state) => state.patientprofileslice);
   const [loading, setLoading] = useState(false);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
   const handleLogin = async () => {
     // Check if both fields are filled
     if (!email || !password) {
@@ -79,12 +84,12 @@ const Login = () => {
 
       {/* Main Content */}
       <Box sx={{ flex: 1, display: 'flex', bgcolor: 'white' }}>
-        {/* Left Section - Background Image */}
+        {/* Left Section - Background Image Original Size */}
         <Box
           sx={{
             flex: 2,
             position: 'relative',
-            display: { xs: 'none', md: 'block' },
+            display: isMobile ? 'none' : 'block',
             overflow: 'hidden'
           }}
         >
@@ -153,14 +158,13 @@ const Login = () => {
           </Box>
         </Box>
 
-        {/* Right Section - Sign In Form */}
+        {/* Right Section - Sign In Form Original Size */}
         <Box
           sx={{
             flex: 1,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            bgcolor: 'white',
             position: 'relative'
           }}
         >
@@ -178,7 +182,6 @@ const Login = () => {
               sx={{
                 boxShadow: 3,
                 borderRadius: 2,
-                bgcolor: 'white',
                 width: '100%',
                 position: 'relative'
               }}
@@ -187,7 +190,7 @@ const Login = () => {
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'left',
+                  justifyContent: isMobile ? 'center' : 'left',
                   gap: 1,
                   mb: 4
                 }}

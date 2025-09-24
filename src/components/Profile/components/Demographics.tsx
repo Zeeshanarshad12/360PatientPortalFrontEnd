@@ -19,10 +19,10 @@ function Demographics() {
     'Sex Assigned at Birth': patientDemographics?.sexassignedatBirth,
     'Marital Status': patientDemographics?.maritalStatus,
     'Birth Order': patientDemographics?.birthOrder,
+    'Preferred Language': patientDemographics?.preferredLanguage,
     'Occupation': patientDemographics?.occupation,
     'Occupation Industry': patientDemographics?.occupationIndustry,
-    'Tribal Affiliation': patientDemographics?.tribalAffiliation,
-    'Preferred Language': patientDemographics?.preferredLanguage
+    'Tribal Affiliation': patientDemographics?.tribalAffiliation
   };
 
   return (
@@ -34,7 +34,7 @@ function Demographics() {
 
       <Grid container spacing={2}>
         {Object.entries(patientDemographicsData).map(([key, value]) => (
-          <Grid item xs={3} key={key}>
+          <Grid item xs={(key === 'Occupation' || key === 'Occupation Industry' || key === 'Tribal Affiliation') ? 12 : 6} md={3} key={key}>
             <Typography sx={{ marginBottom: 1 }} variant="subtitle2" component="h5">
               {key}
             </Typography>

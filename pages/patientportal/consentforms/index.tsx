@@ -1,5 +1,14 @@
-import ConsentFormsLayout from '@/components/ConsentForms/components/ConsentFormsLayout';
+import ConsentFormsPage from '@/components/ConsentForms/index';
+import { ProtectedRoute } from '@/contexts/protectedRoute';
 
-export default function ConsentFormsPage() {
-  return <ConsentFormsLayout />;
+const ConsentForms = () => {
+  return (
+  <>
+      <ProtectedRoute>
+        <ConsentFormsPage /> {/* main page component */}
+      </ProtectedRoute>
+    </>
+  );
 }
+
+export default ConsentForms;

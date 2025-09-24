@@ -39,7 +39,7 @@ const SharedLayout: FC<CollapsedSidebarLayoutProps> = ({ children }) => {
             <Box
               id="app-com-content"
               sx={{
-                marginLeft: '170px'
+                marginLeft: '5px'
               }}
             >
               {children}

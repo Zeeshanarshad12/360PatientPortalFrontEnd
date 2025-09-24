@@ -1,49 +1,80 @@
 "use client";
-import React from "react";
-
-import { Box, styled } from "@mui/material";
-
+import React, { useContext } from "react";
+import { Box, Drawer, useTheme, useMediaQuery, styled } from "@mui/material";
+import { SidebarContext } from "../../../contexts/SidebarContext";
 import SidebarMenu from "./SidebarMenu";
 
-const SidebarWrapper = styled(Box)(
-  ({ theme }) => `
-
-        // width: ${theme.spacing(8.4)};
-        // color: ${theme.sidebar.textColor};
-        // background: ${theme.sidebar.background};
-        // box-shadow: ${theme.sidebar.boxShadow};  
-        // // box-shadow: '0px 3px 4px #00000029';  
-        // height: 100%;
-
-        // @media (min-width: ${theme.breakpoints.values.md}px) {
-        //   top: 0;
-        //   left: 0;
-        //   position: fixed;
-        //   // z-index: 10;
-        //   // border-top-right-radius: 30px;
-        //   // border-bottom-right-radius: 30px;
-        // }
-`
-);
+const StyledDrawerPaper = styled(Box)(({ theme }) => ({
+  background: '#FFFFFF',
+  color: theme.palette.text.primary,
+  borderRadius: '0',
+  border: 'none',
+  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+  overflow: 'hidden',
+}));
 
 function Sidebar() {
-  return (
-    <React.Fragment>
-      <SidebarWrapper
-        id="app-sidebar"
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { sidebarToggle, closeSidebar } = useContext(SidebarContext);
+
+  const sidebarWidth = 280;
+
+  const sidebarStyles = {
+    width: sidebarWidth,
+    flexShrink: 0,
+    '& .MuiDrawer-paper': {
+      width: sidebarWidth,
+      boxSizing: 'border-box',
+      background: '#FFFFFF',
+      border: 'none',
+      boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+    },
+  };
+
+  // Mobile: Use temporary drawer
+  if (isMobile) {
+    return (
+      <Drawer
+        variant="temporary"
+        anchor="left"
+        open={sidebarToggle}
+        onClose={closeSidebar}
         sx={{
-          background: "#FFFFFF",
-          position: "fixed",
-          top: 0,
-          bottom: 0,
-          width: '240px'
+          ...sidebarStyles,
+          '& .MuiDrawer-paper': {
+            ...sidebarStyles['& .MuiDrawer-paper'],
+            zIndex: theme.zIndex.drawer + 2,
+          },
+        }}
+        ModalProps={{
+          keepMounted: true, // Better open performance on mobile
         }}
       >
-        <Box>
-          <SidebarMenu />
-        </Box>
-      </SidebarWrapper>
-    </React.Fragment>
+        <StyledDrawerPaper sx={{ height: '100%', overflow: 'auto' }}>
+          <SidebarMenu onItemClick={closeSidebar} />
+        </StyledDrawerPaper>
+      </Drawer>
+    );
+  }
+
+  // Desktop: Use permanent drawer
+  return (
+    <Drawer
+      variant="permanent"
+      sx={{
+        ...sidebarStyles,
+        '& .MuiDrawer-paper': {
+          ...sidebarStyles['& .MuiDrawer-paper'],
+          position: 'fixed',
+          zIndex: theme.zIndex.drawer,
+        },
+      }}
+    >
+      <StyledDrawerPaper sx={{ height: '100%', overflow: 'auto' }}>
+        <SidebarMenu />
+      </StyledDrawerPaper>
+    </Drawer>
   );
 }
 

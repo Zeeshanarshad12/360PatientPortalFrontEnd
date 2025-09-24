@@ -40,9 +40,9 @@ const ConsentFormList = ({ forms, onSelect, selectedId }: Props) => {
                 onChange={(e) => setSearch(e.target.value)}
                 sx={{ mb: 1 }}
                 InputProps={{
-                    startAdornment: (
-                        <InputAdornment position="start">
-                            <SearchIcon fontSize="small" />
+                    endAdornment: (
+                        <InputAdornment position="end">
+                            <SearchIcon fontSize="small" sx={{ mr: -1 }} />
                         </InputAdornment>
                     ),
                 }}

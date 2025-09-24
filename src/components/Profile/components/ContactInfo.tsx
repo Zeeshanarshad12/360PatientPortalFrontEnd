@@ -54,8 +54,7 @@ function ContactInfo() {
       </Grid>
 
       <Grid container spacing={2} mt={2}>
-        <Grid item xs={5}>
-          {/* Section label as heading */}
+        <Grid item xs={12} md={5}>
           <Typography sx={{ marginBottom: 1 }} variant="subtitle2" component="h4">
             Practice
           </Typography>
@@ -63,7 +62,7 @@ function ContactInfo() {
             {patientDetails?.practiceName}
           </Typography>
         </Grid>
-        <Grid item xs={4}>
+        <Grid item xs={6} md={4}>
           <Typography sx={{ marginBottom: 1 }} variant="subtitle2" component="h4">
             ACO Name
           </Typography>
@@ -71,7 +70,7 @@ function ContactInfo() {
             {patientDetails?.acO_Name}
           </Typography>
         </Grid>
-        <Grid item xs={3}>
+        <Grid item xs={6} md={3}>
           <Typography sx={{ marginBottom: 1 }} variant="subtitle2" component="h4">
             Physician Name
           </Typography>
