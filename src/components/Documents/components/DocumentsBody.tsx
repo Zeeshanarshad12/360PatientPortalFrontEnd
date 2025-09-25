@@ -43,10 +43,11 @@ interface Document {
 }
 
 interface BodyProps {
+  dateRange: string;
   selectedTypeId: number | null;
 }
 
-const DocumentsBody: React.FC<BodyProps> = ({ selectedTypeId }) => {
+const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
   const dispatch = useDispatch();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(false);
@@ -59,6 +60,36 @@ const DocumentsBody: React.FC<BodyProps> = ({ selectedTypeId }) => {
   const [docType, setDocType] = useState<string>('');
 
   const viewerRef = useRef<DocViewerRef>(null);
+
+  const getDateRange = (range: string) => {
+    const to = new Date();
+    let from = new Date();
+
+    switch (range) {
+      case '1m':
+        from.setMonth(to.getMonth() - 1);
+        break;
+      case '6m':
+        from.setMonth(to.getMonth() - 6);
+        break;
+      case '1y':
+        from.setFullYear(to.getFullYear() - 1);
+        break;
+      case '2y':
+        from.setFullYear(to.getFullYear() - 2);
+        break;
+      case '3y':
+        from.setFullYear(to.getFullYear() - 3);
+        break;
+      default:
+        from = new Date(2000, 0, 1);
+    }
+
+    return {
+      fromDate: from.toISOString().split('T')[0],
+      toDate: to.toISOString().split('T')[0]
+    };
+  };
 
   // Cleanup ObjectURL on unmount or when docUrl changes
   useEffect(() => {
@@ -76,11 +107,13 @@ const DocumentsBody: React.FC<BodyProps> = ({ selectedTypeId }) => {
 
       setLoading(true);
       try {
+        const { fromDate, toDate } = getDateRange(dateRange);
+
         const Obj = {
           patientId: localStorage.getItem('patientID'),
           documentTypeId: selectedTypeId,
-          fromDate: '2023-09-23',
-          toDate: '2025-09-23'
+          fromDate: fromDate,
+          toDate: toDate
         };
         const response = await dispatch(getAllSelectedDocuments(Obj)).unwrap();
         setDocuments(response.result || []);
@@ -93,19 +126,20 @@ const DocumentsBody: React.FC<BodyProps> = ({ selectedTypeId }) => {
     };
 
     fetchData();
-  }, [dispatch, selectedTypeId]);
+  }, [dispatch, selectedTypeId, dateRange]);
 
   const handleMenuOpen = (
     event: React.MouseEvent<HTMLButtonElement>,
     doc: Document
   ) => {
+    setMenuDoc(null);
+
     setAnchorEl(event.currentTarget);
     setMenuDoc(doc);
   };
 
   const handleMenuClose = () => {
     setAnchorEl(null);
-    setMenuDoc(null);
   };
 
   const getMimeTypeFromExtension = (fileName: string): string => {
@@ -152,13 +186,11 @@ const DocumentsBody: React.FC<BodyProps> = ({ selectedTypeId }) => {
         })
         .finally(() => {
           setDocLoading(false);
-          //handleMenuClose();
         });
     } catch (error) {
       console.error('Error viewing document:', error);
     } finally {
       setDocLoading(false);
-      //handleMenuClose();
     }
   };
 
@@ -254,12 +286,10 @@ const DocumentsBody: React.FC<BodyProps> = ({ selectedTypeId }) => {
           console.error('Error downloading document:', err);
         })
         .finally(() => {
-          //handleMenuClose();
         });
     } catch (error) {
       console.error('Error downloading document:', error);
     } finally {
-      //handleMenuClose();
     }
   };
 
@@ -301,7 +331,7 @@ const DocumentsBody: React.FC<BodyProps> = ({ selectedTypeId }) => {
     {
       field: 'date',
       headerName: 'Date',
-      width: 150,
+      flex: 1,
       valueFormatter: (params) =>
         params.value ? moment(params.value).format('MM/DD/YYYY') : ''
     },
@@ -313,6 +343,8 @@ const DocumentsBody: React.FC<BodyProps> = ({ selectedTypeId }) => {
       align: 'center',
       headerAlign: 'center',
       width: 100,
+      minWidth: 80,
+      flex: 0,
       renderCell: (params) => (
         <IconButton onClick={(e) => handleMenuOpen(e, params.row)}>
           <MoreVertIcon />
@@ -359,7 +391,7 @@ const DocumentsBody: React.FC<BodyProps> = ({ selectedTypeId }) => {
       <Menu
         anchorEl={anchorEl}
         open={Boolean(anchorEl)}
-        //onClose={handleMenuClose}
+        onClose={handleMenuClose}
       >
         <MenuItem onClick={handleView}>View</MenuItem>
         <MenuItem onClick={handleDownload}>Download</MenuItem>

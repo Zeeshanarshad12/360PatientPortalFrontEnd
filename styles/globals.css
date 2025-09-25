@@ -60,6 +60,10 @@ html {
     border-color: rgba(0, 0, 0, 0.897) !important;
 }
 
+#pdf-download {
+  display: none !important;
+}
+
 /* Mobile-specific improvements */
 @media (max-width: 768px) {
   /* Improve touch targets */

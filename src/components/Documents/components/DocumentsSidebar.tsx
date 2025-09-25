@@ -18,6 +18,7 @@ import { useDispatch } from 'react-redux';
 import { getAllDocumentTypes } from '@/slices/patientprofileslice';
 
 interface DocumentsSidebarProps {
+  dateRange: string;
   search: string;
   onSearchChange: (v: string) => void;
   showOnlyWithData: boolean;
@@ -26,7 +27,8 @@ interface DocumentsSidebarProps {
   onSelectType: (id: number) => void;
 }
 
-const DocumentsSidebar: React.FC<DocumentsSidebarProps> = ({
+const DocumentsSidebar: React.FC<DocumentsSidebarProps & { dateRange: string }> = ({
+  dateRange,
   search,
   onSearchChange,
   showOnlyWithData,
@@ -38,14 +40,46 @@ const DocumentsSidebar: React.FC<DocumentsSidebarProps> = ({
   const [documentTypes, setDocumentTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
+  const getDateRange = (range: string) => {
+    const to = new Date();
+    let from = new Date();
+
+    switch (range) {
+      case '1m':
+        from.setMonth(to.getMonth() - 1);
+        break;
+      case '6m':
+        from.setMonth(to.getMonth() - 6);
+        break;
+      case '1y':
+        from.setFullYear(to.getFullYear() - 1);
+        break;
+      case '2y':
+        from.setFullYear(to.getFullYear() - 2);
+        break;
+      case '3y':
+        from.setFullYear(to.getFullYear() - 3);
+        break;
+      default:
+        from = new Date(2000, 0, 1);
+    }
+
+    return {
+      fromDate: from.toISOString().split('T')[0],
+      toDate: to.toISOString().split('T')[0]
+    };
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
+        const { fromDate, toDate } = getDateRange(dateRange);
+
         const Obj = {
           patientId: localStorage.getItem('patientID'),
-          fromDate: '2023-09-23',
-          toDate: '2025-09-23'
+          fromDate: fromDate,
+          toDate: toDate
         };
         const response = await dispatch(getAllDocumentTypes(Obj)).unwrap();
         setDocumentTypes(response.result || []);
@@ -57,7 +91,7 @@ const DocumentsSidebar: React.FC<DocumentsSidebarProps> = ({
     };
 
     fetchData();
-  }, [dispatch]);
+  }, [dispatch, dateRange]);
 
   const { filtered, allCount } = useMemo(() => {
     const term = search.trim().toLowerCase();

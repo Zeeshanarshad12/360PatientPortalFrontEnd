@@ -11,9 +11,7 @@ const PatientDocuments = () => {
   const [filterType, setFilterType] = React.useState<string>('all');
   const [search, setSearch] = React.useState<string>('');
   const [showOnlyWithData, setShowOnlyWithData] = React.useState<boolean>(false);
-
   const [selectedTypeId, setSelectedTypeId] = React.useState<number | null>(null);
-
   const [heartLoading, setHeartLoading] = useState(true);
 
   useEffect(() => {
@@ -44,9 +42,12 @@ const PatientDocuments = () => {
               <Box sx={{ display: 'flex' }}>
                 <DocumentsHeader
                   dateRange={dateRange}
-                  onChangeDateRange={setDateRange}
-                  filterType={filterType}
-                  onChangeFilterType={setFilterType}
+                  onChangeDateRange={(newRange) => {
+                    setDateRange(newRange);
+                    setSelectedTypeId(null);   // reset
+                    setSearch('');
+                    setShowOnlyWithData(false);
+                  }}
                 />
               </Box>
             </Grid>
@@ -72,12 +73,13 @@ const PatientDocuments = () => {
                     }}
                   >
                     <DocumentsSidebar
+                      dateRange={dateRange}
                       search={search}
                       onSearchChange={setSearch}
                       showOnlyWithData={showOnlyWithData}
                       onToggleShowOnlyWithData={setShowOnlyWithData}
                       selectedTypeId={selectedTypeId}
-                      onSelectType={setSelectedTypeId} // updates state
+                      onSelectType={setSelectedTypeId}
                     />
                   </CardContent>
                 </Card>
@@ -96,7 +98,7 @@ const PatientDocuments = () => {
                     overflow: 'hidden'
                   }}
                 >
-                  <DocumentsBody selectedTypeId={selectedTypeId} />
+                  <DocumentsBody dateRange={dateRange} selectedTypeId={selectedTypeId} />
                 </Card>
               </Box>
             </Grid>
