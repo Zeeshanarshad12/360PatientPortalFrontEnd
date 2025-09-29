@@ -280,6 +280,7 @@ const DocumentsSidebar: React.FC<DocumentsSidebarProps & { dateRange: string }> 
           checked={showOnlyWithData}
           onChange={(e) => onToggleShowOnlyWithData(e.target.checked)}
           size="medium"
+          inputProps={{ 'aria-label': 'Show Data Only' }}
         />
         <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
           Show Only with Data

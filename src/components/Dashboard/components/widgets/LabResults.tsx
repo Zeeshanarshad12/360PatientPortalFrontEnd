@@ -161,7 +161,7 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
                           timeout="auto"
                           unmountOnExit
                         >
-                          <Table size="small" sx={{ mt: 1 }}>
+                          <Table size="small" sx={{ mt: 1 }} role="none">
                             <TableBody>
                               {test.labObservations &&
                                 test.labObservations.map((obs, oIndex) => (

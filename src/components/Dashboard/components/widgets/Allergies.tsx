@@ -49,13 +49,13 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
       case 'severe':
         return {
           bgcolor: '#ffebee',
-          textColor: '#d32f2f',
+          textColor: '#b71c1c',
           chipColor: '#d32f2f'
         };
       case 'mild':
         return {
           bgcolor: '#fff3e0',
-          textColor: '#f57c00',
+          textColor: '#bf360c',
           chipColor: '#f57c00'
         };
       case 'moderate':

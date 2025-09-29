@@ -187,12 +187,12 @@ function SignUp() {
       <Box
         sx={{
           bgcolor: '#ff9800',
-          color: 'white',
+          color: '#000000',
           py: 1,
           px: 2,
           textAlign: 'center',
           fontSize: '0.9rem',
-          fontWeight: 'medium'
+          fontWeight: 'bold'
         }}
       >
         This portal is not for emergencies. If you need urgent medical

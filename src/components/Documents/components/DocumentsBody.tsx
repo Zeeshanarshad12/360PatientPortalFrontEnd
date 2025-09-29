@@ -346,7 +346,7 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
       minWidth: 80,
       flex: 0,
       renderCell: (params) => (
-        <IconButton onClick={(e) => handleMenuOpen(e, params.row)}>
+        <IconButton aria-label={`Actions for ${params.row.documentName}`} onClick={(e) => handleMenuOpen(e, params.row)}>
           <MoreVertIcon />
         </IconButton>
       )
