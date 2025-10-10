@@ -668,6 +668,40 @@ export const getDownloadPatientDocument: any = createAsyncThunk(
   }
 );
 
+export const generateResetPasswordOtp: any = createAsyncThunk(
+  'generateResetPasswordOtp',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.generateResetPasswordOtp(data, 'ApiVersion2Req');
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data?.result;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+);
+
+export const resetPatientPassword: any = createAsyncThunk(
+  'resetPatientPassword',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.resetPatientPassword(data);
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data.result;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+);
+
 const patientProfileSlice = createSlice({
   name: 'Patient Profile Slice',
   initialState: initialState,

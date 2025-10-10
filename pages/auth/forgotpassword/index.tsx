@@ -17,29 +17,27 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Image from 'next/image';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
-import React, { useEffect } from 'react';
+import React from 'react';
 import {
+  generateResetPasswordOtp,
   GetPatientUserRequestByCode,
-  GenerateOtp,
-  AddPatientUser
+  resetPatientPassword
 } from '@/slices/patientprofileslice';
-import { useDispatch, useSelector } from '@/store/index';
+import { useDispatch } from '@/store/index';
 import { useRouter } from 'next/router';
 
-function SignUp() {
+function ForgotPassword() {
   const dispatch = useDispatch();
   const router = useRouter();
-  const [code, setCode] = useState(null);
-  const { GetPatientUserRequestByCodeData, GenerateOtpData } = useSelector(
-    (state) => state.patientprofileslice
-  );
   const [step, setStep] = useState(1);
   const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [error, setError] = useState(false);
+  const [emailError, setEmailError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
@@ -51,36 +49,24 @@ function SignUp() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  useEffect(() => {
-    const queryString = router.asPath.split('?')[1];
-    if (queryString) {
-      const urlParams = new URLSearchParams(queryString);
-      const newCode = urlParams.get('code');
-
-      // Only update if the new code is different from the current code
-      if (newCode && (newCode !== code || code === null)) {
-        setCode(newCode);
-      }
-    }
-  }, []); // This will run when router.asPath changes
-
-  useEffect(() => {
-    if (code) {
-      // Call the dispatch only when the code is updated
-      dispatch(GetPatientUserRequestByCode(code));
-    }
-  }, [code, dispatch]); // This will only run when 'code' changes
-
-  useEffect(() => {
-    if (GetPatientUserRequestByCodeData) {
-      setEmail(GetPatientUserRequestByCodeData?.result.emailAddress);
-    }
-  }, [GetPatientUserRequestByCodeData]); // This will run when the API response changes
-
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
   const toggleConfirmPasswordVisibility = () =>
     setShowConfirmPassword((prev) => !prev);
 
+  // Email validation
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  // Handle email input and validation
+  const handleEmailChange = (e) => {
+    const value = e.target.value;
+    setEmail(value);
+    setEmailError('');
+  };
+
+  // Handle OTP input
   const handleOtpChange = (index, value) => {
     if (/^\d?$/.test(value)) {
       const newOtp = [...otp];
@@ -108,7 +94,32 @@ function SignUp() {
     }
   };
 
-  // Handle Verify Button Click
+  // Handle Send OTP (Step 1 → Step 2)
+  const handleSendOtp = async () => {
+    if (!email) {
+      setEmailError('Email is required');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+
+    setLoading(true);
+
+    const resetOtpResponse = await dispatch(
+      generateResetPasswordOtp(email)
+    ).unwrap();
+
+    if (resetOtpResponse.result != null || resetOtpResponse.result !== '') {
+      setCode(resetOtpResponse.result);
+      setLoading(false);
+      setStep(2);
+    }
+  };
+
+  // Handle OTP Verification (Step 2 → Step 3)
   const handleVerifyOtp = async () => {
     if (otp.some((digit) => digit === '')) {
       setError(true);
@@ -141,21 +152,22 @@ function SignUp() {
     }
   };
 
-  const handleSendCode = () => {
+  // Handle Resend OTP
+  const handleResendOtp = () => {
     setOtp(['', '', '', '', '', '']);
     setError(false);
-
-    setStep(2);
-    dispatch(GenerateOtp(GetPatientUserRequestByCodeData?.result.code));
+    
+    handleSendOtp();
   };
 
-  // Regex to validate password
+  // Password validation regex (same as signup)
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^*])(?!.*(.)\1\1).{10,20}$/;
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
-  const handleSignUp = async () => {
+  // Handle Password Reset (Final Step)
+  const handleResetPassword = async () => {
     // Clear any previous errors
     setPasswordError('');
     setConfirmPasswordError('');
@@ -179,20 +191,24 @@ function SignUp() {
       return;
     }
 
+    setLoading(true);
+    
     const joinotp = otp.join('');
-    const signupobj = {
+    const resetobj = {
       Code: code,
       Otp: joinotp,
       Password: password.toString(),
       CreatedBy: 'System'
     };
 
-    const signUpResponse = await dispatch(
-      AddPatientUser(signupobj)
+    const patientRestResponse = await dispatch(
+      resetPatientPassword(resetobj)
     ).unwrap();
 
-    if (signUpResponse.result != null) {
-      setMessageSnackbar('Sign Up process completed. Redirecting to Login!');
+    setLoading(false);
+
+    if (patientRestResponse.result != null) {
+      setMessageSnackbar('Password has been updated. Redirecting to Login!');
       setSeverity('success');
       setOpenSnackbar(true);
 
@@ -200,10 +216,22 @@ function SignUp() {
         router.push('/auth/signin');
       }, 1000); // delay before proceeding
     } else {
-      setMessageSnackbar('Error occurred during the Sign Up process. Try Again!');
+      setMessageSnackbar('Error occurred during the Reset process. Try Again!');
       setSeverity('error');
       setOpenSnackbar(true);
       return;
+    }
+  };
+
+  // Handle back navigation
+  const handleBack = () => {
+    if (step > 1) {
+      setStep(step - 1);
+      setError(false);
+      setPasswordError('');
+      setConfirmPasswordError('');
+    } else {
+      router.push('/auth/signin');
     }
   };
 
@@ -301,7 +329,7 @@ function SignUp() {
           </Box>
         </Box>
 
-        {/* Right Section - Sign Up Form Original Size */}
+        {/* Right Section - Reset Password Form */}
         <Box
           sx={{
             flex: 1,
@@ -311,7 +339,7 @@ function SignUp() {
             position: 'relative'
           }}
         >
-          {/* Sign Up Container - Keep existing structure */}
+          {/* Reset Password Container */}
           <Container
             maxWidth="xs"
             sx={{
@@ -329,45 +357,48 @@ function SignUp() {
                 position: 'relative'
               }}
             >
-              {step === 2 && (
+              {/* Back Button */}
+              {(step === 2 || step === 3) && (
                 <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'left',
-                  mb: 3
-                }}
-                >
-                <IconButton
-                  onClick={() => setStep(1)}
                   sx={{
-                    right: 3,
-                    '&:focus': {
-                      outline: '2px solid #1976d2',
-                      outlineOffset: '2px'
-                    },
-                    '&:focus-visible': {
-                      outline: '2px solid #1976d2',
-                      outlineOffset: '2px'
-                    }
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'left',
+                    mb: 3
                   }}
-                  aria-label="Back to previous step"
                 >
-                  <ArrowBackIcon />
-                  <span
-                    style={{
-                      width: 1,
-                      height: 1,
-                      overflow: 'hidden',
-                      clip: 'rect(0 0 0 0)',
-                      whiteSpace: 'nowrap'
+                  <IconButton
+                    onClick={handleBack}
+                    sx={{
+                      right: 3,
+                      '&:focus': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      },
+                      '&:focus-visible': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      }
                     }}
+                    aria-label="Back to previous step"
                   >
-                    Go Back
-                  </span>
-                </IconButton>
+                    <ArrowBackIcon />
+                    <span
+                      style={{
+                        width: 1,
+                        height: 1,
+                        overflow: 'hidden',
+                        clip: 'rect(0 0 0 0)',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      Go Back
+                    </span>
+                  </IconButton>
                 </Box>
               )}
+
+              {/* Logo and Title */}
               <Box
                 sx={{
                   display: 'flex',
@@ -391,6 +422,8 @@ function SignUp() {
                   Patient Portal
                 </Typography>
               </Box>
+
+              {/* Step 1: Email Input */}
               {step === 1 && (
                 <>
                   <Typography
@@ -398,7 +431,7 @@ function SignUp() {
                     component="h4"
                     sx={{ fontWeight: 'bold', mt: 2, textAlign: 'left' }}
                   >
-                    Sign Up
+                    Reset Password
                   </Typography>
                   <Typography
                     component="h6"
@@ -409,8 +442,8 @@ function SignUp() {
                       mb: 2
                     }}
                   >
-                    Click ‘Get Code’ to receive a one-time verification code on
-                    your registered email.
+                    Enter your email address to receive a verification code for
+                    password reset.
                   </Typography>
                   <TextField
                     id="email"
@@ -418,8 +451,11 @@ function SignUp() {
                     variant="outlined"
                     margin="normal"
                     label="Email"
+                    type="email"
                     value={email}
-                    disabled
+                    onChange={handleEmailChange}
+                    error={!!emailError}
+                    helperText={emailError}
                     inputProps={{ 'aria-label': 'Email' }}
                   />
                   <Button
@@ -438,12 +474,19 @@ function SignUp() {
                         outlineOffset: '2px'
                       }
                     }}
-                    onClick={handleSendCode}
+                    onClick={handleSendOtp}
+                    disabled={loading}
                   >
-                    Get Code
+                    {loading ? (
+                      <CircularProgress size={24} sx={{ color: 'white' }} />
+                    ) : (
+                      'Send Verification Code'
+                    )}
                   </Button>
                 </>
               )}
+
+              {/* Step 2: OTP Verification */}
               {step === 2 && (
                 <>
                   <Typography
@@ -523,7 +566,7 @@ function SignUp() {
                     {loading ? (
                       <CircularProgress size={24} sx={{ color: 'white' }} />
                     ) : (
-                      'Verify'
+                      'Verify Code'
                     )}
                   </Button>
 
@@ -543,12 +586,14 @@ function SignUp() {
                         outlineOffset: '2px'
                       }
                     }}
-                    onClick={handleSendCode}
+                    onClick={handleResendOtp}
                   >
                     Resend Code
                   </Button>
                 </>
               )}
+
+              {/* Step 3: New Password */}
               {step === 3 && (
                 <>
                   <Typography
@@ -556,13 +601,24 @@ function SignUp() {
                     component="h4"
                     sx={{ fontWeight: 'bold', mt: 2, textAlign: 'left' }}
                   >
-                    Create Password
+                    Create New Password
+                  </Typography>
+                  <Typography
+                    component="h6"
+                    sx={{
+                      color: '#4a4a4a',
+                      mt: 1,
+                      textAlign: 'justify',
+                      mb: 2
+                    }}
+                  >
+                    Enter your new password below.
                   </Typography>
                   <TextField
                     fullWidth
                     variant="outlined"
                     margin="normal"
-                    label="Create Password"
+                    label="New Password"
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -602,13 +658,13 @@ function SignUp() {
                         </IconButton>
                       )
                     }}
-                    inputProps={{ 'aria-label': 'Email' }}
+                    inputProps={{ 'aria-label': 'New Password' }}
                   />
                   <TextField
                     fullWidth
                     variant="outlined"
                     margin="normal"
-                    label="Confirm Password"
+                    label="Confirm New Password"
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -649,12 +705,12 @@ function SignUp() {
                               whiteSpace: 'nowrap'
                             }}
                           >
-                            {showPassword ? 'Hide' : 'Show'}
+                            {showConfirmPassword ? 'Hide' : 'Show'}
                           </span>
                         </IconButton>
                       )
                     }}
-                    inputProps={{ 'aria-label': 'Email' }}
+                    inputProps={{ 'aria-label': 'Confirm New Password' }}
                   />
                   <Button
                     fullWidth
@@ -672,12 +728,19 @@ function SignUp() {
                         outlineOffset: '2px'
                       }
                     }}
-                    onClick={handleSignUp}
+                    onClick={handleResetPassword}
+                    disabled={loading}
                   >
-                    Sign Up & Login
+                    {loading ? (
+                      <CircularProgress size={24} sx={{ color: 'white' }} />
+                    ) : (
+                      'Reset Password'
+                    )}
                   </Button>
                 </>
               )}
+
+              {/* Footer */}
               <Typography
                 variant="subtitle2"
                 component="p"
@@ -687,7 +750,7 @@ function SignUp() {
               </Typography>
             </Box>
 
-            {/* Snackbar for Danger Message of invalid OTP */}
+            {/* Snackbar for Error Messages */}
             <Snackbar
               open={openSnackbar}
               autoHideDuration={3000}
@@ -709,4 +772,4 @@ function SignUp() {
   );
 }
 
-export default SignUp;
+export default ForgotPassword;

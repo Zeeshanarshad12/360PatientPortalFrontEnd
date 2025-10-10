@@ -9,7 +9,8 @@ import {
   Alert,
   CircularProgress,
   useTheme,
-  useMediaQuery
+  useMediaQuery,
+  Link
 } from '@mui/material';
 import Image from 'next/image';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
@@ -65,8 +66,13 @@ const Login = () => {
     if (error) setError('');
   };
 
+  const handleForgotPassword = () => {
+    // Navigate to the forgot password page
+    router.push('/auth/forgotpassword');
+  };
+
   return (
-    <Box sx={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <Box sx={{ minHeight: '100vh', width: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Orange Emergency Banner */}
       <Box
         sx={{
@@ -274,6 +280,31 @@ const Login = () => {
                 }}
                 error={!!error} // Show error if email or password is empty
               />
+              
+              {/* Forgot Password Link */}
+              <Box sx={{ textAlign: 'right', mt: 1, mb: 1 }}>
+                <Link
+                  component="button"
+                  variant="body2"
+                  onClick={handleForgotPassword}
+                  sx={{
+                    color: 'primary.main',
+                    textDecoration: 'none',
+                    fontWeight: 'bold',
+                    '&:hover': {
+                      textDecoration: 'underline',
+                    },
+                    '&:focus': {
+                      outline: '2px solid #1976d2',
+                      outlineOffset: '2px',
+                      borderRadius: '2px'
+                    }
+                  }}
+                >
+                  {"Forgot Password ?"}
+                </Link>
+              </Box>
+
               <Button
                 fullWidth
                 variant="contained"

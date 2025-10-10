@@ -213,7 +213,7 @@ const UpdateSharingModulesData = (data, flag) =>
 const saveConsentForm = (data, flag) =>
   post(
 
-    SERVICE_URLSV2.saveConsentForm, data,
+    SERVICE_URLSV2.SaveConsentForm, data,
     {
 
       feature: featureConstants.static,
@@ -275,7 +275,7 @@ const getpatientvitals = (data, flag) =>
 
   get(
 
-    `${SERVICE_URLSV2.getpatientvitals}?&PatientId=${data?.PatientId}`,
+    `${SERVICE_URLSV2.GetPatientVitals}?&PatientId=${data?.PatientId}`,
     {},
     {
       feature: featureConstants.static,
@@ -287,7 +287,7 @@ const getpatientproblems = (data, flag) =>
 
   get(
 
-    `${SERVICE_URLSV2.getpatientproblems}?&PatientId=${data?.PatientId}`,
+    `${SERVICE_URLSV2.GetPatientProblems}?&PatientId=${data?.PatientId}`,
     {},
     {
       feature: featureConstants.static,
@@ -299,7 +299,7 @@ const getpatientappointments = (data, flag) =>
 
   get(
 
-    `${SERVICE_URLSV2.getpatientappointments}?&PatientId=${data?.PatientId}`,
+    `${SERVICE_URLSV2.GetPatientAppointments}?&PatientId=${data?.PatientId}`,
     {},
     {
       feature: featureConstants.static,
@@ -311,7 +311,7 @@ const getunsignedlabordertestbypatientid = (data, flag) =>
 
   get(
 
-    `${SERVICE_URLSV2.getunsignedlabordertestbypatientid}?&PatientId=${data?.PatientId}`,
+    `${SERVICE_URLSV2.GetUnsignedLaborderTestByPatientId}?&PatientId=${data?.PatientId}`,
     {},
     {
       feature: featureConstants.static,
@@ -324,7 +324,7 @@ const getdashboardconfigurations = (data, flag) =>
 
   get(
 
-    `${SERVICE_URLSV2.getdashboardconfigurations}?&Email=${data?.Email}`,
+    `${SERVICE_URLSV2.GetDashboardConfigurations}?&Email=${data?.Email}`,
     {},
     {
       feature: featureConstants.static,
@@ -336,7 +336,7 @@ const getdashboardconfigurations = (data, flag) =>
 const saveDashboardConfiguration = (data, flag) =>
   post(
 
-    SERVICE_URLSV2.saveDashboardConfiguration, data,
+    SERVICE_URLSV2.SaveDashboardConfiguration, data,
     {
 
       feature: featureConstants.static,
@@ -388,6 +388,23 @@ const getDownloadPatientDocument = (data, flag) =>
     { responseType: 'blob' }
   );
 
+const generateResetPasswordOtp = (data, flag) =>
+  get(
+    SERVICE_URLSV2.generateResetPasswordOtp + `?Email=${data}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
+const resetPatientPassword = (data) =>
+  postWithoutToken(
+    SERVICE_URLSV2.resetPatientPassword, data,
+    {
+      feature: featureConstants.static
+    }
+  );
 
 const apiServicesV2 = {
   GetGeneralLookup,
@@ -424,7 +441,9 @@ const apiServicesV2 = {
   getAllDocumentTypes,
   getAllSelectedDocuments,
   getPatientDocumentInfo,
-  getDownloadPatientDocument
+  getDownloadPatientDocument,
+  generateResetPasswordOtp,
+  resetPatientPassword
 };
 
 export default apiServicesV2;
