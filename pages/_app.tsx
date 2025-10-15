@@ -56,7 +56,7 @@ function MyApp(props: MyAppProps) {
     console.debug = () => {};
   }
 
-  const authPages = ['/auth/signup', '/auth/signin', '/'];
+  const authPages = ['/auth/signup', '/auth/signin', '/auth/forgotpassword', '/'];
   const isAuthPage = authPages.includes(router.pathname);
 
   return (
