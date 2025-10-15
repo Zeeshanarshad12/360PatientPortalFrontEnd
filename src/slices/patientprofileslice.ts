@@ -674,7 +674,7 @@ export const generateResetPasswordOtp: any = createAsyncThunk(
     const res = await apiServicesV2.generateResetPasswordOtp(data, 'ApiVersion2Req');
     try {
       if (res?.status === 200 || res?.status === 201) {
-        return res?.data?.result;
+        return res?.data;
       }
     } catch (error) {
       const err: any = thunkAPI.rejectWithValue(error);
@@ -688,10 +688,10 @@ export const generateResetPasswordOtp: any = createAsyncThunk(
 export const resetPatientPassword: any = createAsyncThunk(
   'resetPatientPassword',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.resetPatientPassword(data);
+    const res = await apiServicesV2.resetPatientPassword(data, 'ApiVersion2Req');
     try {
       if (res?.status === 200 || res?.status === 201) {
-        return res?.data.result;
+        return res?.data;
       }
     } catch (error) {
       const err: any = thunkAPI.rejectWithValue(error);

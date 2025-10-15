@@ -17,6 +17,7 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Image from 'next/image';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import NorthEast from '@mui/icons-material/NorthEast';
 import React, { useEffect } from 'react';
 import {
   GetPatientUserRequestByCode,
@@ -40,6 +41,7 @@ function SignUp() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const [error, setError] = useState(false);
+  const [emailError, setEmailError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const [showPassword, setShowPassword] = useState(false);
@@ -81,6 +83,12 @@ function SignUp() {
   const toggleConfirmPasswordVisibility = () =>
     setShowConfirmPassword((prev) => !prev);
 
+  // Email validation
+  const validateEmail = (email) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
   const handleOtpChange = (index, value) => {
     if (/^\d?$/.test(value)) {
       const newOtp = [...otp];
@@ -108,7 +116,39 @@ function SignUp() {
     }
   };
 
-  // Handle Verify Button Click
+  // Handle Send Code (Step 1 → Step 2)
+  const handleSendCode = async () => {
+    setEmailError('');
+
+    if (!email) {
+      setEmailError('Email is required');
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+
+    setOtp(['', '', '', '', '', '']);
+    setError(false);
+
+    setLoading(true);
+
+    const signUpOtpResponse = await dispatch(
+      GenerateOtp(GetPatientUserRequestByCodeData?.result.code)
+    ).unwrap();
+
+    if (signUpOtpResponse?.result != null && signUpOtpResponse?.result !== '') {
+      setLoading(false);
+      setStep(2);
+    }
+    else{
+      setLoading(false);
+    }
+  };
+
+  // Handle OTP Verification (Step 2 → Step 3)
   const handleVerifyOtp = async () => {
     if (otp.some((digit) => digit === '')) {
       setError(true);
@@ -141,20 +181,13 @@ function SignUp() {
     }
   };
 
-  const handleSendCode = () => {
-    setOtp(['', '', '', '', '', '']);
-    setError(false);
-
-    setStep(2);
-    dispatch(GenerateOtp(GetPatientUserRequestByCodeData?.result.code));
-  };
-
   // Regex to validate password
   const passwordRegex =
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^*])(?!.*(.)\1\1).{10,20}$/;
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
+  // Handle Sign Up (Final Step)
   const handleSignUp = async () => {
     // Clear any previous errors
     setPasswordError('');
@@ -418,8 +451,11 @@ function SignUp() {
                     variant="outlined"
                     margin="normal"
                     label="Email"
+                    type="email"
                     value={email}
                     disabled
+                    error={!!emailError}
+                    helperText={emailError}
                     inputProps={{ 'aria-label': 'Email' }}
                   />
                   <Button
@@ -439,9 +475,39 @@ function SignUp() {
                       }
                     }}
                     onClick={handleSendCode}
+                    disabled={loading}
                   >
-                    Get Code
+                    {loading ? (
+                      <CircularProgress size={24} sx={{ color: 'white' }} />
+                    ) : (
+                      'Get Code'
+                    )}
                   </Button>
+                  <Box sx={{ mt: 1, textAlign: 'center' }}>
+                    <Typography variant="h5" component="h5" fontWeight="bold">
+                      Already have an account?{' '}
+                      <Box
+                        component="span"
+                        sx={{
+                          color: 'primary.main',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          fontWeight: 'bold',
+                          textDecoration: 'none',
+                          '&:hover': {
+                            textDecoration: 'underline',
+                          }
+                        }}
+                        onClick={() => router.push('/')}
+                        aria-label="Go back to sign in"
+                        role="link"
+                      >
+                        Sign In
+                        <NorthEast sx={{ fontSize: 16, ml: 0.2 }} />
+                      </Box>
+                    </Typography>
+                  </Box>
                 </>
               )}
               {step === 2 && (

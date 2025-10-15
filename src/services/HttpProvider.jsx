@@ -136,7 +136,6 @@ export async function newRequest({ method, url, data, headers }) {
 }
 
 export async function requestWithoutToken({ method, url, data, headers, flag }) {
-
   if (headers === undefined) {
     await updateHeadersWithoutToken();
   }

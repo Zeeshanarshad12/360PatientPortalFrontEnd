@@ -17,6 +17,7 @@ import {
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import Image from 'next/image';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
+import NorthEast from '@mui/icons-material/NorthEast';
 import React from 'react';
 import {
   generateResetPasswordOtp,
@@ -106,16 +107,22 @@ function ForgotPassword() {
       return;
     }
 
+    setOtp(['', '', '', '', '', '']);
+    setError(false);
+
     setLoading(true);
 
     const resetOtpResponse = await dispatch(
       generateResetPasswordOtp(email)
     ).unwrap();
 
-    if (resetOtpResponse.result != null || resetOtpResponse.result !== '') {
-      setCode(resetOtpResponse.result);
+    if (resetOtpResponse?.result != null && resetOtpResponse?.result !== '') {
+      setCode(resetOtpResponse?.result);
       setLoading(false);
       setStep(2);
+    }
+    else{
+      setLoading(false);
     }
   };
 
@@ -130,9 +137,9 @@ function ForgotPassword() {
       GetPatientUserRequestByCode(code)
     ).unwrap();
 
-    if (patientUserResponse.result != null) {
+    if (patientUserResponse?.result != null) {
       const joinotp = otp.join('');
-      if (joinotp == patientUserResponse.result.otp) {
+      if (joinotp == patientUserResponse?.result.otp) {
       } else {
         setMessageSnackbar('Invalid OTP!');
         setSeverity('error');
@@ -207,7 +214,7 @@ function ForgotPassword() {
 
     setLoading(false);
 
-    if (patientRestResponse.result != null) {
+    if (patientRestResponse?.result != null) {
       setMessageSnackbar('Password has been updated. Redirecting to Login!');
       setSeverity('success');
       setOpenSnackbar(true);
@@ -483,6 +490,31 @@ function ForgotPassword() {
                       'Send Verification Code'
                     )}
                   </Button>
+                  <Box sx={{ mt: 1, textAlign: 'center' }}>
+                    <Typography variant="h5" component="h5" fontWeight="bold">
+                      Go Back To{' '}
+                      <Box
+                        component="span"
+                        sx={{
+                          color: 'primary.main',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          fontWeight: 'bold',
+                          textDecoration: 'none',
+                          '&:hover': {
+                            textDecoration: 'underline',
+                          }
+                        }}
+                        onClick={() => router.push('/')}
+                        aria-label="Go back to sign in"
+                        role="link"
+                      >
+                        Sign In
+                        <NorthEast sx={{ fontSize: 16, ml: 0.2 }} />
+                      </Box>
+                    </Typography>
+                  </Box>
                 </>
               )}
 
