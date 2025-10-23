@@ -9,17 +9,15 @@ import {
   Button,
   Grid,
   Dialog,
-  DialogTitle,
   DialogContent,
-  DialogActions,
   IconButton,
   Typography,
   TextField,
-  Divider,
   Snackbar,
   Alert,
   Switch,
   FormControl,
+  FormHelperText,
   Select,
   MenuItem,
   InputLabel,
@@ -67,7 +65,7 @@ function AuthorizedUserHeader() {
     const response = await dispatch(
       UpdateSharingModulesData(togglesJson)
     ).unwrap();
-    
+
     if (response.result === 'Success') {
       setOpenSnackbar(true);
       setsnackbarmsg('Changes Saved.');
@@ -304,17 +302,23 @@ function AuthorizedUserHeader() {
       </Grid>
 
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ fontWeight: 'bold' }}>
-          Add Authorised User
-          <IconButton
-            aria-label="close"
-            onClick={handleClose}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            px: 2,
+            py: 1,
+            borderBottom: '1px solid #ddd'
+          }}
+        >
+          <Typography variant="h4" noWrap>
+            Add Authorised User
+          </Typography>
+          <IconButton onClick={handleClose}>
             <CloseIcon />
           </IconButton>
-          <Divider sx={{ marginY: 1 }} />
-        </DialogTitle>
+        </Box>
 
         <DialogContent className="test">
           <Box sx={{ padding: 2 }}>
@@ -453,8 +457,23 @@ function AuthorizedUserHeader() {
 
               {/* Relationship Dropdown */}
               <Grid item xs={6}>
-                <FormControl fullWidth required>
-                  <InputLabel id="relationship-label">Relationship</InputLabel>
+                <FormControl
+                  fullWidth
+                  required
+                  error={isTouched && !formData.Relation}
+                >
+                  <InputLabel
+                    id="relationship-label"
+                    sx={{
+                      color: 'gray',
+                      '&.Mui-focused': { color: 'gray' },
+                      '&.Mui-error': { color: 'gray' },
+                      '& .MuiInputLabel-asterisk': { color: 'gray' },
+                      '&.Mui-error .MuiInputLabel-asterisk': { color: 'red' }
+                    }}
+                  >
+                    Select Relationship
+                  </InputLabel>
                   <Select
                     id="relation"
                     labelId="relationship-label"
@@ -462,7 +481,6 @@ function AuthorizedUserHeader() {
                     name="Relation"
                     value={formData.Relation}
                     onChange={handleChange}
-                    error={isTouched && !formData.Relation}
                   >
                     <MenuItem value="Family">Family</MenuItem>
                     <MenuItem value="Mother">Mother</MenuItem>
@@ -476,12 +494,12 @@ function AuthorizedUserHeader() {
                     <MenuItem value="Foster Child">Foster Child</MenuItem>
                     <MenuItem value="Other">Other</MenuItem>
                   </Select>
+
+                  {/* Use FormHelperText for consistent behavior */}
                   {isTouched && !formData.Relation && (
-                    // <span style={{ color: 'red', fontSize: '12px' }}>Relationship is required</span>
-                    <Typography variant="subtitle1" color="error">
-                      {' '}
-                      Relationship is required{' '}
-                    </Typography>
+                    <FormHelperText sx={{ fontWeight: 'normal' }}>
+                      Relationship is required
+                    </FormHelperText>
                   )}
                 </FormControl>
               </Grid>
@@ -489,47 +507,28 @@ function AuthorizedUserHeader() {
           </Box>
         </DialogContent>
 
-        <DialogActions
+        <Box
           sx={{
+            display: 'flex',
             justifyContent: 'flex-end',
-            paddingRight: '22px',
-            marginBottom: '10px'
+            alignItems: 'center',
+            px: 2,
+            py: 1,
+            borderTop: '1px solid #ddd',
+            gap: 2
           }}
         >
           <Button
             variant="outlined"
-            color="primary"
-            sx={{
-              borderRadius: '5px',
-              '&:focus': {
-                outline: '2px solid #1976d2',
-                outlineOffset: '2px'
-              },
-              '&:focus-visible': {
-                outline: '2px solid #1976d2',
-                outlineOffset: '2px'
-              }
-            }}
             onClick={handleClose}
+            sx={{ borderRadius: '5px' }}
           >
             Cancel
           </Button>
           <Button
             variant="contained"
-            color="primary"
-            disabled={isSending}
-            sx={{
-              borderRadius: '5px',
-              '&:focus': {
-                outline: '2px solid #1976d2',
-                outlineOffset: '2px'
-              },
-              '&:focus-visible': {
-                outline: '2px solid #1976d2',
-                outlineOffset: '2px'
-              }
-            }}
             onClick={handleAuthorisedUserSend}
+            sx={{ borderRadius: '5px' }}
           >
             {loading ? (
               <CircularProgress size={24} sx={{ color: 'white' }} />
@@ -537,21 +536,27 @@ function AuthorizedUserHeader() {
               'Send'
             )}
           </Button>
-        </DialogActions>
+        </Box>
       </Dialog>
 
       <Dialog open={openCDS} onClose={handleCloseCDS} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ fontWeight: 'bold' }}>
-          Control Data Sharing
-          <IconButton
-            aria-label="close"
-            onClick={handleCloseCDS}
-            sx={{ position: 'absolute', right: 8, top: 8 }}
-          >
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            px: 2,
+            py: 1,
+            borderBottom: '1px solid #ddd'
+          }}
+        >
+          <Typography variant="h4" noWrap>
+            Control Data Sharing
+          </Typography>
+          <IconButton onClick={handleCloseCDS}>
             <CloseIcon />
           </IconButton>
-          <Divider sx={{ marginY: 1 }} />
-        </DialogTitle>
+        </Box>
 
         {/* DialogContent */}
         <DialogContent>
@@ -586,7 +591,8 @@ function AuthorizedUserHeader() {
                       backgroundColor: '#f5f5f5',
                       position: 'sticky',
                       top: 0,
-                      zIndex: 1
+                      zIndex: 1,
+                      width: '75%'
                     }}
                   >
                     Information
@@ -599,10 +605,10 @@ function AuthorizedUserHeader() {
                       position: 'sticky',
                       top: 0,
                       zIndex: 1,
-                      textAlign: 'right'
+                      width: '25%'
                     }}
                   >
-                    <div style={{ marginRight: '20%' }}>Access Status</div>
+                    Access Status
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -613,18 +619,16 @@ function AuthorizedUserHeader() {
                     sx={{ borderBottom: '1px solid #e0e0e0' }}
                   >
                     <TableCell>{item.moduleName}</TableCell>
-                    <TableCell sx={{ textAlign: 'right' }}>
-                      <div style={{ marginRight: '25%' }}>
-                        <Switch
-                          id={`switchControl-${index}`} // Unique ID for the switch
-                          checked={toggles[item.moduleName] ?? false}
-                          onChange={() => handleToggleChange(item)}
-                          color="primary"
-                          inputProps={{
-                            'aria-label': 'Enable/Disable Control Sharing'
-                          }}
-                        />
-                      </div>
+                    <TableCell>
+                      <Switch
+                        id={`switchControl-${index}`} // Unique ID for the switch
+                        checked={toggles[item.moduleName] ?? false}
+                        onChange={() => handleToggleChange(item)}
+                        color="primary"
+                        inputProps={{
+                          'aria-label': 'Enable/Disable Control Sharing'
+                        }}
+                      />
                     </TableCell>
                   </TableRow>
                 ))}
@@ -633,45 +637,32 @@ function AuthorizedUserHeader() {
           </TableContainer>
         </DialogContent>
 
-        {/* Actions */}
-        <DialogActions sx={{ justifyContent: 'flex-end', px: 2, pb: 2 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            px: 2,
+            py: 1,
+            borderTop: '1px solid #ddd',
+            gap: 2
+          }}
+        >
           <Button
             variant="outlined"
-            color="primary"
-            sx={{
-              borderRadius: '5px',
-              '&:focus': {
-                outline: '2px solid #1976d2',
-                outlineOffset: '2px'
-              },
-              '&:focus-visible': {
-                outline: '2px solid #1976d2',
-                outlineOffset: '2px'
-              }
-            }}
             onClick={handleCloseCDS}
+            sx={{ borderRadius: '5px' }}
           >
             Cancel
           </Button>
           <Button
             variant="contained"
-            color="primary"
-            sx={{
-              borderRadius: '5px',
-              '&:focus': {
-                outline: '2px solid #1976d2',
-                outlineOffset: '2px'
-              },
-              '&:focus-visible': {
-                outline: '2px solid #1976d2',
-                outlineOffset: '2px'
-              }
-            }}
             onClick={handleSaveCDS}
+            sx={{ borderRadius: '5px' }}
           >
             Save
           </Button>
-        </DialogActions>
+        </Box>
       </Dialog>
 
       {/* Snackbar for Success Message of Create User */}
