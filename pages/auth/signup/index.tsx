@@ -224,7 +224,7 @@ function SignUp() {
       AddPatientUser(signupobj)
     ).unwrap();
 
-    if (signUpResponse.result != null) {
+    if (signUpResponse && signUpResponse !== 0) {
       setMessageSnackbar('Sign Up process completed. Redirecting to Login!');
       setSeverity('success');
       setOpenSnackbar(true);
