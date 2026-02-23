@@ -223,7 +223,6 @@ function SignUp() {
     const signUpResponse = await dispatch(
       AddPatientUser(signupobj)
     ).unwrap();
-
     if (signUpResponse && signUpResponse !== 0) {
       setMessageSnackbar('Sign Up process completed. Redirecting to Login!');
       setSeverity('success');
@@ -233,7 +232,8 @@ function SignUp() {
         router.push('/auth/signin');
       }, 1000); // delay before proceeding
     } else {
-      setMessageSnackbar('Error occurred during the Sign Up process. Try Again!');
+      //setMessageSnackbar('Error occurred during the Sign Up process. Try Again!');
+      setMessageSnackbar('An account with this email already exists. Please user a different email address!');
       setSeverity('error');
       setOpenSnackbar(true);
       return;

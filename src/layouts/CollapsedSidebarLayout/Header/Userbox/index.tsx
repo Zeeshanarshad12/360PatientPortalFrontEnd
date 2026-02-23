@@ -10,7 +10,7 @@ import {
   useTheme,
 } from "@mui/material";
 import ExpandMoreTwoToneIcon from "@mui/icons-material/ExpandMoreTwoTone";
-import { IsParsable, stringAvatar } from "@/utils/functions";
+import { IsParsable, stringAvatar,clearPatientSession } from "@/utils/functions";
 import { useAuth0 } from "@auth0/auth0-react";
 import { Icons } from "@/icons/themeicons";
 import Image from "next/image";
@@ -174,6 +174,7 @@ function HeaderUserbox() {
               fullWidth
               onClick={() => {
                 localStorage.clear();
+                clearPatientSession();
                 router.push(process.env.NEXT_PUBLIC_ORIGIN_URI);
               }}
             >
