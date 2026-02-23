@@ -242,6 +242,8 @@ export function stringToColor(string: string) {
   return color;
 }
 
+
+
 export function stringAvatar(
   name: string,
   width: string = "40px",
@@ -284,6 +286,21 @@ export const formatAddresswithCCDA = (addr) => {
   }
  
   return parts.join('\n');
+};
+
+export const clearPatientSession = () => {
+  const keysToClear = [
+    'patientID',
+    'PracticeId',
+    'PracticeName',
+    'FirstName',
+    'LastName',
+    'vdtAccess',
+    'pendingConsentFormCount',
+    'patientEmail',
+    'Email',
+  ];
+  keysToClear.forEach((key) => localStorage.removeItem(key));
 };
 
 export function formatDateCCDADate(dateString: string): string {
