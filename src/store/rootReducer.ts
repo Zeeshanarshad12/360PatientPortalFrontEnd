@@ -11,6 +11,10 @@ export const rootReducer = combineReducers({
 });
 
 const GeneralLookupDataFilter = createFilter("static", ["GeneralLookupData"]);
+const PatientProfileFilter = createFilter("patientprofileslice", [
+  "PatientByEmailData",
+  "patientEmail",
+]);
 
 const createNoopStorage = () => {
   return {
@@ -34,7 +38,14 @@ const storage =
 export const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["static"],
-  transforms: [GeneralLookupDataFilter],
+  whitelist: ["static", "patientprofileslice"],
+  transforms: [GeneralLookupDataFilter,PatientProfileFilter],
 };
-export const persistedReducer = persistReducer(persistConfig, rootReducer);
+const rootReducerWithReset = (state: any, action: any) => {
+  if (action.type === 'RESET_ALL_STATE') {
+    // Reset state to undefined to trigger re-initialization
+    state = undefined;
+  }
+  return persistReducer(persistConfig, rootReducer)(state, action);
+};
+export const persistedReducer = rootReducerWithReset;

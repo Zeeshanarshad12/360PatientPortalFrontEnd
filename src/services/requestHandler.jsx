@@ -30,7 +30,7 @@ const GetPatientByEmail = (data, flag) =>
   );
 const GetPatientDetailsById = (data, flag) =>
   get(
-    SERVICE_URLSV2.GetPatientDetailsById + `?PatientId=${data}`,
+     `${SERVICE_URLSV2.GetPatientDetailsById}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
     {
       feature: featureConstants.static,
@@ -39,7 +39,7 @@ const GetPatientDetailsById = (data, flag) =>
   );
 const GetPatientEncounterDetails = (data, flag) =>
   get(
-    `${SERVICE_URLSV2.GetPatientEncounterDetails}?&PatientId=${data?.PatientId}&dateflag=${data?.dateflag}&datefrom=${data?.datefrom}&dateto=${data?.dateto}`,
+    `${SERVICE_URLSV2.GetPatientEncounterDetails}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}&dateflag=${data?.dateflag}&datefrom=${data?.datefrom}&dateto=${data?.dateto}`,
     {},
     {
       feature: featureConstants.static,
@@ -122,8 +122,7 @@ const ShareDocument = (data) =>
 const GetPatientAuthorizedUser = (data, flag) =>
 
   get(
-
-    `${SERVICE_URLSV2.GetPatientAuthorizedUser}?PatientId=${data}`,
+    `${SERVICE_URLSV2.GetPatientAuthorizedUser}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
     {
       feature: featureConstants.static,
@@ -250,7 +249,7 @@ const GetPatientActiveMedications = (data, flag) =>
 
   get(
 
-    `${SERVICE_URLSV2.GetPatientActiveMedications}?&PatientId=${data?.PatientId}`,
+    `${SERVICE_URLSV2.GetPatientActiveMedications}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
     {
       feature: featureConstants.static,
@@ -262,7 +261,7 @@ const GetPatientAllergies = (data, flag) =>
 
   get(
 
-    `${SERVICE_URLSV2.GetPatientAllergies}?&PatientId=${data?.PatientId}`,
+    `${SERVICE_URLSV2.GetPatientAllergies}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
     {
       feature: featureConstants.static,
@@ -275,7 +274,7 @@ const getpatientvitals = (data, flag) =>
 
   get(
 
-    `${SERVICE_URLSV2.GetPatientVitals}?&PatientId=${data?.PatientId}`,
+    `${SERVICE_URLSV2.GetPatientVitals}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
     {
       feature: featureConstants.static,
@@ -287,7 +286,7 @@ const getpatientproblems = (data, flag) =>
 
   get(
 
-    `${SERVICE_URLSV2.GetPatientProblems}?&PatientId=${data?.PatientId}`,
+    `${SERVICE_URLSV2.GetPatientProblems}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
     {
       feature: featureConstants.static,
@@ -299,7 +298,7 @@ const getpatientappointments = (data, flag) =>
 
   get(
 
-    `${SERVICE_URLSV2.GetPatientAppointments}?&PatientId=${data?.PatientId}`,
+    `${SERVICE_URLSV2.GetPatientAppointments}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
     {
       feature: featureConstants.static,
@@ -311,7 +310,7 @@ const getunsignedlabordertestbypatientid = (data, flag) =>
 
   get(
 
-    `${SERVICE_URLSV2.GetUnsignedLaborderTestByPatientId}?&PatientId=${data?.PatientId}`,
+    `${SERVICE_URLSV2.GetUnsignedLaborderTestByPatientId}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
     {
       feature: featureConstants.static,

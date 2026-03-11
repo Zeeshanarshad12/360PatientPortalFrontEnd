@@ -5,16 +5,21 @@ import { useDispatch, useSelector } from "@/store/index";
 import { GetPatientByEmail } from "@/slices/patientprofileslice";
 import { CircularProgress } from '@mui/material';
 import { Box } from '@mui/system';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
 const Dashboard = () => {
   const dispatch = useDispatch();
   const [email, setEmail] = useState<string | null>(null);
-  const { PatientByEmailData } = useSelector((state) => state.patientprofileslice);
-  const [practiceKey, setPracticeKey] = useState<string | null>(null);
+  const { PatientByEmailData,patientEmail } = useSelector((state) => state.patientprofileslice);
   const [isSessionReady, setIsSessionReady] = useState(false); // KEY FIX
+  const { patientId, practiceId } = useCurrentPatient();
 
+  const getInitialKey = () => {
+  if (typeof window === 'undefined') return null;
+  return `${practiceId}-${patientId}`;
+};
+  const [practiceKey, setPracticeKey] = useState<string | null>(getInitialKey());
 
-  // Safe localStorage access
   useEffect(() => {
     const storedEmail = localStorage.getItem("Email");
     if (storedEmail) {
@@ -23,17 +28,12 @@ const Dashboard = () => {
     }
   }, []);
 
-  // Fetch patient data on load
-  useEffect(() => {
-    if (!email) return;
-    dispatch(GetPatientByEmail(email));
-  }, [email, dispatch]);
 
-  // Listen for practice changes — re-dispatch practice-dependent calls
  useEffect(() => {
   const handlePracticeChange = () => {
-    setPracticeKey(localStorage.getItem('PracticeId')); // changing key remounts PatientDashboard
+    setPracticeKey(`${practiceId}-${patientId}`);
   };
+
   window.addEventListener('practiceChanged', handlePracticeChange);
   return () => window.removeEventListener('practiceChanged', handlePracticeChange);
 }, []);
@@ -43,7 +43,7 @@ const Dashboard = () => {
   if (!Array.isArray(PatientByEmailData) || PatientByEmailData.length === 0) return;
 
   // Only skip if stored patientID belongs to the current user
-  const existingPatientId = localStorage.getItem('patientID');
+  const existingPatientId = patientId;
   const currentUserPatientIds = PatientByEmailData.map((p) => String(p.patientID));
   const isAlreadyCorrectUser = existingPatientId && currentUserPatientIds.includes(existingPatientId);
   //if (existingPatientId && currentUserPatientIds.includes(existingPatientId)) return;
@@ -60,9 +60,10 @@ const Dashboard = () => {
   localStorage.setItem('vdtAccess', String(defaultPatient.vdtAccess ?? ''));
   localStorage.setItem('pendingConsentFormCount', String(defaultPatient.pendingConsentFormCount ?? ''));
   setPracticeKey(String(defaultPatient.practiceId ?? ''));
+  window.dispatchEvent(new Event('practiceInitialized'));
   }
   else {
-      setPracticeKey(localStorage.getItem('PracticeId'));
+      setPracticeKey(practiceId);
     }
     setIsSessionReady(true);
 }, [PatientByEmailData]);

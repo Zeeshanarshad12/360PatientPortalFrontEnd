@@ -19,6 +19,7 @@ import { widgetContent } from '@/components/Dashboard/contexts/widgetData';
 import { getunsignedlabordertestbypatientid } from '@/slices/patientprofileslice';
 import { useDispatch } from '@/store/index';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -29,6 +30,7 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
   const [labGroups, setLabGroups] = useState<any[]>([]);
+  const { patientId, practiceId } = useCurrentPatient();
 
   const togglePanel = (event: React.MouseEvent, index: number) => {
     event.stopPropagation();
@@ -41,7 +43,8 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
     const fetchData = async () => {
       try {
         const Obj = {
-          PatientId: localStorage.getItem('patientID')
+            PatientId: patientId,
+            PracticeId: practiceId
         };
         const response = await dispatch(
           getunsignedlabordertestbypatientid(Obj)

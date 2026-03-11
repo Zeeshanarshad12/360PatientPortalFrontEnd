@@ -18,6 +18,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { getpatientappointments } from '@/slices/patientprofileslice';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
 import moment from 'moment';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -38,12 +39,14 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
   const dispatch = useDispatch();
   const [appointments, setappointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { patientId, practiceId } = useCurrentPatient();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const Obj = {
-          PatientId: localStorage.getItem('patientID')
+          PatientId: patientId,
+          PracticeId: practiceId
         };
 
         const response = await dispatch(getpatientappointments(Obj)).unwrap();

@@ -14,6 +14,8 @@ import { useDispatch, useSelector } from "@/store/index";
 import { GetPatientCCDAActivityLog, GetServerTime } from '@/slices/patientprofileslice';
 import { isNull } from '@/utils/functions';
 import moment from 'moment-timezone';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
+
 
 
 function ActivityLogFilter() {
@@ -26,8 +28,10 @@ function ActivityLogFilter() {
   const dateRangeOptions = PatientCCDAActivityLog?.result.item2;
   const [activityValue, setActivityValue] = useState('1');
   const [dateRangeValue, setDateRangeValue] = useState('1');
+  const { patientId, practiceId } = useCurrentPatient();
+
   const LogObj = {
-    PatientId: localStorage.getItem('patientID'),
+    PatientId: patientId,
     Activity: activityValue,
     Daterange: dateRangeValue
   }
@@ -45,19 +49,18 @@ function ActivityLogFilter() {
 
   const getLogReport = () => {
     setIsActivityLoad(true);
-    if (localStorage.getItem('patientID') != null) {
+    if (patientId) {
 
       dispatch(GetPatientCCDAActivityLog(LogObj));
     }
   };
 
   useEffect(() => {
-    if (localStorage.getItem('patientID') != null) {
+    if (!patientId) return;
 
       dispatch(GetPatientCCDAActivityLog(LogObj));
       setIsActivityLoad(true);
-    }
-  }, [dispatch]);
+  }, [patientId,dispatch]);
 
     useEffect(() => {
     // Call it immediately

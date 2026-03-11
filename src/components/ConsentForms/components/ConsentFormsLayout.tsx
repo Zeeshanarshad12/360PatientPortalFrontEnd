@@ -13,6 +13,7 @@ import {
 import HeartProgressLoader from '@/components/ProgressLoaders/components/HeartLoader';
 import { useConsentFormContext } from '@/contexts/ConsentFormContext';
 import draftToHtml from 'draftjs-to-html';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
 function ConsentFormsLayout() {
   const [heartLoading, setHeartLoading] = useState(true);
@@ -23,6 +24,8 @@ function ConsentFormsLayout() {
   const [justSigned, setJustSigned] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(false);
   const { setPendingCount } = useConsentFormContext();
+  
+  const { patientId, practiceId } = useCurrentPatient();
 
   const { GetConsentFormDataList } = useSelector(
     (state) => state.patientprofileslice
@@ -39,7 +42,6 @@ function ConsentFormsLayout() {
   useEffect(() => {
     const fetchConsentForms = async () => {
       try {
-        const patientId = localStorage.getItem('patientID');
         if (!patientId) return;
 
         const response = await dispatch(GetConsentFormData(patientId)).unwrap();
@@ -69,7 +71,7 @@ function ConsentFormsLayout() {
   // consentFormService.ts
   const getConsentFormById = async (formId: string) => {
     const Obj = {
-      PatientId: localStorage.getItem('patientID'),
+      PatientId: patientId,
       FormID: formId
     };
     const response = await dispatch(GetConsentFormContent(Obj)).unwrap();
@@ -79,7 +81,6 @@ function ConsentFormsLayout() {
 
   const refreshForms = async () => {
     try {
-      const patientId = localStorage.getItem('patientID');
       if (!patientId) return;
 
       const response = await dispatch(GetConsentFormData(patientId)).unwrap();

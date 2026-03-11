@@ -14,6 +14,7 @@ import { useDispatch, useSelector } from '@/store/index';
 import { useState, useEffect, useMemo } from 'react';
 import { GetPatientAllergies } from '@/slices/patientprofileslice';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -24,11 +25,13 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
   const [loading, setLoading] = useState(true);
 
   const dispatch = useDispatch();
+    const { patientId, practiceId } = useCurrentPatient();
   useEffect(() => {
     const fetchData = async () => {
       try {
         const Obj = {
-          PatientId: localStorage.getItem('patientID')
+          PatientId: patientId,
+          PracticeId: practiceId
         };
 
         const response = await dispatch(GetPatientAllergies(Obj)).unwrap();

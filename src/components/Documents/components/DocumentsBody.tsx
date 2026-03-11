@@ -20,6 +20,7 @@ import DocViewer, {
   DocViewerRenderers,
   DocViewerRef
 } from '@cyntler/react-doc-viewer';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
 import axios from 'axios';
 export const BASEURLV2 = process.env.NEXT_PUBLIC_APP_API_PATH_V2;
@@ -60,7 +61,11 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
   const [docType, setDocType] = useState<string>('');
 
   const viewerRef = useRef<DocViewerRef>(null);
+  
+  
+const { patientId, practiceId } = useCurrentPatient();
 
+  
   const getDateRange = (range: string) => {
     const to = new Date();
     let from = new Date();
@@ -110,7 +115,8 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
         const { fromDate, toDate } = getDateRange(dateRange);
 
         const Obj = {
-          patientId: localStorage.getItem('patientID'),
+          patientId: patientId,
+          practiceId: practiceId,
           documentTypeId: selectedTypeId,
           fromDate: fromDate,
           toDate: toDate

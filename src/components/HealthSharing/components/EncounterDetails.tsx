@@ -32,6 +32,8 @@ import {
   isNull
 } from '@/utils/functions';
 
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
+
 function EncounterDetailsReport() {
   const { EncounterId, ShareDocumentData } = useSelector(
     (state) => state.patientprofileslice
@@ -50,9 +52,11 @@ function EncounterDetailsReport() {
   const [jsonError, setJsonError] = useState(null);
   const [isSending, setIsSending] = useState(false);
 
+  const { patientId, practiceId } = useCurrentPatient();
+
   //Save ActivityLog Obj
   const Logobj = {
-    PatientId: localStorage.getItem('patientID'),
+    PatientId: patientId,
     Email: localStorage.getItem('Email'),
     ActivityTypeId: '3'
   };
@@ -95,7 +99,7 @@ function EncounterDetailsReport() {
         setOpenSnackbar(true);
 
         const LogEmailobj = {
-          PatientId: localStorage.getItem('patientID'),
+          PatientId: patientId,
           Email: email + '|' + localStorage.getItem('Email'), // localStorage.getItem('Email'),
           ActivityTypeId: '4'
         };
