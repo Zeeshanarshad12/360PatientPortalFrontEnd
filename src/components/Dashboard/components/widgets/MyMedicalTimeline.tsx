@@ -19,6 +19,8 @@ import { useState, useEffect, useMemo } from 'react';
 import { GetPatientEncounterDetails } from '@/slices/patientprofileslice';
 import moment from 'moment-timezone';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
+
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -30,12 +32,15 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
   const [fromDate, setFromDate] = useState(moment().format('YYYY-MM-DD'));
   const [toDate, setToDate] = useState(moment().format('YYYY-MM-DD'));
   const [loading, setLoading] = useState(true);
+  const { patientId, practiceId } = useCurrentPatient();
+  
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const Obj = {
-          PatientId: localStorage.getItem('patientID'),
+          PatientId: patientId,
+          PracticeId: practiceId,
           dateflag: false,
           datefrom: fromDate,
           dateto: toDate

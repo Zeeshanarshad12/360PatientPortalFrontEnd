@@ -16,6 +16,8 @@ import { Icons } from "@/icons/themeicons";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useAriaHiddenFixOnDialog } from "@/hooks/useAriaHiddenFixOnDialog";
+import { store, persistor } from '@/store';
+
 
 const UserBoxButton = styled(Button)(
   ({ theme }) => `
@@ -54,6 +56,12 @@ const UserBoxDescription = styled(Typography)(
 `
 );
 
+
+ const handleLogout = () => {
+  store.dispatch({ type: 'RESET_ALL_STATE' });
+  persistor.purge(); 
+};
+
 function HeaderUserbox() {
   const router = useRouter();
   const { logout } = useAuth0();
@@ -63,6 +71,8 @@ function HeaderUserbox() {
   const isOpen = Boolean(anchorEl);
 
   useAriaHiddenFixOnDialog(isOpen);
+
+ 
 
   let userDetails: string;
   const userName: string = typeof window !== "undefined" ? localStorage.getItem("Email") : "";
@@ -174,6 +184,7 @@ function HeaderUserbox() {
               fullWidth
               onClick={() => {
                 localStorage.clear();
+                handleLogout();
                 clearPatientSession();
                 router.push(process.env.NEXT_PUBLIC_ORIGIN_URI);
               }}

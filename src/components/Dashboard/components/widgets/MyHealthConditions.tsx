@@ -16,6 +16,7 @@ import { useDispatch, useSelector } from '@/store/index';
 import { useState, useEffect, useMemo } from 'react';
 import { getpatientproblems } from '@/slices/patientprofileslice';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -25,19 +26,20 @@ const MyHealthConditions: React.FC<Props> = ({ dragHandleProps }) => {
   const dispatch = useDispatch();
   const [healthConditions, sethealthConditions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const { patientId, practiceId } = useCurrentPatient();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const Obj = {
-          PatientId: localStorage.getItem('patientID')
+          PatientId: patientId,
+          PracticeId: practiceId
         };
-
         const response = await dispatch(getpatientproblems(Obj)).unwrap();
         const data = response.result;
         sethealthConditions(data);
       } catch (error) {
-        console.error('Error fetching medications:', error);
+        console.error('Error fetching Health conditions:', error);
       } finally {
         setLoading(false);
       }

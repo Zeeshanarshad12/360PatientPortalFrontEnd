@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Box, Popover, Tooltip, Typography, useTheme } from '@mui/material';
+import { Box, Popover, Tooltip, Typography, useTheme, Divider } from '@mui/material';
 import Image from 'next/image';
 import { useSelector } from '@/store/index';
 import { Icons } from '@/icons/themeicons';
@@ -24,6 +24,14 @@ interface PracticeGroup {
   patients: PatientRecord[];
 }
 
+interface DropdownItem {
+  patientID: number;
+  practiceName: string;
+  patientName: string;
+  practiceId: string | number;
+  patient: PatientRecord;
+}
+
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const getLocalItem = (key: string): string =>
@@ -34,6 +42,9 @@ const getPracticeId = (patient: PatientRecord): string | number =>
 
 const getPracticeName = (patient: PatientRecord): string =>
   patient?.practiceName ?? 'Unknown Practice';
+
+const getPatientName = (patient: PatientRecord): string =>
+  `${patient?.firstName ?? ''} ${patient?.lastName ?? ''}`.trim();
 
 const normalisePatientList = (raw: unknown): PatientRecord[] => {
   if (Array.isArray(raw)) return raw;
@@ -58,8 +69,16 @@ const groupByPractice = (patients: PatientRecord[]): PracticeGroup[] => {
   return Object.values(map);
 };
 
+// Counts how many practices share the same name
+const countPracticeNameDuplicates = (practices: PracticeGroup[]): Record<string, number> => {
+  const counts: Record<string, number> = {};
+  for (const practice of practices) {
+    counts[practice.practiceName] = (counts[practice.practiceName] ?? 0) + 1;
+  }
+  return counts;
+};
+
 // Reads current patient display values from localStorage into a plain object.
-// Called once on mount and again after every practice switch.
 const readFallbackFromStorage = () => ({
   patientName: `${getLocalItem('FirstName')} ${getLocalItem('LastName')}`.trim(),
   practiceName: getLocalItem('PracticeName'),
@@ -83,43 +102,67 @@ function PracticeBox() {
     () => getLocalItem('PracticeId'),
   );
 
-  // Fallback display values stored in state — NOT read inline from localStorage.
-  // This prevents showing stale data: values are seeded on mount from localStorage
-  // (which is guaranteed correct by the isSessionReady gate in Dashboard),
-  // then updated explicitly on every practice switch.
+  // Fallback display values
   const [displayFallback, setDisplayFallback] = useState(readFallbackFromStorage);
 
   const { PatientByEmailData } = useSelector((state) => state.patientprofileslice);
 
   // ALL useEffect hooks declared before any derived logic
+  // useEffect(() => {
+  //   const sync = () => {
+  //     setCurrentPatientId(getLocalItem('patientID'));
+  //     setCurrentPracticeId(getLocalItem('PracticeId'));
+  //     setDisplayFallback(readFallbackFromStorage());
+  //   };
+  //   window.addEventListener('practiceChanged', sync);
+  //   return () => window.removeEventListener('practiceChanged', sync);
+  // }, []);
+
   useEffect(() => {
-    const sync = () => {
-      setCurrentPatientId(getLocalItem('patientID'));
-      setCurrentPracticeId(getLocalItem('PracticeId'));
-      // Keep fallback in sync so header always shows correct name instantly
-      setDisplayFallback(readFallbackFromStorage());
-    };
-    window.addEventListener('practiceChanged', sync);
-    return () => window.removeEventListener('practiceChanged', sync);
-  }, []);
+  const sync = () => {
+    setCurrentPatientId(getLocalItem('patientID'));
+    setCurrentPracticeId(getLocalItem('PracticeId'));
+    setDisplayFallback(readFallbackFromStorage());
+  };
+
+  window.addEventListener('practiceChanged', sync);
+  window.addEventListener('practiceInitialized', sync);
+
+  return () => {
+    window.removeEventListener('practiceChanged', sync);
+    window.removeEventListener('practiceInitialized', sync);
+  };
+}, []);
 
   // ─── Derived values (computed after all hooks) ────────────────────────────
 
   const patientList = normalisePatientList(PatientByEmailData);
   const practicesArray = groupByPractice(patientList);
+  const practiceNameDuplicates = countPracticeNameDuplicates(practicesArray);
+
+  // Build flat list of all patient-practice combinations for dropdown
+  const dropdownItems: DropdownItem[] = practicesArray.flatMap((practice) =>
+    practice.patients.map((patient) => ({
+      patientID: patient.patientID,
+      practiceName: practice.practiceName,
+      patientName: getPatientName(patient),
+      practiceId: practice.practiceId,
+      patient,
+    })),
+  );
 
   // Prefer a live Redux match for the selected patient
   const selectedPatient = patientList.find(
     (p) => p.patientID != null && String(p.patientID) === currentPatientId,
   );
 
-  // Use live Redux data when available; fall back to state (not raw localStorage)
+  // Use live Redux data when available; fall back to state
   const displayPracticeName = selectedPatient
     ? getPracticeName(selectedPatient)
     : displayFallback.practiceName;
 
   const displayPatientName = selectedPatient
-    ? `${selectedPatient.firstName ?? ''} ${selectedPatient.lastName ?? ''}`.trim()
+    ? getPatientName(selectedPatient)
     : displayFallback.patientName;
 
   // ─── Handlers ─────────────────────────────────────────────────────────────
@@ -133,11 +176,8 @@ function PracticeBox() {
 
   const handleClose = (): void => setIsOpen(false);
 
-  const handlePracticeSelect = (practice: PracticeGroup): void => {
-    const patient =
-      practice.patients.find((p) => p.isDefault) ?? practice.patients[0];
-    if (!patient) return;
-
+  const handlePatientSelect = (item: DropdownItem): void => {
+    const patient = item.patient;
     const patientId = String(patient.patientID);
     const practiceId = String(getPracticeId(patient));
     const practiceName = getPracticeName(patient);
@@ -154,11 +194,13 @@ function PracticeBox() {
 
     setCurrentPatientId(patientId);
     setCurrentPracticeId(practiceId);
-    // Update fallback immediately so header reflects new selection
-    // before Redux has a chance to re-render with updated data
-    setDisplayFallback({ patientName: `${firstName} ${lastName}`.trim(), practiceName });
+    setDisplayFallback({
+      patientName: `${firstName} ${lastName}`.trim(),
+      practiceName,
+    });
 
     setIsOpen(false);
+    //window.location.reload()
     window.dispatchEvent(new Event('practiceChanged'));
   };
 
@@ -187,7 +229,7 @@ function PracticeBox() {
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '40px' }}>
-          <Image src={Icons.pafill} alt="practice icon" width={20} height={20} />
+          <Image  src={Icons.hospital} alt="practice icon" width={20} height={20} />
         </Box>
 
         <Box sx={{ overflow: 'hidden', flex: 1, pr: 1 }}>
@@ -236,7 +278,7 @@ function PracticeBox() {
         </Box>
       </Box>
 
-      {/* Dropdown */}
+      {/* Dropdown Popover */}
       <Popover
         disableScrollLock
         open={isOpen}
@@ -264,82 +306,114 @@ function PracticeBox() {
             '&::-webkit-scrollbar-thumb': { backgroundColor: '#d3d9e3', borderRadius: '4px' },
           }}
         >
-          {practicesArray.length === 0 ? (
+          {dropdownItems.length === 0 ? (
             <Typography sx={{ p: 1, fontSize: '12px', color: 'text.secondary' }}>
               {PatientByEmailData === null ? 'Loading practices...' : 'No practices available'}
             </Typography>
           ) : (
-            practicesArray.map((practice, index) => {
-              const isSelected = String(practice.practiceId) === currentPracticeId;
-              const representativePatient =
-                practice.patients.find((p) => p.isDefault) ?? practice.patients[0];
+            practicesArray.map((practice, practiceIndex) => {
+              const hasMultipleNames = practiceNameDuplicates[practice.practiceName] > 1;
+              const practicePatients = practice.patients;
 
               return (
-                <Box
-                  key={practice.practiceId ?? index}
-                  onClick={() => handlePracticeSelect(practice)}
-                  sx={{
-                    p: 1,
-                    pl: 1.5,
-                    mt: index > 0 ? 0.3 : 0,
-                    borderBottom: '1px solid #f0f2f5',
-                    borderRadius: '4px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    bgcolor: isSelected ? '#E3F2FD' : 'transparent',
-                    '&:hover': { bgcolor: isSelected ? '#BBDEFB' : '#EBF3FF' },
-                  }}
-                >
-                  <Image src={Icons.hospital} alt="hospital" width={16} height={16} />
+                <Box key={`${practice.practiceId}-${practiceIndex}`}>
+                  {/* Practice header with divider */}
+                  {practiceIndex > 0 && <Divider sx={{ my: 0.5 }} />}
 
-                  <Box sx={{ flex: 1, overflow: 'hidden' }}>
-                    <Tooltip
-                      title={practice.practiceName}
-                      arrow
-                      placement="bottom-start"
-                      PopperProps={{
-                        modifiers: [{ name: 'preventOverflow', options: { boundary: 'viewport' } }],
-                      }}
-                      componentsProps={{
-                        tooltip: { sx: { maxWidth: '200px', fontSize: '11px', wordBreak: 'break-word' } },
-                      }}
-                    >
-                      <Typography
+                  <Typography
+                    sx={{
+                      px: 1.5,
+                      py: 0.5,
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      color: 'text.secondary',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                    }}
+                  >
+                    {practice.practiceName}
+                  </Typography>
+
+                  {/* Patient items under this practice */}
+                  {practicePatients.map((patient, patientIndex) => {
+                    const patientId = String(patient.patientID);
+                    const isSelected = patientId === currentPatientId;
+                    const patientName = getPatientName(patient);
+                    // Show practice name in item if there are duplicate practice names
+                    const displayLabel = hasMultipleNames
+                      ? `${patientName} • ${practice.practiceName}`
+                      : patientName;
+
+                    return (
+                      <Box
+                        key={`patient-${patientId}`}
+                        onClick={() =>
+                          handlePatientSelect({
+                            patientID: patient.patientID,
+                            practiceName: practice.practiceName,
+                            patientName,
+                            practiceId: practice.practiceId,
+                            patient,
+                          })
+                        }
                         sx={{
-                          fontSize: '13px',
-                          fontWeight: isSelected ? 700 : 500,
-                          color: isSelected ? 'primary.main' : 'text.primary',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
+                          p: 1,
+                          pl: 2,
+                          mt: patientIndex > 0 ? 0.2 : 0,
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          bgcolor: isSelected ? '#E3F2FD' : 'transparent',
+                          '&:hover': { bgcolor: isSelected ? '#BBDEFB' : '#EBF3FF' },
                         }}
                       >
-                        {practice.practiceName}
-                      </Typography>
-                    </Tooltip>
+                        <Image src={Icons.pafill} alt="hospital" width={16} height={16} />
 
-                    {representativePatient && (
-                      <Typography
-                        sx={{
-                          fontSize: '11px',
-                          color: 'text.secondary',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        {representativePatient.firstName} {representativePatient.lastName}
-                      </Typography>
-                    )}
-                  </Box>
+                        <Box sx={{ flex: 1, overflow: 'hidden' }}>
+                          <Tooltip
+                            title={displayLabel}
+                            arrow
+                            placement="bottom-start"
+                            PopperProps={{
+                              modifiers: [
+                                { name: 'preventOverflow', options: { boundary: 'viewport' } },
+                              ],
+                            }}
+                            componentsProps={{
+                              tooltip: {
+                                sx: {
+                                  maxWidth: '250px',
+                                  fontSize: '11px',
+                                  wordBreak: 'break-word',
+                                },
+                              },
+                            }}
+                          >
+                            <Typography
+                              sx={{
+                                fontSize: '13px',
+                                fontWeight: isSelected ? 700 : 500,
+                                color: isSelected ? 'primary.main' : 'text.primary',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                              }}
+                            >
+                              {displayLabel}
+                            </Typography>
+                          </Tooltip>
+                        </Box>
 
-                  {isSelected && (
-                    <Typography sx={{ fontSize: '14px', color: 'primary.main', fontWeight: 700 }}>
-                      ✓
-                    </Typography>
-                  )}
+                        {isSelected && (
+                          <Typography sx={{ fontSize: '14px', color: 'primary.main', fontWeight: 700 }}>
+                            ✓
+                          </Typography>
+                        )}
+                      </Box>
+                    );
+                  })}
                 </Box>
               );
             })
@@ -351,3 +425,4 @@ function PracticeBox() {
 }
 
 export default PracticeBox;
+

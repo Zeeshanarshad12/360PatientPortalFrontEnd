@@ -16,6 +16,7 @@ import FolderDocumentIcon from '@mui/icons-material/FolderSharedOutlined';
 import SearchIcon from '@mui/icons-material/Search';
 import { useDispatch } from 'react-redux';
 import { getAllDocumentTypes } from '@/slices/patientprofileslice';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
 interface DocumentsSidebarProps {
   dateRange: string;
@@ -39,6 +40,7 @@ const DocumentsSidebar: React.FC<DocumentsSidebarProps & { dateRange: string }> 
   const dispatch = useDispatch();
   const [documentTypes, setDocumentTypes] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const { patientId,practiceId } = useCurrentPatient();
 
   const getDateRange = (range: string) => {
     const to = new Date();
@@ -71,27 +73,22 @@ const DocumentsSidebar: React.FC<DocumentsSidebarProps & { dateRange: string }> 
   };
 
   useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const { fromDate, toDate } = getDateRange(dateRange);
-
-        const Obj = {
-          patientId: localStorage.getItem('patientID'),
-          fromDate: fromDate,
-          toDate: toDate
-        };
-        const response = await dispatch(getAllDocumentTypes(Obj)).unwrap();
-        setDocumentTypes(response.result || []);
-      } catch (error) {
-        console.error('Error fetching document types:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchData();
-  }, [dispatch, dateRange]);
+  const fetchData = async () => {
+    if (!patientId) return;
+    setLoading(true);
+    try {
+      const { fromDate, toDate } = getDateRange(dateRange);
+      const Obj = { patientId,practiceId, fromDate, toDate };
+      const response = await dispatch(getAllDocumentTypes(Obj)).unwrap();
+      setDocumentTypes(response.result || []);
+    } catch (error) {
+      console.error('Error fetching document types:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchData();
+}, [dispatch, dateRange, patientId]);
 
   const { filtered, allCount } = useMemo(() => {
     const term = search.trim().toLowerCase();

@@ -18,6 +18,7 @@ const initialState = {
   PatientCCDADetailCCDFLoader: false,
   PatientCCDAActivityLog: null,
   PatientCCDAActivityLogLoader: false,
+  patientEmail: null as string | null,
   InsertActivityLogData: null,
   InsertActivityLogLoader: false,
   clearcache: false,
@@ -38,7 +39,7 @@ const initialState = {
   GetSharingModulesDataLoader: false,
   getServerTimeData: null,
   GetConsentFormDataList: null,
-  GetConsentFormDataLoader: false
+  GetConsentFormDataLoader: false,
 };
 
 export const ClearCahceNLogout: any = createAsyncThunk(
@@ -714,9 +715,10 @@ const patientProfileSlice = createSlice({
     [GetPatientByEmail.pending]: (state: any) => {
       state.PatientByEmailDataLoader = true;
     },
-    [GetPatientByEmail.fulfilled]: (state: any, { payload }) => {
+    [GetPatientByEmail.fulfilled]: (state: any, { payload,meta }: any) => {
       state.PatientByEmailData = payload;
       state.PatientByEmailDataLoader = false;
+      state.patientEmail = meta?.arg ?? null;
     },
     [GetPatientByEmail.rejected]: (state: any) => {
       state.PatientByEmailDataLoader = false;

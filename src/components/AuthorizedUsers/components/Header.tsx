@@ -40,6 +40,7 @@ import { useEffect } from 'react';
 import { debug } from 'console';
 import { format } from 'path';
 import { useAriaHiddenFixOnDialog } from '@/hooks/useAriaHiddenFixOnDialog';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
 function AuthorizedUserHeader() {
   const { CreateAuthorizedUserData, GetSharingModulesDataList } = useSelector(
@@ -58,8 +59,9 @@ function AuthorizedUserHeader() {
   const [loading, setLoading] = useState(false);
   const [snackbarmsg, setsnackbarmsg] = useState('');
   const [isSending, setIsSending] = useState(false);
-  //  const [snackbarType, setsnackbarType] = useState('success');
   const [snackbarType, setSnackbarType] = useState<AlertColor>('success');
+  
+  const { patientId, practiceId } = useCurrentPatient();
 
   const handleSaveCDS = async () => {
     const response = await dispatch(
@@ -82,25 +84,24 @@ function AuthorizedUserHeader() {
       setLoading(true);
       setIsSending(true); //  Disable the button
       formData.Name = formData.firstName + ' ' + formData.lastName;
-      // Dispatch the CreateAuthorizedUser action and wait for it to complete
+     
       const response = await dispatch(CreateAuthorizedUser(formData)).unwrap();
-      // Now that the dispatch is complete, check the result of CreateAuthorizedUserData
-      // if (response === "success")
+
       if (response > 0) {
-        // Execute your logic when the user is successfully created
+
         setLoading(false);
         handleClose();
         setOpenSnackbar(true);
         setsnackbarmsg('User created Successfully!');
         setSnackbarType('success');
-        await dispatch(
-          GetPatientAuthorizedUser(localStorage.getItem('patientID'))
-        );
+        await dispatch(GetPatientAuthorizedUser({ 
+                PatientId: patientId, 
+                PracticeId: practiceId 
+            }));
       } else {
-        // Handle failure or other cases here
+    
         setLoading(false);
         setIsSending(false);
-        // console.error("User creation failed:", response);
         setOpenSnackbar(true);
         setsnackbarmsg('User creation failed');
         setSnackbarType('error');
@@ -122,33 +123,28 @@ function AuthorizedUserHeader() {
     return emailRegex.test(email);
   };
 
-  // Validation function for the "Send" button
+
   const validateForm = () => {
     setIsTouched(true);
-    // Return false if any field is empty or email is invalid
+
     return (
       formData.firstName.trim() === '' ||
       formData.lastName.trim() === '' ||
       formData.EmailAddress.trim() === '' ||
-      !isValidEmail(formData.EmailAddress) || // Add email validation check
+      !isValidEmail(formData.EmailAddress) || 
       formData.Relation.trim() === ''
     );
   };
 
-  useEffect(() => {
-    if (localStorage.getItem('patientID') != null) {
-      dispatch(GetPatientAuthorizedUser(localStorage.getItem('patientID')));
-    }
-  }, [dispatch]);
+
 
   const handleClickOpenAuthorisedUser = () => {
     setOpen(true);
     setIsTouched(false);
-    setIsSending(false); //  Re-enable the button
-    // Reset formData to initial state
+    setIsSending(false); 
     setFormData({
-      PatientId: localStorage.getItem('patientID'),
-      PracticeId: localStorage.getItem('PracticeId'),
+      PatientId: patientId,
+      PracticeId: practiceId,
       firstName: '',
       lastName: '',
       EmailAddress: '',
@@ -159,12 +155,12 @@ function AuthorizedUserHeader() {
 
   const handleClickOpenControlDataSharing = () => {
     setOpenCDS(true);
-    dispatch(GetSharingModulesData(localStorage.getItem('patientID')));
+    dispatch(GetSharingModulesData(patientId));
   };
 
   const [formData, setFormData] = useState({
-    PatientId: localStorage.getItem('patientID'),
-    PracticeId: localStorage.getItem('PracticeId'),
+    PatientId: patientId,
+    PracticeId: practiceId,
     firstName: '',
     lastName: '',
     EmailAddress: '',
@@ -172,7 +168,7 @@ function AuthorizedUserHeader() {
     Name: ''
   });
 
-  // Handle change for each input field
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData({
@@ -185,7 +181,6 @@ function AuthorizedUserHeader() {
   const [togglesJson, setTogglesJson] = useState('');
 
   useEffect(() => {
-    const patientId = localStorage.getItem('patientID');
 
     const modulesArray = Object.entries(toggles).map(
       ([moduleName, moduleAccess]) => ({
@@ -200,14 +195,14 @@ function AuthorizedUserHeader() {
     });
 
     setTogglesJson(newJson);
-  }, [toggles]); // runs whenever toggles changes
+  }, [toggles]); 
 
   const handleToggleChange = (item) => {
     const updatedToggles = {
       ...toggles,
       [item.moduleName]: !toggles[item.moduleName]
     };
-    setToggles(updatedToggles); // triggers useEffect, which updates togglesJson
+    setToggles(updatedToggles); 
   };
 
   useEffect(() => {
@@ -223,7 +218,6 @@ function AuthorizedUserHeader() {
   useAriaHiddenFixOnDialog(open);
   useAriaHiddenFixOnDialog(openCDS);
 
-  // Common SX for black border
   const blackBorderSx = {
     '& .MuiOutlinedInput-root': {
       '& fieldset': {
@@ -237,7 +231,7 @@ function AuthorizedUserHeader() {
         borderColor: '#A0A0A0'
       },
       '&.Mui-error fieldset': {
-        borderColor: '#A0A0A0' // Optional: still black even in error
+        borderColor: '#A0A0A0' 
       }
     },
     '& .MuiInputBase-input::placeholder': {

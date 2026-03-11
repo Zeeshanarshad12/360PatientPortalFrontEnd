@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "@/store/index";
 import { GetPatientDetailsById } from "@/slices/patientprofileslice";
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
 import HeartProgressLoader from '@/components/ProgressLoaders/components/HeartLoader';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
 const PatientProfile = () => {
   const [heartLoading, setHeartLoading] = useState(true);
@@ -19,6 +20,7 @@ const PatientProfile = () => {
 
   const patient = PatientByEmailData?.[0];
 
+  const { patientId,practiceId } = useCurrentPatient();
   useEffect(() => {
     const timer = setTimeout(() => {
       setHeartLoading(false);
@@ -27,11 +29,16 @@ const PatientProfile = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  useEffect(() => {
-    if (localStorage.getItem('patientID') != null) {
-      dispatch(GetPatientDetailsById(localStorage.getItem('patientID')));
-    }
-  }, [localStorage.getItem('patientID'), dispatch]);
+
+ useEffect(() => {
+
+  if (!patientId) return;
+   const Obj = {
+          PatientId: patientId,
+          PracticeId: practiceId
+        };    
+  dispatch(GetPatientDetailsById(Obj));
+}, [dispatch]);
 
   useEffect(() => {
     if (PatientDetailsById?.item1) {

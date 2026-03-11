@@ -9,6 +9,7 @@ import { saveConsentForm } from '@/slices/patientprofileslice';
 import { useSelector, useDispatch } from '@/store/index';
 import { Snackbar, Alert } from '@mui/material';
 import { useConsentFormContext } from '@/contexts/ConsentFormContext';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
 interface Props {
   form: (ConsentForm & { Signature?: string }) | null;
@@ -46,6 +47,7 @@ const ConsentFormViewer = ({
   const hasShownCompletionMessage = useRef<boolean>(false);
 
   const { decrementPendingCount } = useConsentFormContext();
+  const { patientId, practiceId } = useCurrentPatient();
 
   useEffect(() => {
     if (form) {
@@ -190,7 +192,7 @@ const ConsentFormViewer = ({
     if (!form) return;
 
     const updatedForm: ConsentForm = {
-      PatientID: localStorage.getItem('patientID'),
+      PatientID: patientId,
       ...form,
       Signature,
       Status: 'Signed',

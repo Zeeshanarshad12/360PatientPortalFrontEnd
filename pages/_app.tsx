@@ -26,6 +26,8 @@ import AuthProvider from '@/components/AuthProvider';
 import { AxiosInterceptor } from '@/components/AxiosInterceptor';
 import SharedLayout from '@/layouts';
 import { ConsentFormProvider } from '@/contexts/ConsentFormContext';
+import { CurrentPatientProvider } from '@/contexts/CurrentPatientContext';
+import PracticeChangeRefresher from './_PracticeChangeRefresher';
 
 const clientSideEmotionCache = createEmotionCache();
 
@@ -94,11 +96,14 @@ function MyApp(props: MyAppProps) {
                         <CssBaseline />
                         {/* <CustomScript /> */}
                          <ConsentFormProvider>
+                          <CurrentPatientProvider>
+                          <PracticeChangeRefresher />
                         <SharedLayout>
                           
                           <Component {...pageProps} />
                           
                         </SharedLayout>
+                        </CurrentPatientProvider>
                         </ConsentFormProvider>
                       </SnackbarProvider>
                     </AxiosInterceptor>

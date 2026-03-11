@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
 import { SidebarContext } from "../../contexts/SidebarContext";
-
+import { CurrentPatientProvider } from '@/contexts/CurrentPatientContext';
 interface CollapsedSidebarLayoutProps {
   children?: ReactNode;
 }
@@ -44,6 +44,7 @@ const CollapsedSidebarLayout: FC<CollapsedSidebarLayoutProps> = ({
             }),
           }}
         >
+          <CurrentPatientProvider>
           <Header />
 
           <Box 
@@ -56,6 +57,7 @@ const CollapsedSidebarLayout: FC<CollapsedSidebarLayoutProps> = ({
           >
             {children}
           </Box>
+          </CurrentPatientProvider>
         </Box>
       </Box>
     </>

@@ -17,6 +17,8 @@ import { GetPatientEncounterDetails } from '@/slices/patientprofileslice';
 import { useDispatch, useSelector } from '@/store/index';
 // import moment from 'moment';
 import moment from 'moment-timezone';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
+
 
 function HealthRecordFilter() {
   const dispatch = useDispatch();
@@ -30,38 +32,37 @@ function HealthRecordFilter() {
   const { PatientEncounterData } = useSelector(
     (state) => state.patientprofileslice
   );
+   
 
-  const obj = {
-    PatientId: localStorage.getItem('patientID'),
-    dateflag: true,
-    datefrom: fromDate,
-    dateto: toDate
-  };
+  const { patientId, practiceId } = useCurrentPatient();
 
   useEffect(() => {
-    if (localStorage.getItem('patientID') != null) {
-      getPatientencountersClick();
-    }
-  }, [dispatch]);
+  if (!patientId) return;
 
-  const getPatientencountersClick = () => {
-    setIsEncounterLoad(false);
-    setIsHealthRecordLoad(true);
+  getPatientencountersClick();
+}, [patientId, fromDate, toDate]);
 
-    if (filterType === 'dateRange') {
-      obj.dateflag = true;
-    } else {
-      obj.dateflag = false;
-    }
+const getPatientencountersClick = () => {
+  if (!patientId) return;
 
-    obj.datefrom = moment(fromDate)
+  setIsEncounterLoad(false);
+  setIsHealthRecordLoad(true);
+
+  const obj = {
+    PatientId: patientId,
+    PracticeId: practiceId,
+    dateflag: filterType === 'dateRange',
+    datefrom: moment(fromDate)
       .tz('America/New_York')
-      .format('YYYY-MM-DD HH:mm:ss');
-    obj.dateto = moment(toDate)
+      .format('YYYY-MM-DD HH:mm:ss'),
+    dateto: moment(toDate)
       .tz('America/New_York')
-      .format('YYYY-MM-DD HH:mm:ss');
-    dispatch(GetPatientEncounterDetails(obj));
+      .format('YYYY-MM-DD HH:mm:ss'),
   };
+
+  dispatch(GetPatientEncounterDetails(obj));
+};
+
   return (
     <>
       <Card sx={{ marginY: 2 }}>

@@ -22,6 +22,7 @@ import { widgetContent } from '@/components/Dashboard/contexts/widgetData';
 import { useDispatch, useSelector } from '@/store/index';
 import { getpatientvitals } from '@/slices/patientprofileslice';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -33,6 +34,7 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
   const [isClient, setIsClient] = useState(false);
   const [loading, setLoading] = useState(true);
   const dispatch = useDispatch();
+  const { patientId, practiceId } = useCurrentPatient();
   useEffect(() => {
     setIsClient(true);
   }, []);
@@ -45,7 +47,8 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const Obj = { PatientId: localStorage.getItem('patientID') };
+        const Obj = { PatientId: patientId,
+          PracticeId: practiceId };
         const response = await dispatch(getpatientvitals(Obj)).unwrap();
         const data = response.result;
 
