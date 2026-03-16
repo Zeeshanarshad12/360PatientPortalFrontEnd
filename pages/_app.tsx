@@ -72,48 +72,48 @@ function MyApp(props: MyAppProps) {
         <link rel="icon" href="/statics/Logo.svg" type="image/svg+xml" />
       </Head>
       <ReduxProvider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
-          {isAuthPage ? (
-            <ThemeProvider>
-              <CssBaseline />
-              <Component {...pageProps} />
-            </ThemeProvider>
-          ) : (
-            <SidebarProvider>
-              <ThemeProvider>
-                <LocalizationProvider dateAdapter={AdapterDateFns}>
-                  {/* <AuthProvider> */}
-                    <AxiosInterceptor>
-                      <SnackbarProvider
-                        maxSnack={6}
-                        anchorOrigin={{
-                          vertical: 'bottom',
-                          horizontal: 'right'
-                        }}
-                        action={(key) => <SnackbarCloseButton key={key} />}
-                      >
-                        <SnackbarUtilsConfigurator />
-                        <CssBaseline />
-                        {/* <CustomScript /> */}
-                         <ConsentFormProvider>
-                          <CurrentPatientProvider>
-                          <PracticeChangeRefresher />
-                        <SharedLayout>
-                          
-                          <Component {...pageProps} />
-                          
-                        </SharedLayout>
-                        </CurrentPatientProvider>
-                        </ConsentFormProvider>
-                      </SnackbarProvider>
-                    </AxiosInterceptor>
-                  {/* </AuthProvider> */}
-                </LocalizationProvider>
-              </ThemeProvider>
-            </SidebarProvider>
-          )}
-        </PersistGate>
-      </ReduxProvider>
+      {isAuthPage ? (
+    // Auth pages: no PersistGate, minimal providers
+    <ThemeProvider>
+      <CssBaseline />
+      <Component {...pageProps} />
+    </ThemeProvider>
+  ) : (
+    // Main app: full provider tree, wrapped in PersistGate
+    <PersistGate loading={null} persistor={persistor}>
+      <SidebarProvider>
+        <ThemeProvider>
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            {/* <AuthProvider> */}
+            <AxiosInterceptor>
+              <SnackbarProvider
+                maxSnack={6}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right'
+                }}
+                action={(key) => <SnackbarCloseButton key={key} />}
+              >
+                <SnackbarUtilsConfigurator />
+                <CssBaseline />
+                {/* <CustomScript /> */}
+                <ConsentFormProvider>
+                  <CurrentPatientProvider>
+                    <PracticeChangeRefresher />
+                    <SharedLayout>
+                      <Component {...pageProps} />
+                    </SharedLayout>
+                  </CurrentPatientProvider>
+                </ConsentFormProvider>
+              </SnackbarProvider>
+            </AxiosInterceptor>
+            {/* </AuthProvider> */}
+          </LocalizationProvider>
+        </ThemeProvider>
+      </SidebarProvider>
+    </PersistGate>
+  )}
+</ReduxProvider>
     </CacheProvider>
   );
 }
