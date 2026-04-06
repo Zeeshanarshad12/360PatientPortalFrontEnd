@@ -233,7 +233,7 @@ function SignUp() {
       }, 1000); // delay before proceeding
     } else {
       //setMessageSnackbar('Error occurred during the Sign Up process. Try Again!');
-      setMessageSnackbar('An account with this email already exists. Please user a different email address!');
+      setMessageSnackbar('An account with this email already exists. Please use a different email address!');
       setSeverity('error');
       setOpenSnackbar(true);
       return;

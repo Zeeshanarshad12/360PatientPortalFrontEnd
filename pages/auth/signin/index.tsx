@@ -49,7 +49,11 @@ const Login = () => {
     const response = await dispatch(GetToken(loginobj)).unwrap();
     if (!response || !response.access_token || response.error_description) {
       // setError('Invalid Credentials');
-      setError(response.error_description);
+      if (response.error === 'invalid_grant') {
+        setError('Your account has been blocked.');
+      } else {
+        setError(response.error_description);
+      }
       setLoading(false);
     }
   };
@@ -72,7 +76,14 @@ const Login = () => {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', width: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
       {/* Orange Emergency Banner */}
       <Box
         sx={{
@@ -85,7 +96,8 @@ const Login = () => {
           fontWeight: 'bold'
         }}
       >
-        This portal is not for emergencies. If you need urgent medical attention, call 911 or go to the closest emergency facility.
+        This portal is not for emergencies. If you need urgent medical
+        attention, call 911 or go to the closest emergency facility.
       </Box>
 
       {/* Main Content */}
@@ -110,7 +122,7 @@ const Login = () => {
               borderBottomRightRadius: '150px'
             }}
           />
-          
+
           {/* Logo Overlay */}
           <Box
             sx={{
@@ -201,8 +213,17 @@ const Login = () => {
                   mb: 4
                 }}
               >
-                <Image src="/statics/Logo.svg" alt="Logo" width={70} height={70} />
-                <Typography variant="h3" component="h3" sx={{ fontWeight: 'bold' }}>
+                <Image
+                  src="/statics/Logo.svg"
+                  alt="Logo"
+                  width={70}
+                  height={70}
+                />
+                <Typography
+                  variant="h3"
+                  component="h3"
+                  sx={{ fontWeight: 'bold' }}
+                >
                   Patient Portal
                 </Typography>
               </Box>
@@ -257,7 +278,9 @@ const Login = () => {
                       <IconButton
                         onClick={togglePasswordVisibility}
                         id="LoginEyeIcon"
-                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        aria-label={
+                          showPassword ? 'Hide password' : 'Show password'
+                        }
                         title={showPassword ? 'Hide password' : 'Show password'}
                         sx={{
                           '&:focus': {
@@ -271,7 +294,16 @@ const Login = () => {
                         }}
                       >
                         {showPassword ? <VisibilityOff /> : <Visibility />}
-                        <span style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)', whiteSpace: 'nowrap' }}>
+                        <span
+                          style={{
+                            position: 'absolute',
+                            width: 1,
+                            height: 1,
+                            overflow: 'hidden',
+                            clip: 'rect(0 0 0 0)',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
                           {showPassword ? 'Hide' : 'Show'}
                         </span>
                       </IconButton>
@@ -280,7 +312,7 @@ const Login = () => {
                 }}
                 error={!!error} // Show error if email or password is empty
               />
-              
+
               {/* Forgot Password Link */}
               <Box sx={{ textAlign: 'right', mt: 1, mb: 1 }}>
                 <Link
@@ -292,7 +324,7 @@ const Login = () => {
                     textDecoration: 'none',
                     fontWeight: 'bold',
                     '&:hover': {
-                      textDecoration: 'underline',
+                      textDecoration: 'underline'
                     },
                     '&:focus': {
                       outline: '2px solid #1976d2',
@@ -301,7 +333,7 @@ const Login = () => {
                     }
                   }}
                 >
-                  {"Forgot Password ?"}
+                  {'Forgot Password ?'}
                 </Link>
               </Box>
 
@@ -336,9 +368,9 @@ const Login = () => {
                 component="p"
                 sx={{ mt: 3, textAlign: 'justify', mb: 2 }}
               >
-                To use the patient portal, you need an invitation from your provider.
-                If you haven't registered yet, please request your doctor or their
-                office to send an invite.
+                To use the patient portal, you need an invitation from your
+                provider. If you haven't registered yet, please request your
+                doctor or their office to send an invite.
               </Typography>
               <Typography
                 variant="subtitle2"

@@ -7,7 +7,6 @@ const PracticeChangeRefresher = () => {
 
   useEffect(() => {
     const handlePracticeChanged = () => {
-      debugger;
       // Hard reload – guaranteed
       window.location.reload();
       // If you want a softer reload, try:
