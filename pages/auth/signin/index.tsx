@@ -49,7 +49,7 @@ const Login = () => {
     const response = await dispatch(GetToken(loginobj)).unwrap();
     if (!response || !response.access_token || response.error_description) {
       // setError('Invalid Credentials');
-      if (response.error === 'invalid_grant') {
+      if (response.error_description === 'user is blocked') {
         setError('Your account has been blocked.');
       } else {
         setError(response.error_description);
