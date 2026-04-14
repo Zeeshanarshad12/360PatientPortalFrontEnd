@@ -22,7 +22,8 @@ import React, { useEffect } from 'react';
 import {
   GetPatientUserRequestByCode,
   GenerateOtp,
-  AddPatientUser
+  AddPatientUser,
+  AddExistingUser
 } from '@/slices/patientprofileslice';
 import { useDispatch, useSelector } from '@/store/index';
 import { useRouter } from 'next/router';
@@ -142,8 +143,7 @@ function SignUp() {
     if (signUpOtpResponse?.result != null && signUpOtpResponse?.result !== '') {
       setLoading(false);
       setStep(2);
-    }
-    else{
+    } else {
       setLoading(false);
     }
   };
@@ -220,9 +220,7 @@ function SignUp() {
       CreatedBy: 'System'
     };
 
-    const signUpResponse = await dispatch(
-      AddPatientUser(signupobj)
-    ).unwrap();
+    const signUpResponse = await dispatch(AddPatientUser(signupobj)).unwrap();
     if (signUpResponse && signUpResponse !== 0) {
       setMessageSnackbar('Sign Up process completed. Redirecting to Login!');
       setSeverity('success');
@@ -233,15 +231,48 @@ function SignUp() {
       }, 1000); // delay before proceeding
     } else {
       //setMessageSnackbar('Error occurred during the Sign Up process. Try Again!');
-      setMessageSnackbar('An account with this email already exists. Please use a different email address!');
+      setMessageSnackbar(
+        'An account with this email already exists. Please use a different email address!'
+      );
       setSeverity('error');
       setOpenSnackbar(true);
       return;
     }
   };
 
+  // Handle
+
+  const handleExistingUser = async () => {
+    const existinguserobj = {
+      Code: code,
+      Password: password.toString(),
+      CreatedBy: 'System'
+    };
+
+    const signUpResponse = await dispatch(
+      AddExistingUser(existinguserobj)
+    ).unwrap();
+
+    if (signUpResponse && signUpResponse !== 0) {
+      router.push('/auth/signin');
+    } else {
+      setMessageSnackbar(
+        'No account found. Please register to access the Patient Portal.'
+      );
+      setSeverity('error');
+      setOpenSnackbar(true);
+    }
+  };
+
   return (
-    <Box sx={{ minHeight: '100vh', width: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
       {/* Orange Emergency Banner */}
       <Box
         sx={{
@@ -364,41 +395,41 @@ function SignUp() {
             >
               {step === 2 && (
                 <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'left',
-                  mb: 3
-                }}
-                >
-                <IconButton
-                  onClick={() => setStep(1)}
                   sx={{
-                    right: 3,
-                    '&:focus': {
-                      outline: '2px solid #1976d2',
-                      outlineOffset: '2px'
-                    },
-                    '&:focus-visible': {
-                      outline: '2px solid #1976d2',
-                      outlineOffset: '2px'
-                    }
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'left',
+                    mb: 3
                   }}
-                  aria-label="Back to previous step"
                 >
-                  <ArrowBackIcon />
-                  <span
-                    style={{
-                      width: 1,
-                      height: 1,
-                      overflow: 'hidden',
-                      clip: 'rect(0 0 0 0)',
-                      whiteSpace: 'nowrap'
+                  <IconButton
+                    onClick={() => setStep(1)}
+                    sx={{
+                      right: 3,
+                      '&:focus': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      },
+                      '&:focus-visible': {
+                        outline: '2px solid #1976d2',
+                        outlineOffset: '2px'
+                      }
                     }}
+                    aria-label="Back to previous step"
                   >
-                    Go Back
-                  </span>
-                </IconButton>
+                    <ArrowBackIcon />
+                    <span
+                      style={{
+                        width: 1,
+                        height: 1,
+                        overflow: 'hidden',
+                        clip: 'rect(0 0 0 0)',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      Go Back
+                    </span>
+                  </IconButton>
                 </Box>
               )}
               <Box
@@ -496,10 +527,10 @@ function SignUp() {
                           fontWeight: 'bold',
                           textDecoration: 'none',
                           '&:hover': {
-                            textDecoration: 'underline',
+                            textDecoration: 'underline'
                           }
                         }}
-                        onClick={() => router.push('/')}
+                        onClick={() => handleExistingUser()}
                         aria-label="Go back to sign in"
                         role="link"
                       >
