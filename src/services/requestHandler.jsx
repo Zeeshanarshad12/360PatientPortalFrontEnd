@@ -30,7 +30,7 @@ const GetPatientByEmail = (data, flag) =>
   );
 const GetPatientDetailsById = (data, flag) =>
   get(
-     `${SERVICE_URLSV2.GetPatientDetailsById}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
+    `${SERVICE_URLSV2.GetPatientDetailsById}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
     {
       feature: featureConstants.static,
@@ -47,9 +47,7 @@ const GetPatientEncounterDetails = (data, flag) =>
     }
   );
 const GetPatientCCDADetail = (data) =>
-
   get(
-
     `${SERVICE_URLSV2.DownloadDocument}?&encounterId=${data?.encounterID}&humanReadable=${data?.humanReadable}`,
     {},
     {
@@ -57,9 +55,7 @@ const GetPatientCCDADetail = (data) =>
     }
   );
 const GetPatientCCDADetailCCDF = (data) =>
-
   get(
-
     `${SERVICE_URLSV2.DownloadDocument}?&encounterId=${data?.encounterID}&humanReadable=${data?.humanReadable}`,
     {},
     {
@@ -76,9 +72,7 @@ const GetServerTime = (data, flag) =>
     }
   );
 const GetPatientCCDAActivityLog = (data, flag) =>
-
   get(
-
     `${SERVICE_URLSV2.GetPatientCCDAActivityLog}?PatientId=${data?.PatientId}&Activity=${data?.Activity}&Daterange=${data?.Daterange}`,
     {},
     {
@@ -88,30 +82,18 @@ const GetPatientCCDAActivityLog = (data, flag) =>
   );
 
 const InsertActivityLog = (data, flag) =>
-
-  post(
-
-    SERVICE_URLSV2.InsertActivityLog, data,
-    {
-      feature: featureConstants.static,
-      ApiVersion2Req: flag
-    }
-  );
+  post(SERVICE_URLSV2.InsertActivityLog, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
 
 const CreateAuthorizedUser = (data) =>
-
-  post(
-
-    SERVICE_URLSV2.CreateAuthorizedUser, data,
-    {
-      feature: featureConstants.static
-    }
-  );
+  post(SERVICE_URLSV2.CreateAuthorizedUser, data, {
+    feature: featureConstants.static
+  });
 
 const ShareDocument = (data) =>
-
   get(
-
     `${SERVICE_URLSV2.Share}?&encounterId=${data?.EncounterId}&emailAddress=${data?.PatientEmail}&message=${data?.message}&isSecure=${data?.includeCCD}`,
     {},
     {
@@ -120,7 +102,6 @@ const ShareDocument = (data) =>
   );
 
 const GetPatientAuthorizedUser = (data, flag) =>
-
   get(
     `${SERVICE_URLSV2.GetPatientAuthorizedUser}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
@@ -131,9 +112,7 @@ const GetPatientAuthorizedUser = (data, flag) =>
   );
 
 const GetPatientUserRequestByCode = (data) =>
-
   getWithoutToken(
-
     `${SERVICE_URLSV2.GetPatientUserRequestByCode}?&code=${data}`,
     {},
     {
@@ -142,9 +121,7 @@ const GetPatientUserRequestByCode = (data) =>
   );
 
 const GenerateOtp = (data) =>
-
   getWithoutToken(
-
     `${SERVICE_URLSV2.GenerateOtp}?&code=${data}`,
     {},
     {
@@ -152,32 +129,23 @@ const GenerateOtp = (data) =>
     }
   );
 
-
 const UpdatePatientAuthorizedUserAccess = (data, flag) =>
-
-  post(
-
-    SERVICE_URLSV2.UpdatePatientAuthorizedUserAccess, data,
-    {
-      feature: featureConstants.static,
-      ApiVersion2Req: flag
-    }
-  );
+  post(SERVICE_URLSV2.UpdatePatientAuthorizedUserAccess, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
 
 const AddPatientUser = (data) =>
-
-  postWithoutToken(
-
-    SERVICE_URLSV2.AddPatientUser, data,
-    {
-      feature: featureConstants.static
-    }
-  );
+  postWithoutToken(SERVICE_URLSV2.AddPatientUser, data, {
+    feature: featureConstants.static
+  });
+const AddExistingUser = (data) =>
+  postWithoutToken(SERVICE_URLSV2.AddExistingUser, data, {
+    feature: featureConstants.static
+  });
 
 const GetToken = (data) =>
-
   getWithoutToken(
-
     `${SERVICE_URLSV2.GetToken}?&username=${data?.username}&password=${data?.password}`,
     {},
     {
@@ -186,9 +154,7 @@ const GetToken = (data) =>
   );
 
 const GetSharingModulesData = (data, flag) =>
-
   get(
-
     `${SERVICE_URLSV2.GetSharingModulesData}?PatientId=${data}`,
     {},
     {
@@ -198,9 +164,7 @@ const GetSharingModulesData = (data, flag) =>
   );
 
 const UpdateSharingModulesData = (data, flag) =>
-
   get(
-
     `${SERVICE_URLSV2.UpdateSharingModulesData}?Data=${data}`,
     {},
     {
@@ -210,20 +174,13 @@ const UpdateSharingModulesData = (data, flag) =>
   );
 
 const saveConsentForm = (data, flag) =>
-  post(
-
-    SERVICE_URLSV2.SaveConsentForm, data,
-    {
-
-      feature: featureConstants.static,
-      ApiVersion2Req: flag
-    }
-  );
+  post(SERVICE_URLSV2.SaveConsentForm, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
 
 const GetConsentFormData = (data, flag) =>
-
   get(
-
     `${SERVICE_URLSV2.GetConsentFormData}?PatientId=${data}`,
     {},
     {
@@ -233,9 +190,7 @@ const GetConsentFormData = (data, flag) =>
   );
 
 const GetConsentFormContent = (data, flag) =>
-
   get(
-
     `${SERVICE_URLSV2.GetConsentFormContent}?&PatientId=${data?.PatientId}&FormID=${data?.FormID}`,
     {},
     {
@@ -244,11 +199,8 @@ const GetConsentFormContent = (data, flag) =>
     }
   );
 
-
 const GetPatientActiveMedications = (data, flag) =>
-
   get(
-
     `${SERVICE_URLSV2.GetPatientActiveMedications}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
     {
@@ -258,9 +210,7 @@ const GetPatientActiveMedications = (data, flag) =>
   );
 
 const GetPatientAllergies = (data, flag) =>
-
   get(
-
     `${SERVICE_URLSV2.GetPatientAllergies}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
     {
@@ -269,11 +219,8 @@ const GetPatientAllergies = (data, flag) =>
     }
   );
 
-
 const getpatientvitals = (data, flag) =>
-
   get(
-
     `${SERVICE_URLSV2.GetPatientVitals}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
     {
@@ -283,9 +230,7 @@ const getpatientvitals = (data, flag) =>
   );
 
 const getpatientproblems = (data, flag) =>
-
   get(
-
     `${SERVICE_URLSV2.GetPatientProblems}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
     {
@@ -295,9 +240,7 @@ const getpatientproblems = (data, flag) =>
   );
 
 const getpatientappointments = (data, flag) =>
-
   get(
-
     `${SERVICE_URLSV2.GetPatientAppointments}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
     {
@@ -307,9 +250,7 @@ const getpatientappointments = (data, flag) =>
   );
 
 const getunsignedlabordertestbypatientid = (data, flag) =>
-
   get(
-
     `${SERVICE_URLSV2.GetUnsignedLaborderTestByPatientId}?&PatientId=${data?.PatientId}&PracticeId=${data?.PracticeId}`,
     {},
     {
@@ -318,11 +259,8 @@ const getunsignedlabordertestbypatientid = (data, flag) =>
     }
   );
 
-
 const getdashboardconfigurations = (data, flag) =>
-
   get(
-
     `${SERVICE_URLSV2.GetDashboardConfigurations}?&Email=${data?.Email}`,
     {},
     {
@@ -331,39 +269,23 @@ const getdashboardconfigurations = (data, flag) =>
     }
   );
 
-
 const saveDashboardConfiguration = (data, flag) =>
-  post(
-
-    SERVICE_URLSV2.SaveDashboardConfiguration, data,
-    {
-
-      feature: featureConstants.static,
-      ApiVersion2Req: flag
-    }
-  );
-
+  post(SERVICE_URLSV2.SaveDashboardConfiguration, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
 
 const getAllDocumentTypes = (data, flag) =>
-  post(
-    SERVICE_URLSV2.getAllDocumentTypes, data,
-    {
-
-      feature: featureConstants.static,
-      ApiVersion2Req: flag
-    }
-  );
-
+  post(SERVICE_URLSV2.getAllDocumentTypes, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
 
 const getAllSelectedDocuments = (data, flag) =>
-  post(
-    SERVICE_URLSV2.getAllSelectedDocuments, data,
-    {
-
-      feature: featureConstants.static,
-      ApiVersion2Req: flag
-    }
-  );
+  post(SERVICE_URLSV2.getAllSelectedDocuments, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
 
 const getPatientDocumentInfo = (data, flag) =>
   get(
@@ -398,13 +320,10 @@ const generateResetPasswordOtp = (data, flag) =>
   );
 
 const resetPatientPassword = (data, flag) =>
-  postWithoutToken(
-    SERVICE_URLSV2.resetPatientPassword, data,
-    {
-      feature: featureConstants.static,
-      ApiVersion2Req: flag
-    }
-  );
+  postWithoutToken(SERVICE_URLSV2.resetPatientPassword, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
 
 const apiServicesV2 = {
   GetGeneralLookup,
@@ -424,6 +343,7 @@ const apiServicesV2 = {
   GetPatientUserRequestByCode,
   GenerateOtp,
   AddPatientUser,
+  AddExistingUser,
   GetToken,
   GetSharingModulesData,
   UpdateSharingModulesData,

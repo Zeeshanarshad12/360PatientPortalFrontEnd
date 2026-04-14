@@ -39,7 +39,7 @@ const initialState = {
   GetSharingModulesDataLoader: false,
   getServerTimeData: null,
   GetConsentFormDataList: null,
-  GetConsentFormDataLoader: false,
+  GetConsentFormDataLoader: false
 };
 
 export const ClearCahceNLogout: any = createAsyncThunk(
@@ -285,6 +285,23 @@ export const AddPatientUser: any = createAsyncThunk(
   'AddPatientUser',
   async (data, thunkAPI) => {
     const res = await apiServicesV2.AddPatientUser(data);
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data.result;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+);
+
+export const AddExistingUser: any = createAsyncThunk(
+  'AddExistingUser',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.AddExistingUser(data);
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data.result;
@@ -592,10 +609,7 @@ export const saveDashboardConfiguration: any = createAsyncThunk(
 export const getAllDocumentTypes: any = createAsyncThunk(
   'getAllDocumentTypes',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.getAllDocumentTypes(
-      data,
-      'ApiVersion2Req'
-    );
+    const res = await apiServicesV2.getAllDocumentTypes(data, 'ApiVersion2Req');
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data;
@@ -672,7 +686,10 @@ export const getDownloadPatientDocument: any = createAsyncThunk(
 export const generateResetPasswordOtp: any = createAsyncThunk(
   'generateResetPasswordOtp',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.generateResetPasswordOtp(data, 'ApiVersion2Req');
+    const res = await apiServicesV2.generateResetPasswordOtp(
+      data,
+      'ApiVersion2Req'
+    );
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data;
@@ -689,7 +706,10 @@ export const generateResetPasswordOtp: any = createAsyncThunk(
 export const resetPatientPassword: any = createAsyncThunk(
   'resetPatientPassword',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.resetPatientPassword(data, 'ApiVersion2Req');
+    const res = await apiServicesV2.resetPatientPassword(
+      data,
+      'ApiVersion2Req'
+    );
     try {
       if (res?.status === 200 || res?.status === 201) {
         return res?.data;
@@ -715,7 +735,7 @@ const patientProfileSlice = createSlice({
     [GetPatientByEmail.pending]: (state: any) => {
       state.PatientByEmailDataLoader = true;
     },
-    [GetPatientByEmail.fulfilled]: (state: any, { payload,meta }: any) => {
+    [GetPatientByEmail.fulfilled]: (state: any, { payload, meta }: any) => {
       state.PatientByEmailData = payload;
       state.PatientByEmailDataLoader = false;
       state.patientEmail = meta?.arg ?? null;
