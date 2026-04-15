@@ -28,7 +28,7 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
   const { patientId, practiceId } = useCurrentPatient();
 
   useEffect(() => {
-    const fetchData = async () => {    
+    const fetchData = async () => {
       try {
         const Obj = {
           PatientId: patientId,
@@ -160,8 +160,11 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
                     {/* Prescribe by Dr. Amir Shahzad */}
                   </Typography>
                   <Typography variant="subtitle1" color="text.primary">
-                    From: {new Date(med.startDate).toLocaleDateString()} | End:{' '}
-                    {new Date(med.endDate).toLocaleDateString()}
+                    {med.startDate &&
+                      `From: ${new Date(med.startDate).toLocaleDateString()}`}
+                    {med.startDate && med.endDate && ' | '}
+                    {med.endDate &&
+                      `End: ${new Date(med.endDate).toLocaleDateString()}`}
                   </Typography>
                 </Box>
               ))}

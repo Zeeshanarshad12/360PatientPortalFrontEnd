@@ -1,61 +1,63 @@
 import { useDispatch } from '@/store/index';
 import { useState, useEffect } from 'react';
 import { getdashboardconfigurations } from '@/slices/patientprofileslice';
- 
+
 export const useInitialLayout = () => {
   const [layout, setLayout] = useState<Record<string, string[]>>({
     column1: [],
     column2: [],
     column3: []
   });
- 
+
   const dispatch = useDispatch();
- 
+
   useEffect(() => {
     const fetchData = async () => {
       try {
         const Obj = {
           Email: localStorage.getItem('Email')
         };
- 
-        const response = await dispatch(getdashboardconfigurations(Obj)).unwrap();
+
+        const response = await dispatch(
+          getdashboardconfigurations(Obj)
+        ).unwrap();
         const savedLayout = response.result;
- 
+
         // Build layout from API result
         const tempLayout: Record<string, { header: string; row: number }[]> = {
           column1: [],
           column2: [],
           column3: []
         };
- 
+
         savedLayout.forEach(({ header, column, row }: any) => {
           const columnKey = `column${column}`;
           if (tempLayout[columnKey]) {
             tempLayout[columnKey].push({ header, row });
           }
         });
- 
+
         const finalLayout: Record<string, string[]> = {
           column1: [],
           column2: [],
           column3: []
         };
- 
+
         Object.entries(tempLayout).forEach(([columnKey, items]) => {
           finalLayout[columnKey] = items
             .sort((a, b) => a.row - b.row)
             .map((item) => item.header);
         });
- 
+
         setLayout(finalLayout);
       } catch (error) {
         console.error('Error fetching Layout:', error);
       }
     };
- 
+
     fetchData();
   }, [dispatch]);
- 
+
   return layout;
 };
 
@@ -120,7 +122,7 @@ export const widgetContent: Record<string, any> = {
     title: 'Lab Results'
   },
   upcomingAppointments: {
-    title: 'Upcoming Appointments'
+    title: 'Appointments'
   },
   notifications: {
     title: 'Notifications & Alerts',
@@ -130,7 +132,8 @@ export const widgetContent: Record<string, any> = {
         timestamp: '12/07/2025 11:00am'
       },
       {
-        message: 'You Appointment has been confirmed With Dr. Joseph Brook on Follow up..',
+        message:
+          'You Appointment has been confirmed With Dr. Joseph Brook on Follow up..',
         timestamp: '12/07/2025 11:00am'
       }
     ]
