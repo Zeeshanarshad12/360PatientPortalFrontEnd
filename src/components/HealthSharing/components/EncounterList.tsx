@@ -49,8 +49,8 @@ function EncounterListData() {
   return (
     <>
       <Typography variant="body1" fontWeight="bold" sx={{ marginBottom: 2 }}>
-        {PatientEncounterData?.length}{" "}
-        {PatientEncounterData?.length === 1 ? "visit found" : "visits found"},
+        {PatientEncounterData?.length}{' '}
+        {PatientEncounterData?.length === 1 ? 'visit found' : 'visits found'},
         please select a visit to see details.
       </Typography>
 
@@ -65,11 +65,14 @@ function EncounterListData() {
           >
             <Grid item>
               <Typography variant="body1" color="primary" fontWeight="bold">
-                {moment(visit.encounterDateTime).format('MM/DD/YYYY')}
+                {visit.encounterDateTime
+                  ? moment(visit.encounterDateTime).format('MM/DD/YYYY')
+                  : ''}
               </Typography>
               <Typography variant="body2">
                 {/* {visit.provider} | Location: {visit.locationName} */}
-                {(visit.provider || "").replace(/,\s*$/, "")} | Location: {visit.locationName}
+                {(visit.provider || '').replace(/,\s*$/, '')} | Location:{' '}
+                {visit.locationName}
               </Typography>
             </Grid>
             <Grid item>
@@ -77,12 +80,13 @@ function EncounterListData() {
                 variant="outlined"
                 size="small"
                 sx={{
-                  borderRadius: '5px', '&:focus': {
+                  borderRadius: '5px',
+                  '&:focus': {
                     outline: '2px solid #1976d2',
                     outlineOffset: '2px'
                   },
                   '&:focus-visible': {
-                    outline: '2px solid #1976d2',                                                                                               
+                    outline: '2px solid #1976d2',
                     outlineOffset: '2px'
                   }
                 }}
