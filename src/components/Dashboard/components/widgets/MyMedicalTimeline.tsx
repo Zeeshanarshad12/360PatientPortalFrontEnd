@@ -21,7 +21,6 @@ import moment from 'moment-timezone';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
-
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
 }
@@ -33,7 +32,6 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
   const [toDate, setToDate] = useState(moment().format('YYYY-MM-DD'));
   const [loading, setLoading] = useState(true);
   const { patientId, practiceId } = useCurrentPatient();
-  
 
   useEffect(() => {
     const fetchData = async () => {
@@ -195,8 +193,13 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
                         color="text.secondary"
                         sx={{ mr: 1 }}
                       >
-                        {new Date(event.encounterDateTime).toLocaleDateString()}
+                        {event.encounterDateTime
+                          ? moment(new Date(event.encounterDateTime)).format(
+                              'MM/DD/YYYY'
+                            )
+                          : ''}
                       </Typography>
+
                       <Typography
                         variant="body2"
                         color="text.secondary"
@@ -208,7 +211,11 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
                         sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }}
                       />
                       <Typography variant="body2" color="text.secondary">
-                        {new Date(event.encounterDateTime).toLocaleTimeString()}
+                        {event.encounterDateTime
+                          ? moment(new Date(event.encounterDateTime)).format(
+                              'hh:mm A'
+                            )
+                          : ''}
                       </Typography>
                     </Box>
 
