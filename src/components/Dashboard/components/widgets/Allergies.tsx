@@ -25,7 +25,7 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
   const [loading, setLoading] = useState(true);
 
   const dispatch = useDispatch();
-    const { patientId, practiceId } = useCurrentPatient();
+  const { patientId, practiceId } = useCurrentPatient();
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -180,10 +180,14 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
                       color="text.primary"
                       sx={{ mb: 0.5 }}
                     >
-                      Onset: {new Date(allergy.onsetDate).toLocaleDateString()}
+                      {allergy.onsetDate &&
+                        `Onset: ${new Date(
+                          allergy.onsetDate
+                        ).toLocaleDateString()}`}
                     </Typography>
                     <Typography variant="body2" color="text.primary">
-                      Category: {allergy.categoryName}
+                      {allergy.categoryName &&
+                        `Category: ${allergy.categoryName}`}
                     </Typography>
                   </Box>
                 );
