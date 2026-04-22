@@ -15,6 +15,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { GetPatientAllergies } from '@/slices/patientprofileslice';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
+import { isNull } from '@/utils/functions';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -29,14 +30,16 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const Obj = {
-          PatientId: patientId,
-          PracticeId: practiceId
-        };
+        if (!isNull(patientId) && !isNull(practiceId)) {
+          const Obj = {
+            PatientId: patientId,
+            PracticeId: practiceId
+          };
 
-        const response = await dispatch(GetPatientAllergies(Obj)).unwrap();
-        const data = response.result;
-        setAllergies(data);
+          const response = await dispatch(GetPatientAllergies(Obj)).unwrap();
+          const data = response.result;
+          setAllergies(data);
+        }
       } catch (error) {
         console.error('Error fetching allergies:', error);
       } finally {
@@ -45,7 +48,7 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
     };
 
     fetchData();
-  }, [dispatch]);
+  }, [dispatch, practiceId, patientId]);
 
   const getSeverityColor = (severity: string) => {
     switch (severity.toLowerCase()) {

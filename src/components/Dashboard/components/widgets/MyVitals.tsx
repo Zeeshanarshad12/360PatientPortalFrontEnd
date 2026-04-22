@@ -23,6 +23,7 @@ import { useDispatch, useSelector } from '@/store/index';
 import { getpatientvitals } from '@/slices/patientprofileslice';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
+import { isNull } from '@/utils/functions';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -47,97 +48,99 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const Obj = { PatientId: patientId,
-          PracticeId: practiceId };
-        const response = await dispatch(getpatientvitals(Obj)).unwrap();
-        const data = response.result;
+        if (!isNull(patientId) && !isNull(practiceId)) {
+          const Obj = { PatientId: patientId, PracticeId: practiceId };
+          const response = await dispatch(getpatientvitals(Obj)).unwrap();
+          const data = response.result;
 
-        // Build Dates
-        const extractedDates = data.map((d) => {
-          const dateObj = new Date(d.sessionDate);
-          const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-          const day = String(dateObj.getDate()).padStart(2, '0');
-          return `${month}/${day}`;
-        });
-        setDates(extractedDates);
-
-        // Define which vitals you want to show
-        const allowedVitals = [
-          'Blood Pressure',
-          //"BMI Percentile",
-          'BMI Percentile',
-          'Body Weight',
-          'Body Height',
-          'Heart Rate',
-          'Pain Level',
-          'Temperature'
-        ];
-
-        // Define mapping for abbreviations
-        const vitalNameMapping = {
-          'Blood Pressure': 'BP',
-          'BMI Percentile': 'BMI',
-          'Body Weight': 'Weight (lbs)',
-          'Body Height': 'Height (ft-in)',
-          'Heart Rate': 'Heart Rate (bpm)',
-          'Pain Level': 'Pain Scale',
-          Temperature: 'Temp (°F)'
-        };
-
-        const vitalsMap = {};
-
-        data.forEach((day) => {
-          day.patientVitalViewModels.forEach((vital) => {
-            let originalName = vital.vitalName;
-
-            // Show only allowed vitals
-            if (!allowedVitals.includes(originalName)) return;
-
-            // Replace with short form if in mapping
-            const displayName = vitalNameMapping[originalName] || originalName;
-
-            let value;
-
-            if (
-              originalName.toLowerCase() === 'bp' ||
-              originalName.toLowerCase() === 'blood pressure'
-            ) {
-              const systolic = vital.listOfPatientVitals[0]?.value || '-';
-              const diastolic = vital.listOfPatientVitals[1]?.value || '-';
-              value = `${systolic}/${diastolic}`;
-            } else if (
-              originalName.toLowerCase() === 'body height' ||
-              originalName.toLowerCase() === 'height'
-            ) {
-              const feet = vital.listOfPatientVitals[0]?.value || '-';
-              const inches = vital.listOfPatientVitals[1]?.value || '-';
-              value = `${feet}'${inches}"`; // Example: 5'4"
-            } else if (
-              originalName.toLowerCase() === 'pain level' ||
-              originalName.toLowerCase() === 'pain level'
-            ) {
-              const PainScale = vital.listOfPatientVitals[0]?.value || '0';
-              const PainUnit = vital.listOfPatientVitals[0]?.painScale;
-              value = `${PainScale} - ${PainUnit}`;
-            } else {
-              value = vital.listOfPatientVitals[0]?.value || '-';
-            }
-
-            if (!vitalsMap[displayName]) vitalsMap[displayName] = [];
-            vitalsMap[displayName].push(value);
+          // Build Dates
+          const extractedDates = data.map((d) => {
+            const dateObj = new Date(d.sessionDate);
+            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(dateObj.getDate()).padStart(2, '0');
+            return `${month}/${day}`;
           });
-        });
+          setDates(extractedDates);
 
-        // Convert vitalsMap to array and sort according to allowedVitals order
-        const vitalsArray = allowedVitals
-          .map((name) => vitalNameMapping[name] || name) // Map to display names
-          .filter((name) => vitalsMap[name]) // Only include existing
-          .map((name) => ({
-            name,
-            values: vitalsMap[name]
-          }));
+          // Define which vitals you want to show
+          const allowedVitals = [
+            'Blood Pressure',
+            //"BMI Percentile",
+            'BMI Percentile',
+            'Body Weight',
+            'Body Height',
+            'Heart Rate',
+            'Pain Level',
+            'Temperature'
+          ];
 
-        setVitals(vitalsArray);
+          // Define mapping for abbreviations
+          const vitalNameMapping = {
+            'Blood Pressure': 'BP',
+            'BMI Percentile': 'BMI',
+            'Body Weight': 'Weight (lbs)',
+            'Body Height': 'Height (ft-in)',
+            'Heart Rate': 'Heart Rate (bpm)',
+            'Pain Level': 'Pain Scale',
+            Temperature: 'Temp (°F)'
+          };
+
+          const vitalsMap = {};
+
+          data.forEach((day) => {
+            day.patientVitalViewModels.forEach((vital) => {
+              let originalName = vital.vitalName;
+
+              // Show only allowed vitals
+              if (!allowedVitals.includes(originalName)) return;
+
+              // Replace with short form if in mapping
+              const displayName =
+                vitalNameMapping[originalName] || originalName;
+
+              let value;
+
+              if (
+                originalName.toLowerCase() === 'bp' ||
+                originalName.toLowerCase() === 'blood pressure'
+              ) {
+                const systolic = vital.listOfPatientVitals[0]?.value || '-';
+                const diastolic = vital.listOfPatientVitals[1]?.value || '-';
+                value = `${systolic}/${diastolic}`;
+              } else if (
+                originalName.toLowerCase() === 'body height' ||
+                originalName.toLowerCase() === 'height'
+              ) {
+                const feet = vital.listOfPatientVitals[0]?.value || '-';
+                const inches = vital.listOfPatientVitals[1]?.value || '-';
+                value = `${feet}'${inches}"`; // Example: 5'4"
+              } else if (
+                originalName.toLowerCase() === 'pain level' ||
+                originalName.toLowerCase() === 'pain level'
+              ) {
+                const PainScale = vital.listOfPatientVitals[0]?.value || '0';
+                const PainUnit = vital.listOfPatientVitals[0]?.painScale;
+                value = `${PainScale} - ${PainUnit}`;
+              } else {
+                value = vital.listOfPatientVitals[0]?.value || '-';
+              }
+
+              if (!vitalsMap[displayName]) vitalsMap[displayName] = [];
+              vitalsMap[displayName].push(value);
+            });
+          });
+
+          // Convert vitalsMap to array and sort according to allowedVitals order
+          const vitalsArray = allowedVitals
+            .map((name) => vitalNameMapping[name] || name) // Map to display names
+            .filter((name) => vitalsMap[name]) // Only include existing
+            .map((name) => ({
+              name,
+              values: vitalsMap[name]
+            }));
+
+          setVitals(vitalsArray);
+        }
       } catch (error) {
         console.error('Error fetching vitals:', error);
       } finally {
@@ -146,7 +149,7 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
     };
 
     fetchData();
-  }, [dispatch]);
+  }, [dispatch, practiceId, patientId]);
 
   const renderTableView = () => (
     <TableContainer

@@ -76,7 +76,7 @@ const PatientDashboard = () => {
 
   const saveColumns = (cols: Record<string, string[]>) => {
     if (!cols) return;
-    const patientId = localStorage.getItem('patientID');
+    const patientId = localStorage.getItem('PatientId');
     if (!patientId) return;
 
     const payload: any[] = [];
@@ -224,17 +224,21 @@ const PatientDashboard = () => {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
           >
-            <div 
-              style={{ 
-                display: 'flex', 
+            <div
+              style={{
+                display: 'flex',
                 flexDirection: isMobile ? 'column' : 'row',
-                gap: isMobile ? '16px' : '25px', 
+                gap: isMobile ? '16px' : '25px',
                 paddingRight: isMobile ? '0' : '10px',
                 paddingBottom: isMobile ? '20px' : '0'
               }}
             >
               {Object.entries(columns).map(([columnKey, widgets]) => (
-                <DroppableColumn key={columnKey} id={columnKey} isMobile={isMobile}>
+                <DroppableColumn
+                  key={columnKey}
+                  id={columnKey}
+                  isMobile={isMobile}
+                >
                   <SortableContext
                     items={widgets}
                     strategy={verticalListSortingStrategy}

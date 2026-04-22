@@ -321,19 +321,24 @@ export const GetToken: any = createAsyncThunk(
     const res = await apiServicesV2.GetToken(data);
     try {
       if (res?.status === 200 || res?.status === 201) {
+        const result = res?.data?.result;
+
         setToken(
-          res?.data?.result?.access_token,
-          res?.data?.result?.Email,
-          res?.data?.result?.FirstName,
-          res?.data?.result?.LastName,
-          res?.data?.result?.UserAccessType,
-          res?.data?.result?.PracticeName
+          result?.access_token,
+          result?.Email,
+          result?.FirstName,
+          result?.LastName,
+          result?.UserAccessType,
+          result?.PracticeName,
+          result.PatientID,
+          result.PracticeID
         );
-        if (res?.data?.result?.access_token) {
+
+        if (result?.access_token) {
           Router.push('/patientportal/dashboard');
-          return res?.data.result;
+          return result;
         }
-        return res?.data.result;
+        return result;
       }
     } catch (error) {
       const err: any = thunkAPI.rejectWithValue(error);

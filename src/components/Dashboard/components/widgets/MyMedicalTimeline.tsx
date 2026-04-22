@@ -20,6 +20,7 @@ import { GetPatientEncounterDetails } from '@/slices/patientprofileslice';
 import moment from 'moment-timezone';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
+import { isNull } from '@/utils/functions';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -36,18 +37,20 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const Obj = {
-          PatientId: patientId,
-          PracticeId: practiceId,
-          dateflag: false,
-          datefrom: fromDate,
-          dateto: toDate
-        };
-        const response = await dispatch(
-          GetPatientEncounterDetails(Obj)
-        ).unwrap();
-        const data = response;
-        settimelineEvents(data);
+        if (!isNull(patientId) && !isNull(practiceId)) {
+          const Obj = {
+            PatientId: patientId,
+            PracticeId: practiceId,
+            dateflag: false,
+            datefrom: fromDate,
+            dateto: toDate
+          };
+          const response = await dispatch(
+            GetPatientEncounterDetails(Obj)
+          ).unwrap();
+          const data = response;
+          settimelineEvents(data);
+        }
       } catch (error) {
         console.error('Error fetching medications:', error);
       } finally {
@@ -56,7 +59,7 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
     };
 
     fetchData();
-  }, [dispatch]);
+  }, [dispatch, practiceId, patientId]);
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
