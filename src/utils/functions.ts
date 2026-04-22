@@ -1,61 +1,59 @@
 /* eslint-disable */
 import Router from 'next/router';
-import SnackbarUtils from "../content/snackbar";
+import SnackbarUtils from '../content/snackbar';
 import moment from 'moment';
 
 export const Check_Authentication = async (response) => {
   if (response?.status === 500) {
     const resp = response;
     if (resp?.data?.responseException) {
-      if (typeof resp?.data?.responseException?.exceptionMessage === "string") {
+      if (typeof resp?.data?.responseException?.exceptionMessage === 'string') {
         let errorMessage = resp?.data?.responseException?.exceptionMessage;
         SnackbarUtils.error(errorMessage, false);
       } else if (Object.keys(resp?.data?.responseException)?.length > 0) {
         SnackbarUtils.error(
           (resp?.data?.responseException?.exceptionMessage ||
             response?.statusText) +
-          " Status Code: " +
-          response?.status,
+            ' Status Code: ' +
+            response?.status,
           false
         );
       } else {
         SnackbarUtils.error(
-          response?.statusText + " Status Code: " + response?.status,
+          response?.statusText + ' Status Code: ' + response?.status,
           false
         );
       }
     } else {
       SnackbarUtils.error(
-        response?.statusText + " Status Code: " + response?.status,
+        response?.statusText + ' Status Code: ' + response?.status,
         false
       );
     }
 
-    localStorage.setItem("isAuthenticated", "false");
-  } 
-  else if (response?.status === 401){
+    localStorage.setItem('isAuthenticated', 'false');
+  } else if (response?.status === 401) {
     localStorage.clear();
     Router.push(process.env.NEXT_PUBLIC_ORIGIN_URI);
-  }
-  else if (response?.status === 400) {
+  } else if (response?.status === 400) {
     const resp = response;
     if (resp?.data?.responseException) {
       let errorMessage;
       if (Array.isArray(resp?.data?.responseException?.exceptionMessage)) {
         errorMessage = resp?.data?.responseException?.exceptionMessage?.title;
       } else if (
-        typeof resp?.data?.responseException?.exceptionMessage === "string"
+        typeof resp?.data?.responseException?.exceptionMessage === 'string'
       ) {
         errorMessage = resp?.data?.responseException?.exceptionMessage;
       } else if (
         typeof resp?.data?.responseException?.exceptionMessage?.errorMessage ===
-        "string"
+        'string'
       ) {
         errorMessage =
           resp?.data?.responseException?.exceptionMessage?.errorMessage;
       } else if (
         typeof resp?.data?.responseException?.exceptionMessage?.message ===
-        "string"
+        'string'
       ) {
         errorMessage = resp?.data?.responseException?.exceptionMessage?.message;
       } else if (
@@ -64,37 +62,37 @@ export const Check_Authentication = async (response) => {
         errorMessage =
           resp?.data?.responseException?.exceptionMessage?.error?.message;
       } else {
-        errorMessage = "An unknown error occurred.";
+        errorMessage = 'An unknown error occurred.';
       }
 
       SnackbarUtils.error(errorMessage, false);
     } else {
       SnackbarUtils.error(
-        resp?.statusText + " Status Code: " + resp?.status,
+        resp?.statusText + ' Status Code: ' + resp?.status,
         false
       );
     }
-    localStorage.setItem("isAuthenticated", "false");
+    localStorage.setItem('isAuthenticated', 'false');
   } else if (response?.status === 404) {
     const resp = response;
 
     if (resp?.data?.responseException) {
       let errorMessage;
-      if (typeof resp?.data?.responseException?.exceptionMessage === "string") {
+      if (typeof resp?.data?.responseException?.exceptionMessage === 'string') {
         errorMessage = resp?.data?.responseException?.exceptionMessage;
       } else if (
         typeof resp?.data?.responseException?.exceptionMessage?.errorMessage ===
-        "string"
+        'string'
       ) {
         errorMessage =
           resp?.data?.responseException?.exceptionMessage?.errorMessage;
       } else if (
         typeof resp?.data?.responseException?.exceptionMessage?.message ===
-        "string"
+        'string'
       ) {
         errorMessage = resp?.data?.responseException?.exceptionMessage?.message;
       } else {
-        errorMessage = "An unknown error occurred.";
+        errorMessage = 'An unknown error occurred.';
       }
 
       SnackbarUtils.error(errorMessage, false);
@@ -134,21 +132,21 @@ export function TruncateStringToLimit(length, str) {
 }
 
 export function RemoveLeadingSpacesInString(inputString) {
-  return inputString.replace(/^\s+/, "");
+  return inputString.replace(/^\s+/, '');
 }
 export function Capitalizefirstlettereveryword(str) {
   if (str) {
-    str = (str + "")?.toLowerCase();
+    str = (str + '')?.toLowerCase();
     return str?.replace(/^([a-z])|\s+([a-z])/g, function ($1) {
       return $1?.toUpperCase();
     });
   } else {
-    return "";
+    return '';
   }
 }
 export function capitalizeEveryWord(str) {
   if (!str || str.trim().length === 0) {
-    return "";
+    return '';
   }
 
   const words = str.split(/\s+/);
@@ -158,7 +156,7 @@ export function capitalizeEveryWord(str) {
     return `${firstChar}${restOfWord}`;
   });
 
-  return capitalizedWords.join(" ");
+  return capitalizedWords.join(' ');
 }
 
 export const IsParsable = (data) => {
@@ -172,49 +170,61 @@ export const IsParsable = (data) => {
 
 // Get Practice Id
 export const getLocationId = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("locationId")
-      ? Number(localStorage.getItem("locationId"))
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('locationId')
+      ? Number(localStorage.getItem('locationId'))
       : null;
   }
 };
 export const getProviderId = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("providerId")
-      ? Number(localStorage.getItem("providerId"))
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('providerId')
+      ? Number(localStorage.getItem('providerId'))
       : null;
   }
 };
 export const getPracticeId = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("practiceId")
-      ? localStorage.getItem("practiceId")
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('PracticeId')
+      ? localStorage.getItem('PracticeId')
       : null;
   }
 };
 export const getPatientId = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("patientid")
-      ? localStorage.getItem("patientid")
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('patientid')
+      ? localStorage.getItem('patientid')
       : null;
   }
 };
 export const getisAuthenticated = () => {
-  if (typeof window !== "undefined") {
-    return localStorage.getItem("isAuthenticated")
-      ? localStorage.getItem("isAuthenticated")
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('isAuthenticated')
+      ? localStorage.getItem('isAuthenticated')
       : null;
   }
 };
-export const setToken = (token,Email?,FirstName?,LastName?,UserAccessType?,PracticeName?) => {
-  if (typeof window !== "undefined") {
-     localStorage.setItem("token", token);
-     localStorage.setItem("Email", Email);
-     localStorage.setItem("FirstName", FirstName);
-     localStorage.setItem("LastName", LastName);
-     localStorage.setItem("UserAccessType", UserAccessType);
-     localStorage.setItem("PracticeName", PracticeName);
-     return;
+export const setToken = (
+  token,
+  Email?,
+  FirstName?,
+  LastName?,
+  UserAccessType?,
+  PracticeName?,
+  PatientID?,
+  PracticeID?
+) => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('token', token);
+    localStorage.setItem('Email', Email);
+    localStorage.setItem('FirstName', FirstName);
+    localStorage.setItem('LastName', LastName);
+    localStorage.setItem('UserAccessType', UserAccessType);
+    localStorage.setItem('PracticeName', PracticeName);
+    localStorage.setItem('PatientId', PatientID);
+    localStorage.setItem('PracticeId', PracticeID);
+    window.dispatchEvent(new Event('userLoggedIn'));
+    return;
   }
 };
 
@@ -231,7 +241,7 @@ export function stringToColor(string: string) {
     hash = string.charCodeAt(i) + ((hash << 5) - hash);
   }
 
-  let color = "#";
+  let color = '#';
 
   for (i = 0; i < 3; i += 1) {
     const value = (hash >> (i * 8)) & 0xff;
@@ -242,18 +252,16 @@ export function stringToColor(string: string) {
   return color;
 }
 
-
-
 export function stringAvatar(
   name: string,
-  width: string = "40px",
-  height: string = "40px",
-  bgcolor: string = "#a0aaba"
+  width: string = '40px',
+  height: string = '40px',
+  bgcolor: string = '#a0aaba'
 ) {
-  if (!name) return { children: "U" }; // Default "U" for unknown user
+  if (!name) return { children: 'U' }; // Default "U" for unknown user
 
   // Extract name before @ if it's an email
-  const namePart = name.includes("@") ? name.split("@")[0] : name;
+  const namePart = name.includes('@') ? name.split('@')[0] : name;
 
   // Split by spaces or dots
   const nameParts = namePart.split(/[.\s]/);
@@ -263,28 +271,32 @@ export function stringAvatar(
     .filter((part) => part.length > 0)
     .slice(0, 2) // Max 2 initials
     .map((part) => part.charAt(0).toUpperCase())
-    .join("");
+    .join('');
 
   return {
     sx: {
       bgcolor: bgcolor,
-      opacity: "0.9",
+      opacity: '0.9',
       height: height,
-      width: width,
+      width: width
     },
-    children: initials || "U", // Ensures at least one letter
+    children: initials || 'U' // Ensures at least one letter
   };
 }
 
 export const formatAddresswithCCDA = (addr) => {
   if (!addr) return '';
- 
+
   const parts = [];
   if (addr.streetAddressLine) parts.push(addr.streetAddressLine);
   if (addr.city || addr.state || addr.postalCode) {
-    parts.push(`${addr.city || ''}, ${addr.state || ''} ${addr.postalCode || ''}, ${addr.country || ''}`.trim());
+    parts.push(
+      `${addr.city || ''}, ${addr.state || ''} ${addr.postalCode || ''}, ${
+        addr.country || ''
+      }`.trim()
+    );
   }
- 
+
   return parts.join('\n');
 };
 
@@ -298,14 +310,14 @@ export const clearPatientSession = () => {
     'vdtAccess',
     'pendingConsentFormCount',
     'patientEmail',
-    'Email',
+    'Email'
   ];
   keysToClear.forEach((key) => localStorage.removeItem(key));
 };
 
 export function formatDateCCDADate(dateString: string): string {
   if (!dateString) return '';
- 
+
   // Check if it's an 8-digit date first (YYYYMMDD)
   const numericOnly = dateString.replace(/\D/g, '');
   if (numericOnly.length === 8) {
@@ -313,7 +325,7 @@ export function formatDateCCDADate(dateString: string): string {
     const formatted = moment(numericOnly, 'YYYYMMDD');
     return formatted.isValid() ? formatted.format('MMMM D, YYYY') : dateString;
   }
- 
+
   // Handle formats with timezone offset (e.g., 201507221430-0500)
   if (dateString.includes('-') || dateString.includes('+')) {
     // Manual parsing for timezone format
@@ -325,13 +337,16 @@ export function formatDateCCDADate(dateString: string): string {
       const day = dateTimePart.substring(6, 8);
       const hour = dateTimePart.substring(8, 10);
       const minute = dateTimePart.substring(10, 12);
-     
-      const formatted = moment(`${year}-${month}-${day} ${hour}:${minute}`, 'YYYY-MM-DD HH:mm');
+
+      const formatted = moment(
+        `${year}-${month}-${day} ${hour}:${minute}`,
+        'YYYY-MM-DD HH:mm'
+      );
       if (formatted.isValid()) {
         return `${formatted.format('MMMM D, YYYY, HH:mm')}, EST`;
       }
     }
-   
+
     // Fallback: try parsing with moment's timezone formats
     const formats = ['YYYYMMDDHHMMZZ', 'YYYYMMDDHHMM ZZ'];
     for (const format of formats) {
@@ -341,29 +356,30 @@ export function formatDateCCDADate(dateString: string): string {
       }
     }
   }
- 
+
   // Handle pure numeric formats without timezone (12+ digits)
   if (numericOnly.length >= 12) {
     // 12+ digit format: YYYYMMDDHHMM -> "July 22, 2015, 14:00, EST"
     const formatted = moment(numericOnly.substring(0, 12), 'YYYYMMDDHHMM');
-    return formatted.isValid() ? `${formatted.format('MMMM D, YYYY, HH:mm')}, EST` : dateString;
+    return formatted.isValid()
+      ? `${formatted.format('MMMM D, YYYY, HH:mm')}, EST`
+      : dateString;
   }
- 
+
   return dateString;
 }
 
-
 export function isNumber(value) {
-  return typeof value === "number";
+  return typeof value === 'number';
 }
 // null checking method
 export const isNull = (value) => {
   if (
-    value === "" ||
+    value === '' ||
     value === undefined ||
     value === null ||
     value === 0 ||
-    value === "undefined"
+    value === 'undefined'
   ) {
     return true;
   } else {

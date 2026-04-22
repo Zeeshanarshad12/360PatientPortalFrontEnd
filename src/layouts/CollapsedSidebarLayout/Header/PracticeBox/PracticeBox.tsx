@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Box, Popover, Tooltip, Typography, useTheme, Divider } from '@mui/material';
+import {
+  Box,
+  Popover,
+  Tooltip,
+  Typography,
+  useTheme,
+  Divider
+} from '@mui/material';
 import Image from 'next/image';
 import { useSelector } from '@/store/index';
 import { Icons } from '@/icons/themeicons';
@@ -35,7 +42,7 @@ interface DropdownItem {
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const getLocalItem = (key: string): string =>
-  typeof window !== 'undefined' ? (localStorage.getItem(key) ?? '') : '';
+  typeof window !== 'undefined' ? localStorage.getItem(key) ?? '' : '';
 
 const getPracticeId = (patient: PatientRecord): string | number =>
   patient?.practiceId ?? 'unknown';
@@ -70,7 +77,9 @@ const groupByPractice = (patients: PatientRecord[]): PracticeGroup[] => {
 };
 
 // Counts how many practices share the same name
-const countPracticeNameDuplicates = (practices: PracticeGroup[]): Record<string, number> => {
+const countPracticeNameDuplicates = (
+  practices: PracticeGroup[]
+): Record<string, number> => {
   const counts: Record<string, number> = {};
   for (const practice of practices) {
     counts[practice.practiceName] = (counts[practice.practiceName] ?? 0) + 1;
@@ -80,8 +89,10 @@ const countPracticeNameDuplicates = (practices: PracticeGroup[]): Record<string,
 
 // Reads current patient display values from localStorage into a plain object.
 const readFallbackFromStorage = () => ({
-  patientName: `${getLocalItem('FirstName')} ${getLocalItem('LastName')}`.trim(),
-  practiceName: getLocalItem('PracticeName'),
+  patientName: `${getLocalItem('FirstName')} ${getLocalItem(
+    'LastName'
+  )}`.trim(),
+  practiceName: getLocalItem('PracticeName')
 });
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -95,17 +106,21 @@ function PracticeBox() {
   const [popoverWidth, setPopoverWidth] = useState<number>(220);
 
   // Initialised from localStorage via lazy initialiser function (SSR-safe)
-  const [currentPatientId, setCurrentPatientId] = useState<string>(
-    () => getLocalItem('patientID'),
+  const [currentPatientId, setCurrentPatientId] = useState<string>(() =>
+    getLocalItem('patientID')
   );
-  const [currentPracticeId, setCurrentPracticeId] = useState<string>(
-    () => getLocalItem('PracticeId'),
+  const [currentPracticeId, setCurrentPracticeId] = useState<string>(() =>
+    getLocalItem('PracticeId')
   );
 
   // Fallback display values
-  const [displayFallback, setDisplayFallback] = useState(readFallbackFromStorage);
+  const [displayFallback, setDisplayFallback] = useState(
+    readFallbackFromStorage
+  );
 
-  const { PatientByEmailData } = useSelector((state) => state.patientprofileslice);
+  const { PatientByEmailData } = useSelector(
+    (state) => state.patientprofileslice
+  );
 
   // ALL useEffect hooks declared before any derived logic
   // useEffect(() => {
@@ -119,20 +134,20 @@ function PracticeBox() {
   // }, []);
 
   useEffect(() => {
-  const sync = () => {
-    setCurrentPatientId(getLocalItem('patientID'));
-    setCurrentPracticeId(getLocalItem('PracticeId'));
-    setDisplayFallback(readFallbackFromStorage());
-  };
+    const sync = () => {
+      setCurrentPatientId(getLocalItem('patientID'));
+      setCurrentPracticeId(getLocalItem('PracticeId'));
+      setDisplayFallback(readFallbackFromStorage());
+    };
 
-  window.addEventListener('practiceChanged', sync);
-  window.addEventListener('practiceInitialized', sync);
+    window.addEventListener('practiceChanged', sync);
+    window.addEventListener('practiceInitialized', sync);
 
-  return () => {
-    window.removeEventListener('practiceChanged', sync);
-    window.removeEventListener('practiceInitialized', sync);
-  };
-}, []);
+    return () => {
+      window.removeEventListener('practiceChanged', sync);
+      window.removeEventListener('practiceInitialized', sync);
+    };
+  }, []);
 
   // ─── Derived values (computed after all hooks) ────────────────────────────
 
@@ -147,13 +162,13 @@ function PracticeBox() {
       practiceName: practice.practiceName,
       patientName: getPatientName(patient),
       practiceId: practice.practiceId,
-      patient,
-    })),
+      patient
+    }))
   );
 
   // Prefer a live Redux match for the selected patient
   const selectedPatient = patientList.find(
-    (p) => p.patientID != null && String(p.patientID) === currentPatientId,
+    (p) => p.patientID != null && String(p.patientID) === currentPatientId
   );
 
   // Use live Redux data when available; fall back to state
@@ -184,19 +199,22 @@ function PracticeBox() {
     const firstName = patient.firstName ?? '';
     const lastName = patient.lastName ?? '';
 
-    localStorage.setItem('patientID', patientId);
+    localStorage.setItem('PatientId', patientId);
     localStorage.setItem('PracticeId', practiceId);
     localStorage.setItem('PracticeName', practiceName);
     localStorage.setItem('FirstName', firstName);
     localStorage.setItem('LastName', lastName);
     localStorage.setItem('vdtAccess', String(patient.vdtAccess ?? ''));
-    localStorage.setItem('pendingConsentFormCount', String(patient.pendingConsentFormCount ?? ''));
+    localStorage.setItem(
+      'pendingConsentFormCount',
+      String(patient.pendingConsentFormCount ?? '')
+    );
 
     setCurrentPatientId(patientId);
     setCurrentPracticeId(practiceId);
     setDisplayFallback({
       patientName: `${firstName} ${lastName}`.trim(),
-      practiceName,
+      practiceName
     });
 
     setIsOpen(false);
@@ -225,11 +243,23 @@ function PracticeBox() {
           border: '1px solid #d3d9e3',
           height: '40px',
           cursor: 'pointer',
-          ':hover': { border: `1px solid ${theme.colors.primary.main}` },
+          ':hover': { border: `1px solid ${theme.colors.primary.main}` }
         }}
       >
-        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '40px' }}>
-          <Image  src={Icons.hospital} alt="practice icon" width={20} height={20} />
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            width: '40px'
+          }}
+        >
+          <Image
+            src={Icons.hospital}
+            alt="practice icon"
+            width={20}
+            height={20}
+          />
         </Box>
 
         <Box sx={{ overflow: 'hidden', flex: 1, pr: 1 }}>
@@ -242,7 +272,7 @@ function PracticeBox() {
               color: 'black',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
-              textOverflow: 'ellipsis',
+              textOverflow: 'ellipsis'
             }}
           >
             {displayPatientName}
@@ -254,10 +284,18 @@ function PracticeBox() {
             arrow
             placement="bottom-start"
             PopperProps={{
-              modifiers: [{ name: 'preventOverflow', options: { boundary: 'viewport' } }],
+              modifiers: [
+                { name: 'preventOverflow', options: { boundary: 'viewport' } }
+              ]
             }}
             componentsProps={{
-              tooltip: { sx: { maxWidth: '200px', fontSize: '11px', wordBreak: 'break-word' } },
+              tooltip: {
+                sx: {
+                  maxWidth: '200px',
+                  fontSize: '11px',
+                  wordBreak: 'break-word'
+                }
+              }
             }}
           >
             <Typography
@@ -269,7 +307,7 @@ function PracticeBox() {
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
-                display: 'block',
+                display: 'block'
               }}
             >
               {displayPracticeName}
@@ -293,8 +331,8 @@ function PracticeBox() {
             width: `${popoverWidth}px`,
             p: 0.5,
             borderRadius: '6px',
-            boxShadow: '0px 4px 16px rgba(0,0,0,0.12)',
-          },
+            boxShadow: '0px 4px 16px rgba(0,0,0,0.12)'
+          }
         }}
       >
         <Box
@@ -303,16 +341,24 @@ function PracticeBox() {
             minHeight: '60px',
             overflowY: 'auto',
             '&::-webkit-scrollbar': { width: '4px' },
-            '&::-webkit-scrollbar-thumb': { backgroundColor: '#d3d9e3', borderRadius: '4px' },
+            '&::-webkit-scrollbar-thumb': {
+              backgroundColor: '#d3d9e3',
+              borderRadius: '4px'
+            }
           }}
         >
           {dropdownItems.length === 0 ? (
-            <Typography sx={{ p: 1, fontSize: '12px', color: 'text.secondary' }}>
-              {PatientByEmailData === null ? 'Loading practices...' : 'No practices available'}
+            <Typography
+              sx={{ p: 1, fontSize: '12px', color: 'text.secondary' }}
+            >
+              {PatientByEmailData === null
+                ? 'Loading practices...'
+                : 'No practices available'}
             </Typography>
           ) : (
             practicesArray.map((practice, practiceIndex) => {
-              const hasMultipleNames = practiceNameDuplicates[practice.practiceName] > 1;
+              const hasMultipleNames =
+                practiceNameDuplicates[practice.practiceName] > 1;
               const practicePatients = practice.patients;
 
               return (
@@ -328,7 +374,7 @@ function PracticeBox() {
                       fontWeight: 600,
                       color: 'text.secondary',
                       textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
+                      letterSpacing: '0.5px'
                     }}
                   >
                     {practice.practiceName}
@@ -353,7 +399,7 @@ function PracticeBox() {
                             practiceName: practice.practiceName,
                             patientName,
                             practiceId: practice.practiceId,
-                            patient,
+                            patient
                           })
                         }
                         sx={{
@@ -366,10 +412,17 @@ function PracticeBox() {
                           alignItems: 'center',
                           gap: 1,
                           bgcolor: isSelected ? '#E3F2FD' : 'transparent',
-                          '&:hover': { bgcolor: isSelected ? '#BBDEFB' : '#EBF3FF' },
+                          '&:hover': {
+                            bgcolor: isSelected ? '#BBDEFB' : '#EBF3FF'
+                          }
                         }}
                       >
-                        <Image src={Icons.pafill} alt="hospital" width={16} height={16} />
+                        <Image
+                          src={Icons.pafill}
+                          alt="hospital"
+                          width={16}
+                          height={16}
+                        />
 
                         <Box sx={{ flex: 1, overflow: 'hidden' }}>
                           <Tooltip
@@ -378,27 +431,32 @@ function PracticeBox() {
                             placement="bottom-start"
                             PopperProps={{
                               modifiers: [
-                                { name: 'preventOverflow', options: { boundary: 'viewport' } },
-                              ],
+                                {
+                                  name: 'preventOverflow',
+                                  options: { boundary: 'viewport' }
+                                }
+                              ]
                             }}
                             componentsProps={{
                               tooltip: {
                                 sx: {
                                   maxWidth: '250px',
                                   fontSize: '11px',
-                                  wordBreak: 'break-word',
-                                },
-                              },
+                                  wordBreak: 'break-word'
+                                }
+                              }
                             }}
                           >
                             <Typography
                               sx={{
                                 fontSize: '13px',
                                 fontWeight: isSelected ? 700 : 500,
-                                color: isSelected ? 'primary.main' : 'text.primary',
+                                color: isSelected
+                                  ? 'primary.main'
+                                  : 'text.primary',
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
-                                textOverflow: 'ellipsis',
+                                textOverflow: 'ellipsis'
                               }}
                             >
                               {displayLabel}
@@ -407,7 +465,13 @@ function PracticeBox() {
                         </Box>
 
                         {isSelected && (
-                          <Typography sx={{ fontSize: '14px', color: 'primary.main', fontWeight: 700 }}>
+                          <Typography
+                            sx={{
+                              fontSize: '14px',
+                              color: 'primary.main',
+                              fontWeight: 700
+                            }}
+                          >
                             ✓
                           </Typography>
                         )}
@@ -425,4 +489,3 @@ function PracticeBox() {
 }
 
 export default PracticeBox;
-

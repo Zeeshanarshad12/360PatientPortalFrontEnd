@@ -38,7 +38,7 @@ function EncounterListData() {
 
     //Save ActivityLog on View
     const Logobj = {
-      PatientId: localStorage.getItem('patientID'),
+      PatientId: localStorage.getItem('PatientId'),
       Email: localStorage.getItem('Email'),
       ActivityTypeId: '2'
     };

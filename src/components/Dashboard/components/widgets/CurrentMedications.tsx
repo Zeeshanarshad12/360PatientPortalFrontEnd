@@ -15,6 +15,7 @@ import { GetPatientActiveMedications } from '@/slices/patientprofileslice';
 import { useState, useEffect, useMemo } from 'react';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
+import { isNull } from '@/utils/functions';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -30,16 +31,18 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const Obj = {
-          PatientId: patientId,
-          PracticeId: practiceId
-        };
+        if (!isNull(patientId) && !isNull(practiceId)) {
+          const Obj = {
+            PatientId: patientId,
+            PracticeId: practiceId
+          };
 
-        const response = await dispatch(
-          GetPatientActiveMedications(Obj)
-        ).unwrap();
-        const data = response.result;
-        setMedications(data);
+          const response = await dispatch(
+            GetPatientActiveMedications(Obj)
+          ).unwrap();
+          const data = response.result;
+          setMedications(data);
+        }
       } catch (error) {
         console.error('Error fetching medications:', error);
       } finally {
@@ -48,7 +51,7 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
     };
 
     fetchData();
-  }, [dispatch]);
+  }, [dispatch, practiceId, patientId]);
 
   return (
     <>

@@ -20,6 +20,7 @@ import { getunsignedlabordertestbypatientid } from '@/slices/patientprofileslice
 import { useDispatch } from '@/store/index';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
+import { isNull } from '@/utils/functions';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -42,16 +43,18 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const Obj = {
+        if (!isNull(patientId) && !isNull(practiceId)) {
+          const Obj = {
             PatientId: patientId,
             PracticeId: practiceId
-        };
-        const response = await dispatch(
-          getunsignedlabordertestbypatientid(Obj)
-        ).unwrap();
-        const data = response.result;
-        // ✅ wrap inside array
-        setLabGroups([data]);
+          };
+          const response = await dispatch(
+            getunsignedlabordertestbypatientid(Obj)
+          ).unwrap();
+          const data = response.result;
+          // ✅ wrap inside array
+          setLabGroups([data]);
+        }
       } catch (error) {
         console.error('Error fetching labs:', error);
       } finally {
@@ -60,7 +63,7 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
     };
 
     fetchData();
-  }, [dispatch]);
+  }, [dispatch, practiceId, patientId]);
 
   return (
     <>
