@@ -122,7 +122,7 @@ const GetPatientUserRequestByCode = (data) =>
 
 const GenerateOtp = (data) =>
   getWithoutToken(
-    `${SERVICE_URLSV2.GenerateOtp}?&code=${data}`,
+    `${SERVICE_URLSV2.GenerateOtp}?&code=${data?.Code}&email=${data?.Email}`,
     {},
     {
       feature: featureConstants.static
