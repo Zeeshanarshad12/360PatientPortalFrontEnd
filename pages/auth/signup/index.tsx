@@ -135,11 +135,11 @@ function SignUp() {
     setError(false);
 
     setLoading(true);
-
-    const signUpOtpResponse = await dispatch(
-      GenerateOtp(GetPatientUserRequestByCodeData?.result.code)
-    ).unwrap();
-
+    const OTPobj = {
+      Code: GetPatientUserRequestByCodeData?.result.code,
+      Email: GetPatientUserRequestByCodeData?.result.emailAddress
+    };
+    const signUpOtpResponse = await dispatch(GenerateOtp(OTPobj)).unwrap();
     if (signUpOtpResponse?.result != null && signUpOtpResponse?.result !== '') {
       setLoading(false);
       setStep(2);
@@ -217,9 +217,10 @@ function SignUp() {
       Code: code,
       Otp: joinotp,
       Password: password.toString(),
-      CreatedBy: 'System'
+      CreatedBy: 'System',
+      Email: email
     };
-
+    debugger;
     const signUpResponse = await dispatch(AddPatientUser(signupobj)).unwrap();
     if (signUpResponse && signUpResponse !== 0) {
       setMessageSnackbar('Sign Up process completed. Redirecting to Login!');
