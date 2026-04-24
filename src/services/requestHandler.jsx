@@ -319,8 +319,24 @@ const generateResetPasswordOtp = (data, flag) =>
     }
   );
 
+const generateCodeResetPassword = (data, flag) =>
+  getWithoutToken(
+    `${SERVICE_URLSV2.generateCodeResetPassword}?&Email=${data}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
 const resetPatientPassword = (data, flag) =>
   postWithoutToken(SERVICE_URLSV2.resetPatientPassword, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
+
+const resetAuth0PatientPassword = (data, flag) =>
+  postWithoutToken(SERVICE_URLSV2.resetAuth0PatientPassword, data, {
     feature: featureConstants.static,
     ApiVersion2Req: flag
   });
@@ -363,7 +379,9 @@ const apiServicesV2 = {
   getPatientDocumentInfo,
   getDownloadPatientDocument,
   generateResetPasswordOtp,
-  resetPatientPassword
+  resetPatientPassword,
+  generateCodeResetPassword,
+  resetAuth0PatientPassword
 };
 
 export default apiServicesV2;

@@ -225,7 +225,7 @@ function SignUp() {
       CreatedBy: 'System',
       Email: email
     };
-    debugger;
+
     const signUpResponse = await dispatch(AddPatientUser(signupobj)).unwrap();
     if (signUpResponse && signUpResponse !== 0) {
       setMessageSnackbar('Sign Up process completed. Redirecting to Login!');
@@ -254,12 +254,13 @@ function SignUp() {
       Password: password.toString(),
       CreatedBy: 'System'
     };
-
+    setLoading(true);
     const signUpResponse = await dispatch(
       AddExistingUser(existinguserobj)
     ).unwrap();
 
     if (signUpResponse && signUpResponse !== 0) {
+      setLoading(true);
       router.push('/auth/signin');
     } else {
       setMessageSnackbar(
