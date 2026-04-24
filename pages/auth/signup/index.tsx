@@ -142,6 +142,11 @@ function SignUp() {
     const signUpOtpResponse = await dispatch(GenerateOtp(OTPobj)).unwrap();
     if (signUpOtpResponse?.result != null && signUpOtpResponse?.result !== '') {
       setLoading(false);
+      setMessageSnackbar(
+        'A new verification code has been sent to your email.'
+      );
+      setSeverity('success');
+      setOpenSnackbar(true);
       setStep(2);
     } else {
       setLoading(false);

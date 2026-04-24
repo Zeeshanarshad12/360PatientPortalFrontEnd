@@ -51,6 +51,12 @@ const Login = () => {
       // setError('Invalid Credentials');
       if (response.error_description === 'user is blocked') {
         setError('Your account has been blocked.');
+      } else if (
+        response.error_description?.includes(
+          'Please change your password for user'
+        )
+      ) {
+        setError('Please change your password to continue');
       } else {
         setError(response.error_description);
       }
@@ -272,6 +278,7 @@ const Login = () => {
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={handlePasswordChange}
+                onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
                 InputProps={{
                   endAdornment: (
                     <>
