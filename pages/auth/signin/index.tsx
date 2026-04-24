@@ -56,7 +56,12 @@ const Login = () => {
           'Please change your password for user'
         )
       ) {
-        setError('Please change your password to continue');
+        router.push(
+          `/auth/forgotpassword?forceChange=true&email=${encodeURIComponent(
+            email
+          )}`
+        );
+        setLoading(false);
       } else {
         setError(response.error_description);
       }

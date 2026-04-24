@@ -707,11 +707,50 @@ export const generateResetPasswordOtp: any = createAsyncThunk(
     }
   }
 );
+export const generateCodeResetPassword: any = createAsyncThunk(
+  'generateCodeResetPassword',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.generateCodeResetPassword(
+      data,
+      'ApiVersion2Req'
+    );
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+);
 
 export const resetPatientPassword: any = createAsyncThunk(
   'resetPatientPassword',
   async (data, thunkAPI) => {
     const res = await apiServicesV2.resetPatientPassword(
+      data,
+      'ApiVersion2Req'
+    );
+    try {
+      if (res?.status === 200 || res?.status === 201) {
+        return res?.data;
+      }
+    } catch (error) {
+      const err: any = thunkAPI.rejectWithValue(error);
+      if (err?.payload?.status !== 200) {
+        SnackbarUtils.error(err?.payload?.data?.message, false);
+      }
+    }
+  }
+);
+
+export const resetAuth0PatientPassword: any = createAsyncThunk(
+  'resetAuth0PatientPassword',
+  async (data, thunkAPI) => {
+    const res = await apiServicesV2.resetAuth0PatientPassword(
       data,
       'ApiVersion2Req'
     );

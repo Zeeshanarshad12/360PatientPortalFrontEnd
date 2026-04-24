@@ -37,5 +37,7 @@ export const SERVICE_URLSV2 = {
   getPatientDocumentInfo: 'patientportal/getpatientdocument',
   getDownloadPatientDocument: 'patientportal/downloadpatientdocument',
   generateResetPasswordOtp: 'patientportal/generateresetpasswordotp',
-  resetPatientPassword: 'patientportal/resetpatientpassword'
+  resetPatientPassword: 'patientportal/resetpatientpassword',
+  resetAuth0PatientPassword: 'patientportal/resetAuth0PatientPassword',
+  generateCodeResetPassword: 'patientportal/generateCodeResetPassword'
 };

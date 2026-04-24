@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Container,
   TextField,
@@ -20,8 +20,10 @@ import { Visibility, VisibilityOff } from '@mui/icons-material';
 import NorthEast from '@mui/icons-material/NorthEast';
 import React from 'react';
 import {
+  generateCodeResetPassword,
   generateResetPasswordOtp,
   GetPatientUserRequestByCode,
+  resetAuth0PatientPassword,
   resetPatientPassword
 } from '@/slices/patientprofileslice';
 import { useDispatch } from '@/store/index';
@@ -46,6 +48,7 @@ function ForgotPassword() {
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [severity, setSeverity] = useState<AlertColor>('error');
   const [messageSnackbar, setMessageSnackbar] = useState('');
+  const [forceChange, setForceChange] = useState(false);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -53,6 +56,17 @@ function ForgotPassword() {
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
   const toggleConfirmPasswordVisibility = () =>
     setShowConfirmPassword((prev) => !prev);
+
+  useEffect(() => {
+    if (router.isReady) {
+      const { forceChange, email: queryEmail } = router.query;
+      if (forceChange === 'true' && queryEmail) {
+        setEmail(queryEmail as string);
+        setForceChange(true); // Add this
+        setStep(3);
+      }
+    }
+  }, [router.isReady, router.query]);
 
   // Email validation
   const validateEmail = (email) => {
@@ -120,8 +134,7 @@ function ForgotPassword() {
       setCode(resetOtpResponse?.result);
       setLoading(false);
       setStep(2);
-    }
-    else{
+    } else {
       setLoading(false);
     }
   };
@@ -163,7 +176,7 @@ function ForgotPassword() {
   const handleResendOtp = () => {
     setOtp(['', '', '', '', '', '']);
     setError(false);
-    
+
     handleSendOtp();
   };
 
@@ -193,13 +206,13 @@ function ForgotPassword() {
       return;
     }
 
-    if (otp.some((digit) => digit === '')) {
+    if (!forceChange && otp.some((digit) => digit === '')) {
       setError(true);
       return;
     }
 
     setLoading(true);
-    
+
     const joinotp = otp.join('');
     const resetobj = {
       Code: code,
@@ -208,25 +221,61 @@ function ForgotPassword() {
       CreatedBy: 'System'
     };
 
-    const patientRestResponse = await dispatch(
-      resetPatientPassword(resetobj)
-    ).unwrap();
+    if (forceChange) {
+      const resetOtpResponse = await dispatch(
+        generateCodeResetPassword(email)
+      ).unwrap();
 
-    setLoading(false);
+      const Passresetobj = {
+        Code: resetOtpResponse?.result,
+        Password: password.toString(),
+        CreatedBy: 'System'
+      };
 
-    if (patientRestResponse?.result != null) {
-      setMessageSnackbar('Password has been updated. Redirecting to Login!');
-      setSeverity('success');
-      setOpenSnackbar(true);
+      const patientRestResponse = await dispatch(
+        resetAuth0PatientPassword(Passresetobj)
+      ).unwrap();
+      setLoading(false);
 
-      setTimeout(() => {
-        router.push('/auth/signin');
-      }, 1000); // delay before proceeding
+      if (patientRestResponse?.result != null) {
+        setMessageSnackbar('Password has been updated. Redirecting to Login!');
+        setSeverity('success');
+        setOpenSnackbar(true);
+
+        setTimeout(() => {
+          router.push('/auth/signin');
+        }, 1000); // delay before proceeding
+      } else {
+        setMessageSnackbar(
+          'Error occurred during the Reset process. Try Again!'
+        );
+        setSeverity('error');
+        setOpenSnackbar(true);
+        return;
+      }
     } else {
-      setMessageSnackbar('Error occurred during the Reset process. Try Again!');
-      setSeverity('error');
-      setOpenSnackbar(true);
-      return;
+      const patientRestResponse = await dispatch(
+        resetPatientPassword(resetobj)
+      ).unwrap();
+
+      setLoading(false);
+
+      if (patientRestResponse?.result != null) {
+        setMessageSnackbar('Password has been updated. Redirecting to Login!');
+        setSeverity('success');
+        setOpenSnackbar(true);
+
+        setTimeout(() => {
+          router.push('/auth/signin');
+        }, 1000); // delay before proceeding
+      } else {
+        setMessageSnackbar(
+          'Error occurred during the Reset process. Try Again!'
+        );
+        setSeverity('error');
+        setOpenSnackbar(true);
+        return;
+      }
     }
   };
 
@@ -243,7 +292,14 @@ function ForgotPassword() {
   };
 
   return (
-    <Box sx={{ minHeight: '100vh', width: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box
+      sx={{
+        minHeight: '100vh',
+        width: '100%',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
       {/* Orange Emergency Banner */}
       <Box
         sx={{
@@ -503,7 +559,7 @@ function ForgotPassword() {
                           fontWeight: 'bold',
                           textDecoration: 'none',
                           '&:hover': {
-                            textDecoration: 'underline',
+                            textDecoration: 'underline'
                           }
                         }}
                         onClick={() => router.push('/')}
