@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   Container,
   TextField,
@@ -53,6 +53,18 @@ function ForgotPassword() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  const [otpTimer, setOtpTimer] = useState(120); // 2 minutes in seconds
+  const [isResendDisabled, setIsResendDisabled] = useState(true);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const formatTimer = (seconds: number): string => {
+    const m = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
+
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
   const toggleConfirmPasswordVisibility = () =>
     setShowConfirmPassword((prev) => !prev);
@@ -68,6 +80,12 @@ function ForgotPassword() {
     }
   }, [router.isReady, router.query]);
 
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
   // Email validation
   const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -79,6 +97,25 @@ function ForgotPassword() {
     const value = e.target.value;
     setEmail(value);
     setEmailError('');
+  };
+
+  const startOtpTimer = () => {
+    // Clear any existing timer
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    setOtpTimer(120);
+    setIsResendDisabled(true);
+
+    timerRef.current = setInterval(() => {
+      setOtpTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          setIsResendDisabled(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
   };
 
   // Handle OTP input
@@ -134,6 +171,7 @@ function ForgotPassword() {
       setCode(resetOtpResponse?.result);
       setLoading(false);
       setStep(2);
+      startOtpTimer();
     } else {
       setLoading(false);
     }
@@ -220,7 +258,6 @@ function ForgotPassword() {
       Password: password.toString(),
       CreatedBy: 'System'
     };
-
     if (forceChange) {
       const resetOtpResponse = await dispatch(
         generateCodeResetPassword(email)
@@ -237,7 +274,7 @@ function ForgotPassword() {
       ).unwrap();
       setLoading(false);
 
-      if (patientRestResponse?.result != null) {
+      if (patientRestResponse?.result === 1) {
         setMessageSnackbar('Password has been updated. Redirecting to Login!');
         setSeverity('success');
         setOpenSnackbar(true);
@@ -245,6 +282,13 @@ function ForgotPassword() {
         setTimeout(() => {
           router.push('/auth/signin');
         }, 1000); // delay before proceeding
+      } else if (patientRestResponse?.result === 0) {
+        setMessageSnackbar(
+          'For security reasons, you cannot reuse a recent password. Please choose a new password!'
+        );
+        setSeverity('error');
+        setOpenSnackbar(true);
+        return;
       } else {
         setMessageSnackbar(
           'Error occurred during the Reset process. Try Again!'
@@ -260,7 +304,7 @@ function ForgotPassword() {
 
       setLoading(false);
 
-      if (patientRestResponse?.result != null) {
+      if (patientRestResponse?.result === 1) {
         setMessageSnackbar('Password has been updated. Redirecting to Login!');
         setSeverity('success');
         setOpenSnackbar(true);
@@ -268,6 +312,13 @@ function ForgotPassword() {
         setTimeout(() => {
           router.push('/auth/signin');
         }, 1000); // delay before proceeding
+      } else if (patientRestResponse?.result === 0) {
+        setMessageSnackbar(
+          'For security reasons, you cannot reuse a recent password. Please choose a new password!'
+        );
+        setSeverity('error');
+        setOpenSnackbar(true);
+        return;
       } else {
         setMessageSnackbar(
           'Error occurred during the Reset process. Try Again!'
@@ -658,6 +709,22 @@ function ForgotPassword() {
                     )}
                   </Button>
 
+                  {isResendDisabled && (
+                    <Typography
+                      variant="body2"
+                      sx={{ mt: 1.5, color: '#4a4a4a', textAlign: 'center' }}
+                      aria-live="polite"
+                      aria-atomic="true"
+                    >
+                      Resend code in{' '}
+                      <Box
+                        component="span"
+                        sx={{ fontWeight: 'bold', color: 'primary.main' }}
+                      >
+                        {formatTimer(otpTimer)}
+                      </Box>
+                    </Typography>
+                  )}
                   <Button
                     fullWidth
                     variant="outlined"
@@ -675,6 +742,7 @@ function ForgotPassword() {
                       }
                     }}
                     onClick={handleResendOtp}
+                    disabled={isResendDisabled}
                   >
                     Resend Code
                   </Button>
