@@ -730,19 +730,29 @@ export const generateCodeResetPassword: any = createAsyncThunk(
 export const resetPatientPassword: any = createAsyncThunk(
   'resetPatientPassword',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.resetPatientPassword(
-      data,
-      'ApiVersion2Req'
-    );
     try {
+      const res = await apiServicesV2.resetPatientPassword(
+        data,
+        'ApiVersion2Req'
+      );
+
       if (res?.status === 200 || res?.status === 201) {
         return res?.data;
       }
-    } catch (error) {
-      const err: any = thunkAPI.rejectWithValue(error);
-      if (err?.payload?.status !== 200) {
-        SnackbarUtils.error(err?.payload?.data?.message, false);
-      }
+
+      const errorMessage =
+        res?.data?.responseException?.exceptionMessage?.message ??
+        res?.data?.message ??
+        'Error occurred. Please try again.';
+
+      return thunkAPI.rejectWithValue({ message: errorMessage });
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.responseException?.exceptionMessage?.message ??
+        error?.data?.message ??
+        'Error occurred. Please try again.';
+
+      return thunkAPI.rejectWithValue({ message: errorMessage });
     }
   }
 );
@@ -750,19 +760,29 @@ export const resetPatientPassword: any = createAsyncThunk(
 export const resetAuth0PatientPassword: any = createAsyncThunk(
   'resetAuth0PatientPassword',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.resetAuth0PatientPassword(
-      data,
-      'ApiVersion2Req'
-    );
     try {
+      const res = await apiServicesV2.resetAuth0PatientPassword(
+        data,
+        'ApiVersion2Req'
+      );
+
       if (res?.status === 200 || res?.status === 201) {
         return res?.data;
       }
-    } catch (error) {
-      const err: any = thunkAPI.rejectWithValue(error);
-      if (err?.payload?.status !== 200) {
-        SnackbarUtils.error(err?.payload?.data?.message, false);
-      }
+
+      const errorMessage =
+        res?.data?.responseException?.exceptionMessage?.message ??
+        res?.data?.message ??
+        'Error occurred. Please try again.';
+
+      return thunkAPI.rejectWithValue({ message: errorMessage });
+    } catch (error: any) {
+      const errorMessage =
+        error?.data?.responseException?.exceptionMessage?.message ??
+        error?.data?.message ??
+        'Error occurred. Please try again.';
+
+      return thunkAPI.rejectWithValue({ message: errorMessage });
     }
   }
 );

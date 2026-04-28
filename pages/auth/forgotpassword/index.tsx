@@ -22,6 +22,7 @@ import React from 'react';
 import {
   generateCodeResetPassword,
   generateResetPasswordOtp,
+  GetPatientByEmail,
   GetPatientUserRequestByCode,
   resetAuth0PatientPassword,
   resetPatientPassword
@@ -224,9 +225,7 @@ function ForgotPassword() {
   const [passwordError, setPasswordError] = useState('');
   const [confirmPasswordError, setConfirmPasswordError] = useState('');
 
-  // Handle Password Reset (Final Step)
   const handleResetPassword = async () => {
-    // Clear any previous errors
     setPasswordError('');
     setConfirmPasswordError('');
 
@@ -256,7 +255,8 @@ function ForgotPassword() {
       Code: code,
       Otp: joinotp,
       Password: password.toString(),
-      CreatedBy: 'System'
+      CreatedBy: 'System',
+      Email: email
     };
     if (forceChange) {
       const resetOtpResponse = await dispatch(
@@ -269,68 +269,72 @@ function ForgotPassword() {
         CreatedBy: 'System'
       };
 
-      const patientRestResponse = await dispatch(
-        resetAuth0PatientPassword(Passresetobj)
-      ).unwrap();
-      setLoading(false);
+      try {
+        const patientRestResponse = await dispatch(
+          resetAuth0PatientPassword(Passresetobj)
+        ).unwrap();
 
-      if (patientRestResponse?.result === 1) {
-        setMessageSnackbar('Password has been updated. Redirecting to Login!');
-        setSeverity('success');
-        setOpenSnackbar(true);
+        setLoading(false);
+        if (patientRestResponse?.result === true) {
+          setMessageSnackbar(
+            'Password has been updated. Redirecting to Login!'
+          );
+          setSeverity('success');
+          setOpenSnackbar(true);
+          setTimeout(() => router.push('/auth/signin'), 1000);
+        } else {
+          setMessageSnackbar(
+            patientRestResponse?.message ?? 'Error occurred. Please try again.'
+          );
+          setSeverity('error');
+          setOpenSnackbar(true);
+        }
+      } catch (error: any) {
+        setLoading(false);
 
-        setTimeout(() => {
-          router.push('/auth/signin');
-        }, 1000); // delay before proceeding
-      } else if (patientRestResponse?.result === 0) {
-        setMessageSnackbar(
-          'For security reasons, you cannot reuse a recent password. Please choose a new password!'
-        );
+        const message =
+          error?.message ??
+          'Error occurred during the Reset process. Try Again!';
+
+        setMessageSnackbar(message);
         setSeverity('error');
         setOpenSnackbar(true);
-        return;
-      } else {
-        setMessageSnackbar(
-          'Error occurred during the Reset process. Try Again!'
-        );
-        setSeverity('error');
-        setOpenSnackbar(true);
-        return;
       }
     } else {
-      const patientRestResponse = await dispatch(
-        resetPatientPassword(resetobj)
-      ).unwrap();
+      try {
+        const patientRestResponse = await dispatch(
+          resetPatientPassword(resetobj)
+        ).unwrap();
 
-      setLoading(false);
+        setLoading(false);
+        if (patientRestResponse?.result === true) {
+          setMessageSnackbar(
+            'Password has been updated. Redirecting to Login!'
+          );
+          setSeverity('success');
+          setOpenSnackbar(true);
+          setTimeout(() => router.push('/auth/signin'), 1000);
+        } else {
+          setMessageSnackbar(
+            patientRestResponse?.message ?? 'Error occurred. Please try again.'
+          );
+          setSeverity('error');
+          setOpenSnackbar(true);
+        }
+      } catch (error: any) {
+        setLoading(false);
 
-      if (patientRestResponse?.result === 1) {
-        setMessageSnackbar('Password has been updated. Redirecting to Login!');
-        setSeverity('success');
-        setOpenSnackbar(true);
+        const message =
+          error?.message ??
+          'Error occurred during the Reset process. Try Again!';
 
-        setTimeout(() => {
-          router.push('/auth/signin');
-        }, 1000); // delay before proceeding
-      } else if (patientRestResponse?.result === 0) {
-        setMessageSnackbar(
-          'For security reasons, you cannot reuse a recent password. Please choose a new password!'
-        );
+        setMessageSnackbar(message);
         setSeverity('error');
         setOpenSnackbar(true);
-        return;
-      } else {
-        setMessageSnackbar(
-          'Error occurred during the Reset process. Try Again!'
-        );
-        setSeverity('error');
-        setOpenSnackbar(true);
-        return;
       }
     }
   };
 
-  // Handle back navigation
   const handleBack = () => {
     if (step > 1) {
       setStep(step - 1);
