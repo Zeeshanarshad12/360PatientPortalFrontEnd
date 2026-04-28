@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import {
   Container,
   TextField,
@@ -53,6 +53,17 @@ function SignUp() {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [otpTimer, setOtpTimer] = useState(120); // 2 minutes in seconds
+  const [isResendDisabled, setIsResendDisabled] = useState(true);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const formatTimer = (seconds: number): string => {
+    const m = Math.floor(seconds / 60)
+      .toString()
+      .padStart(2, '0');
+    const s = (seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  };
 
   useEffect(() => {
     const queryString = router.asPath.split('?')[1];
@@ -80,6 +91,11 @@ function SignUp() {
     }
   }, [GetPatientUserRequestByCodeData]); // This will run when the API response changes
 
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
   const toggleConfirmPasswordVisibility = () =>
     setShowConfirmPassword((prev) => !prev);
@@ -117,6 +133,25 @@ function SignUp() {
     }
   };
 
+  const startOtpTimer = () => {
+    // Clear any existing timer
+    if (timerRef.current) clearInterval(timerRef.current);
+
+    setOtpTimer(120);
+    setIsResendDisabled(true);
+
+    timerRef.current = setInterval(() => {
+      setOtpTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(timerRef.current!);
+          setIsResendDisabled(false);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
   // Handle Send Code (Step 1 → Step 2)
   const handleSendCode = async () => {
     setEmailError('');
@@ -148,6 +183,7 @@ function SignUp() {
       setSeverity('success');
       setOpenSnackbar(true);
       setStep(2);
+      startOtpTimer();
     } else {
       setLoading(false);
     }
@@ -631,6 +667,23 @@ function SignUp() {
                     )}
                   </Button>
 
+                  {isResendDisabled && (
+                    <Typography
+                      variant="body2"
+                      sx={{ mt: 1.5, color: '#4a4a4a', textAlign: 'center' }}
+                      aria-live="polite"
+                      aria-atomic="true"
+                    >
+                      Resend code in{' '}
+                      <Box
+                        component="span"
+                        sx={{ fontWeight: 'bold', color: 'primary.main' }}
+                      >
+                        {formatTimer(otpTimer)}
+                      </Box>
+                    </Typography>
+                  )}
+
                   <Button
                     fullWidth
                     variant="outlined"
@@ -648,6 +701,7 @@ function SignUp() {
                       }
                     }}
                     onClick={handleSendCode}
+                    disabled={isResendDisabled}
                   >
                     Resend Code
                   </Button>
