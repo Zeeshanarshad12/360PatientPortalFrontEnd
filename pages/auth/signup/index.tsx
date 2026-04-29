@@ -261,24 +261,27 @@ function SignUp() {
       CreatedBy: 'System',
       Email: email
     };
+    try {
+      const signUpResponse = await dispatch(AddPatientUser(signupobj)).unwrap();
 
-    const signUpResponse = await dispatch(AddPatientUser(signupobj)).unwrap();
-    if (signUpResponse && signUpResponse !== 0) {
-      setMessageSnackbar('Sign Up process completed. Redirecting to Login!');
-      setSeverity('success');
-      setOpenSnackbar(true);
-
-      setTimeout(() => {
-        router.push('/auth/signin');
-      }, 1000); // delay before proceeding
-    } else {
-      //setMessageSnackbar('Error occurred during the Sign Up process. Try Again!');
-      setMessageSnackbar(
-        'An account with this email already exists. Please use a different email address!'
-      );
+      if (signUpResponse && signUpResponse !== 0) {
+        setMessageSnackbar('Sign Up process completed. Redirecting to Login!');
+        setSeverity('success');
+        setOpenSnackbar(true);
+        setTimeout(() => router.push('/auth/signin'), 1000);
+      } else {
+        setMessageSnackbar(
+          'An account with this email already exists. Please use a different email address!'
+        );
+        setSeverity('error');
+        setOpenSnackbar(true);
+      }
+    } catch (error: any) {
+      const backendMessage =
+        error?.message || 'An error occurred during Sign Up. Please try again!';
+      setMessageSnackbar(backendMessage);
       setSeverity('error');
       setOpenSnackbar(true);
-      return;
     }
   };
 

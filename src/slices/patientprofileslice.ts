@@ -284,16 +284,24 @@ export const GenerateOtp: any = createAsyncThunk(
 export const AddPatientUser: any = createAsyncThunk(
   'AddPatientUser',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.AddPatientUser(data);
     try {
+      const res = await apiServicesV2.AddPatientUser(data);
       if (res?.status === 200 || res?.status === 201) {
         return res?.data.result;
       }
-    } catch (error) {
-      const err: any = thunkAPI.rejectWithValue(error);
-      if (err?.payload?.status !== 200) {
-        SnackbarUtils.error(err?.payload?.data?.message, false);
-      }
+    } catch (error: any) {
+      const backendMessage =
+        error?.data?.responseException?.exceptionMessage?.message ||
+        error?.data?.message ||
+        error?.message ||
+        'Something went wrong';
+
+      SnackbarUtils.error(backendMessage, false);
+
+      return thunkAPI.rejectWithValue({
+        message: backendMessage,
+        data: error?.response?.data
+      });
     }
   }
 );
