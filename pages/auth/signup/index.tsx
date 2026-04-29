@@ -667,23 +667,6 @@ function SignUp() {
                     )}
                   </Button>
 
-                  {isResendDisabled && (
-                    <Typography
-                      variant="body2"
-                      sx={{ mt: 1.5, color: '#4a4a4a', textAlign: 'center' }}
-                      aria-live="polite"
-                      aria-atomic="true"
-                    >
-                      Resend code in{' '}
-                      <Box
-                        component="span"
-                        sx={{ fontWeight: 'bold', color: 'primary.main' }}
-                      >
-                        {formatTimer(otpTimer)}
-                      </Box>
-                    </Typography>
-                  )}
-
                   <Button
                     fullWidth
                     variant="outlined"
@@ -705,6 +688,23 @@ function SignUp() {
                   >
                     Resend Code
                   </Button>
+
+                  {isResendDisabled && (
+                    <Typography
+                      variant="body2"
+                      sx={{ mt: 1.5, color: '#4a4a4a', textAlign: 'center' }}
+                      aria-live="polite"
+                      aria-atomic="true"
+                    >
+                      You can resend the code in{' '}
+                      <Box
+                        component="span"
+                        sx={{ fontWeight: 'bold', color: 'primary.main' }}
+                      >
+                        {formatTimer(otpTimer)}
+                      </Box>
+                    </Typography>
+                  )}
                 </>
               )}
               {step === 3 && (
