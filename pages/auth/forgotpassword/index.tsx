@@ -305,7 +305,6 @@ function ForgotPassword() {
         const patientRestResponse = await dispatch(
           resetPatientPassword(resetobj)
         ).unwrap();
-
         setLoading(false);
         if (patientRestResponse?.result === true) {
           setMessageSnackbar(
@@ -323,7 +322,6 @@ function ForgotPassword() {
         }
       } catch (error: any) {
         setLoading(false);
-
         const message =
           error?.message ??
           'Error occurred during the Reset process. Try Again!';

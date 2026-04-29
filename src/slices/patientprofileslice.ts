@@ -735,8 +735,7 @@ export const resetPatientPassword: any = createAsyncThunk(
         data,
         'ApiVersion2Req'
       );
-
-      if (res?.status === 200 || res?.status === 201) {
+      if (res?.data != null && res?.data?.result === true) {
         return res?.data;
       }
 
@@ -766,7 +765,7 @@ export const resetAuth0PatientPassword: any = createAsyncThunk(
         'ApiVersion2Req'
       );
 
-      if (res?.status === 200 || res?.status === 201) {
+      if (res?.data != null && res?.data?.result === true) {
         return res?.data;
       }
 
