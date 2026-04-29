@@ -232,7 +232,8 @@ function ForgotPassword() {
     // Check if the password matches the regex
     if (!passwordRegex.test(password)) {
       setPasswordError(
-        'Password must be between 10 to 20 characters, contain at least one lowercase letter, one uppercase letter, one digit, one special character, and no three consecutive identical characters.'
+        // 'Password must be between 10 to 20 characters, contain at least one lowercase letter, one uppercase letter, one digit, one special character, and no three consecutive identical characters.'
+        'Your password must be 10–20 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character. It cannot contain three identical characters in a row, cannot include your personal information (such as your name or email), cannot be a commonly used or easily guessed password, and cannot be the same as any of your recent passwords.'
       );
       return;
     }
@@ -292,10 +293,9 @@ function ForgotPassword() {
       } catch (error: any) {
         setLoading(false);
 
-        const message =
-          error?.message ??
-          'Error occurred during the Reset process. Try Again!';
-
+        const message = error?.message
+          ? 'Your password does not meet the security requirements. Please choose a stronger password.'
+          : 'Error occurred. Try Again!';
         setMessageSnackbar(message);
         setSeverity('error');
         setOpenSnackbar(true);
@@ -322,10 +322,9 @@ function ForgotPassword() {
         }
       } catch (error: any) {
         setLoading(false);
-        const message =
-          error?.message ??
-          'Error occurred during the Reset process. Try Again!';
-
+        const message = error?.message
+          ? 'Your password does not meet the security requirements. Please choose a stronger password.'
+          : 'Error occurred. Try Again!';
         setMessageSnackbar(message);
         setSeverity('error');
         setOpenSnackbar(true);
