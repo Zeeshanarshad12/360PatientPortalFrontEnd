@@ -47,10 +47,10 @@ function SidebarMenu({ onItemClick }: SidebarMenuProps) {
   useAriaHiddenFixOnDialog(showAccessDenied);
 
   const restrictedLinks = [
-    '/patientportal/healthsharing',
-    '/patientportal/authorizedUser'
+    // '/patientportal/healthsharing',
+    // '/patientportal/authorizedUser'
   ];
-
+  // As per TPM instruction, there is no restriction for now.
   const handleProtectedClick = (e, link) => {
     const access = localStorage.getItem('vdtAccess') === 'true';
     setVdtAccess(access);
@@ -169,13 +169,14 @@ function SidebarMenu({ onItemClick }: SidebarMenuProps) {
 
   return (
     <>
-      <Box sx={{ 
-        my: 4.5,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center'
-      }}>
-      </Box>
+      <Box
+        sx={{
+          my: 4.5,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}
+      ></Box>
       {menu.map((item) => (
         <Fragment key={uuidv4()}>
           <MenuWrapper>
@@ -186,9 +187,9 @@ function SidebarMenu({ onItemClick }: SidebarMenuProps) {
                   component="div"
                   id={uuidv4()}
                 >
-                  <ListItem 
-                    component="div" 
-                    key={item.name} 
+                  <ListItem
+                    component="div"
+                    key={item.name}
                     id={item.name}
                     sx={{ px: 2, py: 0.5 }}
                   >
@@ -216,12 +217,13 @@ function SidebarMenu({ onItemClick }: SidebarMenuProps) {
                             color: '#0D47A1'
                           },
                           '& img': {
-                            filter: 'brightness(0) saturate(100%) invert(34%) sepia(85%) saturate(2104%) hue-rotate(188deg) brightness(91%) contrast(92%)'
+                            filter:
+                              'brightness(0) saturate(100%) invert(34%) sepia(85%) saturate(2104%) hue-rotate(188deg) brightness(91%) contrast(92%)'
                           }
                         },
                         '&:active': {
                           transform: 'translateX(2px)',
-                          backgroundColor: '#BBDEFB',
+                          backgroundColor: '#BBDEFB'
                         },
                         ...(pathname === item.link && {
                           backgroundColor: '#E3F2FD',
@@ -231,7 +233,8 @@ function SidebarMenu({ onItemClick }: SidebarMenuProps) {
                             fontWeight: 600
                           },
                           '& img': {
-                            filter: 'brightness(0) saturate(100%) invert(34%) sepia(85%) saturate(2104%) hue-rotate(188deg) brightness(91%) contrast(92%)'
+                            filter:
+                              'brightness(0) saturate(100%) invert(34%) sepia(85%) saturate(2104%) hue-rotate(188deg) brightness(91%) contrast(92%)'
                           },
                           '&::before': {
                             content: '""',
@@ -294,7 +297,7 @@ function SidebarMenu({ onItemClick }: SidebarMenuProps) {
                             height={20}
                           />
                           <Typography
-                            sx={{ 
+                            sx={{
                               ml: '15px',
                               fontSize: '0.95rem',
                               fontWeight: 500,

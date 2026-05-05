@@ -68,12 +68,6 @@ const Dashboard = () => {
         'PracticeName',
         String(defaultPatient.practiceName ?? '')
       );
-      localStorage.setItem('PatientId', String(defaultPatient.patientID));
-      localStorage.setItem('PracticeId', String(defaultPatient.practiceId));
-      localStorage.setItem(
-        'PracticeName',
-        String(defaultPatient.practiceName ?? '')
-      );
       localStorage.setItem('FirstName', String(defaultPatient.firstName ?? ''));
       localStorage.setItem('LastName', String(defaultPatient.lastName ?? ''));
       localStorage.setItem('vdtAccess', String(defaultPatient.vdtAccess ?? ''));
