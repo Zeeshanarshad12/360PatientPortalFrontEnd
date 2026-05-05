@@ -330,7 +330,6 @@ export const GetToken: any = createAsyncThunk(
     try {
       if (res?.status === 200 || res?.status === 201) {
         const result = res?.data?.result;
-
         setToken(
           result?.access_token,
           result?.Email,
@@ -339,7 +338,8 @@ export const GetToken: any = createAsyncThunk(
           result?.UserAccessType,
           result?.PracticeName,
           result.PatientID,
-          result.PracticeID
+          result.PracticeID,
+          result.vdtAccess
         );
 
         if (result?.access_token) {

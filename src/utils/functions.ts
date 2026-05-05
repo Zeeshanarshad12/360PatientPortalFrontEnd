@@ -212,7 +212,8 @@ export const setToken = (
   UserAccessType?,
   PracticeName?,
   PatientID?,
-  PracticeID?
+  PracticeID?,
+  vdtAccess?
 ) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem('token', token);
@@ -223,6 +224,7 @@ export const setToken = (
     localStorage.setItem('PracticeName', PracticeName);
     localStorage.setItem('PatientId', PatientID);
     localStorage.setItem('PracticeId', PracticeID);
+    localStorage.setItem('vdtAccess', vdtAccess);
     window.dispatchEvent(new Event('userLoggedIn'));
     return;
   }
