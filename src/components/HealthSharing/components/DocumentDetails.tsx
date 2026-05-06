@@ -18,7 +18,6 @@ import {
 } from '@/utils/functions';
 
 const DocumentDetails = ({ XmlToJson }) => {
-    
   const [showDetails, setShowDetails] = useState(false);
 
   const toggleDetails = () => {
@@ -102,6 +101,7 @@ const DocumentDetails = ({ XmlToJson }) => {
   const performers =
     XmlToJson?.ClinicalDocument?.documentationOf?.serviceEvent?.performer;
 
+  console.log('CCDA_Data', XmlToJson?.ClinicalDocument);
   // Normalize performer to always be an array
   const performerList = Array.isArray(performers)
     ? performers
@@ -110,22 +110,35 @@ const DocumentDetails = ({ XmlToJson }) => {
     : [];
 
   const renderRowDiv = (
-  label: string,
-  value: React.ReactNode,
-  label2?: string,
-  value2?: React.ReactNode
-) => (
-  <div style={{ display: 'flex', flexWrap: 'wrap', padding: '8px 0', borderBottom: '1px solid #e0e0e0' }}>
-    <div style={{ flex: '0 0 180px', fontWeight: 'bold', color: 'black' }}>{label}:</div>
-    <div style={{ flex: '1 1 300px' }}>{value}</div>
-    {label2 && (
-      <>
-        <div style={{ flex: '0 0 100px', fontWeight: 'bold', color: 'black' }}>{label2}:</div>
-        <div style={{ flex: '1 1 400px' }}>{value2}</div>
-      </>
-    )}
-  </div>
-);
+    label: string,
+    value: React.ReactNode,
+    label2?: string,
+    value2?: React.ReactNode
+  ) => (
+    <div
+      style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        padding: '8px 0',
+        borderBottom: '1px solid #e0e0e0'
+      }}
+    >
+      <div style={{ flex: '0 0 180px', fontWeight: 'bold', color: 'black' }}>
+        {label}:
+      </div>
+      <div style={{ flex: '1 1 300px' }}>{value}</div>
+      {label2 && (
+        <>
+          <div
+            style={{ flex: '0 0 100px', fontWeight: 'bold', color: 'black' }}
+          >
+            {label2}:
+          </div>
+          <div style={{ flex: '1 1 400px' }}>{value2}</div>
+        </>
+      )}
+    </div>
+  );
 
   return (
     <div
@@ -156,288 +169,288 @@ const DocumentDetails = ({ XmlToJson }) => {
           }}
         >
           {!isNull(XmlToJson) && (
-              <div>
-                {renderRowDiv(
-                  'Patient',
-                  getFullName(
-                    XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
-                      ?.patient?.name
-                  ),
-                  'Sex',
+            <div>
+              {renderRowDiv(
+                'Patient',
+                getFullName(
                   XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
-                    ?.patient?.administrativeGenderCode?.code === 'M'
-                    ? 'Male'
-                    : XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
-                        ?.patient?.administrativeGenderCode?.code === 'F'
-                    ? 'Female'
-                    : XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
-                        ?.patient?.administrativeGenderCode?.code === 'UNK'
-                    ? 'UNK'
-                    : XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
-                        ?.patient?.administrativeGenderCode?.code === 'UN'
-                    ? 'UNK'
-                    : ''
-                )}
-                {renderRowDiv(
-                  'D.O.B',
-                  formatDateCCDADate(
-                    XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
-                      ?.patient?.birthTime?.value
-                  ),
-                  'Ethnicity',
+                    ?.patient?.name
+                ),
+                'Sex',
+                XmlToJson?.ClinicalDocument?.recordTarget?.patientRole?.patient
+                  ?.administrativeGenderCode?.code === 'M'
+                  ? 'Male'
+                  : XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
+                      ?.patient?.administrativeGenderCode?.code === 'F'
+                  ? 'Female'
+                  : XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
+                      ?.patient?.administrativeGenderCode?.code === 'UNK'
+                  ? 'UNK'
+                  : XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
+                      ?.patient?.administrativeGenderCode?.code === 'UN'
+                  ? 'UNK'
+                  : ''
+              )}
+              {renderRowDiv(
+                'D.O.B',
+                formatDateCCDADate(
                   XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
-                    ?.patient?.ethnicGroupCode?.displayName
-                )}
-                {renderRowDiv(
-                  'Race',
-                  Array.isArray(
-                    XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
-                      ?.patient?.raceCode
-                  )
-                    ? XmlToJson.ClinicalDocument.recordTarget.patientRole
-                        .patient.raceCode[0]?.displayName || ''
-                    : XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
-                        ?.patient?.raceCode?.displayName || '',
+                    ?.patient?.birthTime?.value
+                ),
+                'Ethnicity',
+                XmlToJson?.ClinicalDocument?.recordTarget?.patientRole?.patient
+                  ?.ethnicGroupCode?.displayName
+              )}
+              {renderRowDiv(
+                'Race',
+                Array.isArray(
+                  XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
+                    ?.patient?.raceCode
+                )
+                  ? XmlToJson.ClinicalDocument.recordTarget.patientRole.patient
+                      .raceCode[0]?.displayName || ''
+                  : XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
+                      ?.patient?.raceCode?.displayName || '',
 
-                  'Patient IDs',
-                  Array.isArray(
-                    XmlToJson?.ClinicalDocument?.recordTarget?.patientRole?.id
-                  )
-                    ? XmlToJson.ClinicalDocument.recordTarget.patientRole.id
-                        .map((item: any) => {
-                          const ext = item?.$?.extension || item?.extension;
-                          const root = item?.$?.root || item?.root;
-                          return `${ext} ${root}`.trim();
-                        })
-                        .filter((id: string) => id !== '') // Removes completely empty results
-                        .join('  ')
-                    : `${
-                        XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
-                          ?.id?.extension || ''
-                      } ${
-                        XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
-                          ?.id?.root || ''
-                      }`.trim()
-                )}
-                {renderRowDiv(
-                  'Contact info',
-                  <>
-                    Primary Home:
-                    <br />
-                    {formatAddresswithCCDA(
+                'Patient IDs',
+                Array.isArray(
+                  XmlToJson?.ClinicalDocument?.recordTarget?.patientRole?.id
+                )
+                  ? XmlToJson.ClinicalDocument.recordTarget.patientRole.id
+                      .map((item: any) => {
+                        const ext = item?.$?.extension || item?.extension;
+                        const root = item?.$?.root || item?.root;
+                        return `${ext} ${root}`.trim();
+                      })
+                      .filter((id: string) => id !== '') // Removes completely empty results
+                      .join('  ')
+                  : `${
+                      XmlToJson?.ClinicalDocument?.recordTarget?.patientRole?.id
+                        ?.extension || ''
+                    } ${
+                      XmlToJson?.ClinicalDocument?.recordTarget?.patientRole?.id
+                        ?.root || ''
+                    }`.trim()
+              )}
+              {renderRowDiv(
+                'Contact info',
+                <>
+                  Primary Home:
+                  <br />
+                  {formatAddresswithCCDA(
+                    XmlToJson?.ClinicalDocument?.recordTarget?.patientRole?.addr
+                  )}
+                  <br />
+                  {(() => {
+                    const telecom =
                       XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
-                        ?.addr
-                    )}
-                    <br />
-                    {(() => {
-                      const telecom =
-                        XmlToJson?.ClinicalDocument?.recordTarget?.patientRole
-                          ?.telecom;
-                      if (Array.isArray(telecom)) {
-                        const mcPhone = telecom.find((t) => t?.use === 'MC');
-                        return mcPhone?.value || '';
-                      } else {
-                        return telecom?.value || '';
-                      }
-                    })()}
-                  </>
-                )}
+                        ?.telecom;
+                    if (Array.isArray(telecom)) {
+                      const mcPhone = telecom.find((t) => t?.use === 'MC');
+                      return mcPhone?.value || '';
+                    } else {
+                      return telecom?.value || '';
+                    }
+                  })()}
+                </>
+              )}
 
-                {renderRowDiv(
-                  'Document Id',
-                  <>
-                    {XmlToJson?.ClinicalDocument?.id?.extension}{' '}
-                    {XmlToJson?.ClinicalDocument?.id?.root}
-                  </>
-                )}
+              {renderRowDiv(
+                'Document Id',
+                <>
+                  {XmlToJson?.ClinicalDocument?.id?.extension}{' '}
+                  {XmlToJson?.ClinicalDocument?.id?.root}
+                </>
+              )}
 
-                {renderRowDiv(
-                  'Document Created',
-                  formatDateCCDADate(
-                    XmlToJson?.ClinicalDocument?.effectiveTime?.value
-                  )
-                )}
-                {renderRowDiv(
-                  'Care provision',
-                  <>
-                    {
-                      XmlToJson?.ClinicalDocument?.documentationOf?.serviceEvent
-                        ?.code?.displayName
-                    }{' '}
-                    from{' '}
-                    {formatDateCCDADate(
-                      XmlToJson?.ClinicalDocument?.documentationOf?.serviceEvent
-                        ?.effectiveTime?.low?.value
-                    )}{' '}
-                    to{' '}
-                    {formatDateCCDADate(
-                      XmlToJson?.ClinicalDocument?.documentationOf?.serviceEvent
-                        ?.effectiveTime?.high?.value
-                    )}
-                  </>
-                )}
-                {renderRowDiv(
-                  'Performer (PCP)',
+              {renderRowDiv(
+                'Document Created',
+                formatDateCCDADate(
+                  XmlToJson?.ClinicalDocument?.effectiveTime?.value
+                )
+              )}
+              {renderRowDiv(
+                'Care provision',
+                <>
+                  {
+                    XmlToJson?.ClinicalDocument?.documentationOf?.serviceEvent
+                      ?.code?.displayName
+                  }{' '}
+                  from{' '}
+                  {formatDateCCDADate(
+                    XmlToJson?.ClinicalDocument?.documentationOf?.serviceEvent
+                      ?.effectiveTime?.low?.value
+                  )}{' '}
+                  to{' '}
+                  {formatDateCCDADate(
+                    XmlToJson?.ClinicalDocument?.documentationOf?.serviceEvent
+                      ?.effectiveTime?.high?.value
+                  )}
+                </>
+              )}
+              {renderRowDiv(
+                'Performer (PCP)',
+                (() => {
+                  if (performerList.length === 0) return null;
+                  const performer = performerList[0];
+                  const assignedPerson =
+                    performer?.assignedEntity?.assignedPerson?.name;
+                  const organizationName =
+                    performer?.assignedEntity?.representedOrganization?.name;
+
+                  const prefix =
+                    typeof assignedPerson?.prefix === 'object'
+                      ? assignedPerson?.prefix?._
+                      : assignedPerson?.prefix || '';
+                  const given = assignedPerson?.given || '';
+                  const family = assignedPerson?.family || '';
+
+                  return (
+                    <>
+                      {family} {given}
+                      {prefix && ` ${prefix}`}
+                      {organizationName && ` of ${organizationName}`}
+                    </>
+                  );
+                })()
+              )}
+
+              {performerList.length > 1 &&
+                renderRowDiv(
+                  'Performer',
                   (() => {
-                    if (performerList.length === 0) return null;
-                    const performer = performerList[0];
-                    const assignedPerson =
-                      performer?.assignedEntity?.assignedPerson?.name;
-                    const organizationName =
-                      performer?.assignedEntity?.representedOrganization?.name;
-
-                    const prefix =
-                      typeof assignedPerson?.prefix === 'object'
-                        ? assignedPerson?.prefix?._
-                        : assignedPerson?.prefix || '';
-                    const given = assignedPerson?.given || '';
-                    const family = assignedPerson?.family || '';
-
                     return (
                       <>
-                        {prefix && `${prefix} `}
-                        {given} {family}
-                        {organizationName && ` of ${organizationName}`}
+                        {performerList.slice(1).map((performer, index) => {
+                          const assignedPerson =
+                            performer?.assignedEntity?.assignedPerson?.name;
+                          const prefix =
+                            typeof assignedPerson?.prefix === 'object'
+                              ? assignedPerson?.prefix?._
+                              : assignedPerson?.prefix || '';
+                          const given = assignedPerson?.given || '';
+                          const family = assignedPerson?.family || '';
+
+                          if (!given && !family) return null;
+
+                          return (
+                            <div key={index}>
+                              {prefix && `${prefix} `}
+                              {given} {family}
+                            </div>
+                          );
+                        })}
                       </>
                     );
                   })()
                 )}
 
-                {performerList.length > 1 &&
-                  renderRowDiv(
-                    'Performer',
-                    (() => {
-                      return (
-                        <>
-                          {performerList.slice(1).map((performer, index) => {
-                            const assignedPerson =
-                              performer?.assignedEntity?.assignedPerson?.name;
-                            const prefix =
-                              typeof assignedPerson?.prefix === 'object'
-                                ? assignedPerson?.prefix?._
-                                : assignedPerson?.prefix || '';
-                            const given = assignedPerson?.given || '';
-                            const family = assignedPerson?.family || '';
-
-                            if (!given && !family) return null;
-
-                            return (
-                              <div key={index}>
-                                {prefix && `${prefix} `}
-                                {given} {family}
-                              </div>
-                            );
-                          })}
-                        </>
-                      );
-                    })()
+              {renderRowDiv(
+                'Author',
+                <>
+                  {!isNull(
+                    XmlToJson?.ClinicalDocument?.author?.assignedAuthor
+                      ?.assignedAuthoringDevice?.softwareName
+                  ) &&
+                    XmlToJson?.ClinicalDocument?.author?.assignedAuthor
+                      ?.assignedAuthoringDevice?.softwareName}{' '}
+                  {isNull(
+                    XmlToJson?.ClinicalDocument?.author?.assignedAuthor
+                      ?.assignedAuthoringDevice?.softwareName
+                  ) && (
+                    <>
+                      {
+                        XmlToJson?.ClinicalDocument?.author?.assignedAuthor
+                          ?.assignedPerson?.name?.given
+                      }{' '}
+                      {
+                        XmlToJson?.ClinicalDocument?.author?.assignedAuthor
+                          ?.assignedPerson?.name?.family
+                      }
+                    </>
                   )}
+                </>
+              )}
 
-                {renderRowDiv(
-                  'Author',
-                  <>
-                    {!isNull(
-                      XmlToJson?.ClinicalDocument?.author?.assignedAuthor
-                        ?.assignedAuthoringDevice?.softwareName
-                    ) &&
-                      XmlToJson?.ClinicalDocument?.author?.assignedAuthor
-                        ?.assignedAuthoringDevice?.softwareName}{' '}
-                    {isNull(
-                      XmlToJson?.ClinicalDocument?.author?.assignedAuthor
-                        ?.assignedAuthoringDevice?.softwareName
-                    ) && (
-                      <>
-                        {
-                          XmlToJson?.ClinicalDocument?.author?.assignedAuthor
-                            ?.assignedPerson?.name?.given
-                        }{' '}
-                        {
-                          XmlToJson?.ClinicalDocument?.author?.assignedAuthor
-                            ?.assignedPerson?.name?.family
-                        }
-                      </>
-                    )}
-                  </>
-                )}
+              {renderRowDiv(
+                'Author Contact',
+                <>
+                  {formatAddresswithCCDA(
+                    XmlToJson?.ClinicalDocument?.author?.assignedAuthor?.addr
+                  )}
+                  <br />
+                  {
+                    XmlToJson?.ClinicalDocument?.author?.assignedAuthor?.telecom
+                      ?.value
+                  }
+                </>
+              )}
 
-                {renderRowDiv(
-                  'Author Contact',
-                  <>
-                    {formatAddresswithCCDA(
-                      XmlToJson?.ClinicalDocument?.author?.assignedAuthor?.addr
-                    )}
-                    <br />
-                    {
-                      XmlToJson?.ClinicalDocument?.author?.assignedAuthor
-                        ?.telecom?.value
-                    }
-                  </>
-                )}
+              {renderRowDiv(
+                'Encounter Id',
+                <>
+                  {
+                    XmlToJson?.ClinicalDocument?.componentOf
+                      ?.encompassingEncounter?.id?.extension
+                  }{' '}
+                  {
+                    XmlToJson?.ClinicalDocument?.componentOf
+                      ?.encompassingEncounter?.id?.root
+                  }{' '}
+                </>,
+                'Encounter Type',
+                XmlToJson?.ClinicalDocument?.documentationOf?.serviceEvent?.code
+                  ?.displayName
+              )}
+              {renderRowDiv(
+                'Encounter Date',
+                <>
+                  from{' '}
+                  {formatDateCCDADate(
+                    XmlToJson?.ClinicalDocument?.documentationOf?.serviceEvent
+                      ?.effectiveTime?.low?.value
+                  )}{' '}
+                  to{' '}
+                  {formatDateCCDADate(
+                    XmlToJson?.ClinicalDocument?.documentationOf?.serviceEvent
+                      ?.effectiveTime?.high?.value
+                  )}
+                </>
+              )}
 
-                {renderRowDiv(
-                  'Encounter Id',
-                  <>
-                    {
-                      XmlToJson?.ClinicalDocument?.componentOf
-                        ?.encompassingEncounter?.id?.extension
-                    }{' '}
-                    {
-                      XmlToJson?.ClinicalDocument?.componentOf
-                        ?.encompassingEncounter?.id?.root
-                    }{' '}
-                  </>,
-                  'Encounter Type',
-                  XmlToJson?.ClinicalDocument?.documentationOf?.serviceEvent
-                    ?.code?.displayName
-                )}
-                {renderRowDiv(
-                  'Encounter Date',
-                  <>
-                    from{' '}
-                    {formatDateCCDADate(
-                      XmlToJson?.ClinicalDocument?.documentationOf?.serviceEvent
-                        ?.effectiveTime?.low?.value
-                    )}{' '}
-                    to{' '}
-                    {formatDateCCDADate(
-                      XmlToJson?.ClinicalDocument?.documentationOf?.serviceEvent
-                        ?.effectiveTime?.high?.value
-                    )}
-                  </>
-                )}
+              {renderRowDiv(
+                'Encounter Location',
+                <>
+                  id:{' '}
+                  {
+                    XmlToJson?.ClinicalDocument?.componentOf
+                      ?.encompassingEncounter?.id?.root
+                  }{' '}
+                </>
+              )}
 
-                {renderRowDiv(
-                  'Encounter Location',
-                  <>
-                    id:{' '}
-                    {
-                      XmlToJson?.ClinicalDocument?.componentOf
-                        ?.encompassingEncounter?.id?.root
-                    }{' '}
-                  </>
-                )}
-
-                {renderRowDiv(
-                  'Responsible party',
-                  <>
-                    {
-                      XmlToJson?.ClinicalDocument?.componentOf
-                        ?.encompassingEncounter?.encounterParticipant
-                        ?.assignedEntity?.assignedPerson?.name?.prefix
-                    }{' '}
-                    {
-                      XmlToJson?.ClinicalDocument?.componentOf
-                        ?.encompassingEncounter?.encounterParticipant
-                        ?.assignedEntity?.assignedPerson.name?.given
-                    }{' '}
-                    {
-                      XmlToJson?.ClinicalDocument?.componentOf
-                        ?.encompassingEncounter?.encounterParticipant
-                        ?.assignedEntity?.assignedPerson.name?.family
-                    }
-                  </>
-                )}
-                { XmlToJson?.ClinicalDocument?.participant?.length > 0 && XmlToJson?.ClinicalDocument?.participant?.map(
+              {renderRowDiv(
+                'Responsible party',
+                <>
+                  {
+                    XmlToJson?.ClinicalDocument?.componentOf
+                      ?.encompassingEncounter?.encounterParticipant
+                      ?.assignedEntity?.assignedPerson?.name?.prefix
+                  }{' '}
+                  {
+                    XmlToJson?.ClinicalDocument?.componentOf
+                      ?.encompassingEncounter?.encounterParticipant
+                      ?.assignedEntity?.assignedPerson.name?.given
+                  }{' '}
+                  {
+                    XmlToJson?.ClinicalDocument?.componentOf
+                      ?.encompassingEncounter?.encounterParticipant
+                      ?.assignedEntity?.assignedPerson.name?.family
+                  }
+                </>
+              )}
+              {XmlToJson?.ClinicalDocument?.participant?.length > 0 &&
+                XmlToJson?.ClinicalDocument?.participant?.map(
                   (person: any, index: number) => {
                     const name =
                       person?.associatedEntity?.associatedPerson?.name;
@@ -468,63 +481,64 @@ const DocumentDetails = ({ XmlToJson }) => {
                   }
                 )}
 
-                {renderRowDiv(
-                  'Entered By',
-                  <>
-                    {
-                      XmlToJson?.ClinicalDocument?.dataEnterer?.assignedEntity
-                        ?.assignedPerson?.name?.given
-                    }{' '}
-                    {
-                      XmlToJson?.ClinicalDocument?.dataEnterer?.assignedEntity
-                        ?.assignedPerson?.name?.family
-                    }
-                  </>,
-                  'Contact Info',
-                  <>
-                    {formatAddresswithCCDA(
-                      XmlToJson?.ClinicalDocument?.dataEnterer?.assignedEntity
-                        ?.addr
-                    )}
-                    <br />
-                    {
-                      XmlToJson?.ClinicalDocument?.dataEnterer?.assignedEntity
-                        ?.telecom?.value
-                    }
-                  </>
-                )}
+              {renderRowDiv(
+                'Entered By',
+                <>
+                  {
+                    XmlToJson?.ClinicalDocument?.dataEnterer?.assignedEntity
+                      ?.assignedPerson?.name?.given
+                  }{' '}
+                  {
+                    XmlToJson?.ClinicalDocument?.dataEnterer?.assignedEntity
+                      ?.assignedPerson?.name?.family
+                  }
+                </>,
+                'Contact Info',
+                <>
+                  {formatAddresswithCCDA(
+                    XmlToJson?.ClinicalDocument?.dataEnterer?.assignedEntity
+                      ?.addr
+                  )}
+                  <br />
+                  {
+                    XmlToJson?.ClinicalDocument?.dataEnterer?.assignedEntity
+                      ?.telecom?.value
+                  }
+                </>
+              )}
 
-                {renderRowDiv(
-                  'Signed',
-                  <>
-                    {
-                      XmlToJson?.ClinicalDocument?.authenticator?.assignedEntity
-                        ?.assignedPerson?.name?.prefix
-                    }{' '}
-                    {
-                      XmlToJson?.ClinicalDocument?.authenticator?.assignedEntity
-                        ?.assignedPerson?.name?.given
-                    }{' '}
-                    {
-                      XmlToJson?.ClinicalDocument?.authenticator?.assignedEntity
-                        ?.assignedPerson?.name?.family
-                    }
-                  </>,
-                  'Contact Info',
-                  <>
-                    {formatAddresswithCCDA(
-                      XmlToJson?.ClinicalDocument?.authenticator?.assignedEntity
-                        ?.addr
-                    )}
-                    <br />
-                    {
-                      XmlToJson?.ClinicalDocument?.authenticator?.assignedEntity
-                        ?.telecom?.value
-                    }
-                  </>
-                )}
+              {renderRowDiv(
+                'Signed',
+                <>
+                  {
+                    XmlToJson?.ClinicalDocument?.authenticator?.assignedEntity
+                      ?.assignedPerson?.name?.given
+                  }{' '}
+                  {
+                    XmlToJson?.ClinicalDocument?.authenticator?.assignedEntity
+                      ?.assignedPerson?.name?.family
+                  }{' '}
+                  {
+                    XmlToJson?.ClinicalDocument?.authenticator?.assignedEntity
+                      ?.assignedPerson?.name?.prefix
+                  }
+                </>,
+                'Contact Info',
+                <>
+                  {formatAddresswithCCDA(
+                    XmlToJson?.ClinicalDocument?.authenticator?.assignedEntity
+                      ?.addr
+                  )}
+                  <br />
+                  {
+                    XmlToJson?.ClinicalDocument?.authenticator?.assignedEntity
+                      ?.telecom?.value
+                  }
+                </>
+              )}
 
-                { XmlToJson?.ClinicalDocument?.informant?.length > 0 && XmlToJson?.ClinicalDocument?.informant?.map(
+              {XmlToJson?.ClinicalDocument?.informant?.length > 0 &&
+                XmlToJson?.ClinicalDocument?.informant?.map(
                   (informant, index) => {
                     let name = '';
                     let address = '';
@@ -581,83 +595,81 @@ const DocumentDetails = ({ XmlToJson }) => {
                   }
                 )}
 
-                {renderRowDiv(
-                  'Information recipient',
-                  <>
-                     {
-                      XmlToJson?.ClinicalDocument?.informationRecipient
-                        ?.intendedRecipient?.informationRecipient?.name?.prefix
-                    }{' '}
-                    {
-                      XmlToJson?.ClinicalDocument?.informationRecipient
-                        ?.intendedRecipient?.informationRecipient?.name?.given
-                    }{' '}
-                    {
-                      XmlToJson?.ClinicalDocument?.informationRecipient
-                        ?.intendedRecipient?.informationRecipient?.name?.family
-                    }
-                  </>
-                )}
+              {renderRowDiv(
+                'Information recipient',
+                <>
+                  {
+                    XmlToJson?.ClinicalDocument?.informationRecipient
+                      ?.intendedRecipient?.informationRecipient?.name?.given
+                  }{' '}
+                  {
+                    XmlToJson?.ClinicalDocument?.informationRecipient
+                      ?.intendedRecipient?.informationRecipient?.name?.family
+                  }{' '}
+                  {
+                    XmlToJson?.ClinicalDocument?.informationRecipient
+                      ?.intendedRecipient?.informationRecipient?.name?.prefix
+                  }
+                </>
+              )}
 
-                {renderRowDiv(
-                  'Legal authenticator',
-                  <>
-                     {
-                      XmlToJson?.ClinicalDocument?.legalAuthenticator
-                        ?.assignedEntity?.assignedPerson?.name.prefix
-                    }{' '}
-                    {
-                      XmlToJson?.ClinicalDocument?.legalAuthenticator
-                        ?.assignedEntity?.assignedPerson?.name.given
-                    }{' '}
-                    {
-                      XmlToJson?.ClinicalDocument?.legalAuthenticator
-                        ?.assignedEntity?.assignedPerson?.name.family
-                    }{' '}
-                    {'Signed At '}
-                    {formatDateCCDADate(
-                      XmlToJson?.ClinicalDocument?.legalAuthenticator?.time
-                        ?.value
-                    )}
-                  </>,
-                  'Contact info',
-                  <>
-                    {formatAddresswithCCDA(
-                      XmlToJson?.ClinicalDocument?.legalAuthenticator
-                        ?.assignedEntity?.addr
-                    )}
-                    <br />
-                    {
-                      XmlToJson?.ClinicalDocument?.legalAuthenticator
-                        ?.assignedEntity?.telecom?.value
-                    }
-                  </>
-                )}
+              {renderRowDiv(
+                'Legal authenticator',
+                <>
+                  {
+                    XmlToJson?.ClinicalDocument?.legalAuthenticator
+                      ?.assignedEntity?.assignedPerson?.name.given
+                  }{' '}
+                  {
+                    XmlToJson?.ClinicalDocument?.legalAuthenticator
+                      ?.assignedEntity?.assignedPerson?.name.family
+                  }{' '}
+                  {
+                    XmlToJson?.ClinicalDocument?.legalAuthenticator
+                      ?.assignedEntity?.assignedPerson?.name.prefix
+                  }{' '}
+                  {'Signed At '}
+                  {formatDateCCDADate(
+                    XmlToJson?.ClinicalDocument?.legalAuthenticator?.time?.value
+                  )}
+                </>,
+                'Contact info',
+                <>
+                  {formatAddresswithCCDA(
+                    XmlToJson?.ClinicalDocument?.legalAuthenticator
+                      ?.assignedEntity?.addr
+                  )}
+                  <br />
+                  {
+                    XmlToJson?.ClinicalDocument?.legalAuthenticator
+                      ?.assignedEntity?.telecom?.value
+                  }
+                </>
+              )}
 
-                {renderRowDiv(
-                  'Document maintained by',
-                  <>
-                    {
-                      XmlToJson?.ClinicalDocument?.custodian?.assignedCustodian
-                        ?.representedCustodianOrganization?.name
-                    }{' '}
-                  </>,
-                  'Contact info',
-                  <>
-                    {'Work Place:'} <br />
-                    {formatAddresswithCCDA(
-                      XmlToJson?.ClinicalDocument?.custodian?.assignedCustodian
-                        ?.representedCustodianOrganization?.addr
-                    )}
-                    <br />
-                    {
-                      XmlToJson?.ClinicalDocument?.custodian?.assignedCustodian
-                        ?.representedCustodianOrganization?.telecom?.value
-                    }
-                  </>
-                )}
-              </div>
-           
+              {renderRowDiv(
+                'Document maintained by',
+                <>
+                  {
+                    XmlToJson?.ClinicalDocument?.custodian?.assignedCustodian
+                      ?.representedCustodianOrganization?.name
+                  }{' '}
+                </>,
+                'Contact info',
+                <>
+                  {'Work Place:'} <br />
+                  {formatAddresswithCCDA(
+                    XmlToJson?.ClinicalDocument?.custodian?.assignedCustodian
+                      ?.representedCustodianOrganization?.addr
+                  )}
+                  <br />
+                  {
+                    XmlToJson?.ClinicalDocument?.custodian?.assignedCustodian
+                      ?.representedCustodianOrganization?.telecom?.value
+                  }
+                </>
+              )}
+            </div>
           )}
         </Paper>
       </Collapse>

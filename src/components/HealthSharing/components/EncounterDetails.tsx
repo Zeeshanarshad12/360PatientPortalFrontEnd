@@ -365,7 +365,7 @@ function EncounterDetailsReport() {
           const given = assignedPerson?.given || '';
           const family = assignedPerson?.family || '';
 
-          const performerPCP = `${prefix && `${prefix} `}${given} ${family}${
+          const performerPCP = `${family} ${given} ${prefix && ` ${prefix}`} ${
             organizationName ? ` of ${organizationName}` : ''
           }`.trim();
           documentDetailsHTML += renderRowHTML('Performer (PCP)', performerPCP);
@@ -530,13 +530,13 @@ function EncounterDetailsReport() {
         // Signed
         const signed = `${
           parseJson?.ClinicalDocument?.authenticator?.assignedEntity
-            ?.assignedPerson?.name?.prefix || ''
-        } ${
-          parseJson?.ClinicalDocument?.authenticator?.assignedEntity
             ?.assignedPerson?.name?.given || ''
         } ${
           parseJson?.ClinicalDocument?.authenticator?.assignedEntity
             ?.assignedPerson?.name?.family || ''
+        } ${
+          parseJson?.ClinicalDocument?.authenticator?.assignedEntity
+            ?.assignedPerson?.name?.prefix || ''
         }`.trim();
         const signedContact = `${formatAddresswithCCDA(
           parseJson?.ClinicalDocument?.authenticator?.assignedEntity?.addr
@@ -596,13 +596,13 @@ function EncounterDetailsReport() {
         // Information recipient
         const infoRecipient = `${
           parseJson?.ClinicalDocument?.informationRecipient?.intendedRecipient
-            ?.informationRecipient?.name?.prefix || ''
-        } ${
-          parseJson?.ClinicalDocument?.informationRecipient?.intendedRecipient
             ?.informationRecipient?.name?.given || ''
         } ${
           parseJson?.ClinicalDocument?.informationRecipient?.intendedRecipient
             ?.informationRecipient?.name?.family || ''
+        } ${
+          parseJson?.ClinicalDocument?.informationRecipient?.intendedRecipient
+            ?.informationRecipient?.name?.prefix || ''
         }`.trim();
         documentDetailsHTML += renderRowHTML(
           'Information recipient',
@@ -612,13 +612,13 @@ function EncounterDetailsReport() {
         // Legal authenticator
         const legalAuth = `${
           parseJson?.ClinicalDocument?.legalAuthenticator?.assignedEntity
-            ?.assignedPerson?.name?.prefix || ''
-        } ${
-          parseJson?.ClinicalDocument?.legalAuthenticator?.assignedEntity
             ?.assignedPerson?.name?.given || ''
         } ${
           parseJson?.ClinicalDocument?.legalAuthenticator?.assignedEntity
             ?.assignedPerson?.name?.family || ''
+        } ${
+          parseJson?.ClinicalDocument?.legalAuthenticator?.assignedEntity
+            ?.assignedPerson?.name?.prefix || ''
         } Signed At ${formatDateCCDADate(
           parseJson?.ClinicalDocument?.legalAuthenticator?.time?.value
         )}`.trim();
