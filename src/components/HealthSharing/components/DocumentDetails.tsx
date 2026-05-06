@@ -486,11 +486,11 @@ const DocumentDetails = ({ XmlToJson }) => {
                 <>
                   {
                     XmlToJson?.ClinicalDocument?.dataEnterer?.assignedEntity
-                      ?.assignedPerson?.name?.given
+                      ?.assignedPerson?.name?.family
                   }{' '}
                   {
                     XmlToJson?.ClinicalDocument?.dataEnterer?.assignedEntity
-                      ?.assignedPerson?.name?.family
+                      ?.assignedPerson?.name?.given
                   }
                 </>,
                 'Contact Info',
