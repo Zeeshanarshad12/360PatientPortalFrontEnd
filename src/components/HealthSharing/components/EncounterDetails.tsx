@@ -508,10 +508,10 @@ function EncounterDetailsReport() {
         // Entered By
         const enteredBy = `${
           parseJson?.ClinicalDocument?.dataEnterer?.assignedEntity
-            ?.assignedPerson?.name?.given || ''
+            ?.assignedPerson?.name?.family || ''
         } ${
           parseJson?.ClinicalDocument?.dataEnterer?.assignedEntity
-            ?.assignedPerson?.name?.family || ''
+            ?.assignedPerson?.name?.given || ''
         }`.trim();
         const enteredByContact = `${formatAddresswithCCDA(
           parseJson?.ClinicalDocument?.dataEnterer?.assignedEntity?.addr
