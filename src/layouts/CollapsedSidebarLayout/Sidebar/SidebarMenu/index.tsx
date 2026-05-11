@@ -126,15 +126,15 @@ function SidebarMenu({ onItemClick }: SidebarMenuProps) {
         pathname === '/patientportal/documents'
           ? '/statics/docufill.svg'
           : '/statics/docuout.svg'
+    },
+    {
+      name: 'Consent Forms',
+      link: '/patientportal/consentforms',
+      icon:
+        pathname === '/patientportal/consentforms'
+          ? '/statics/ConsentFormfill.svg'
+          : '/statics/ConsentFormout.svg'
     }
-    // {
-    //   name: 'Consent Forms',
-    //   link: '/patientportal/consentforms',
-    //   icon:
-    //     pathname === '/patientportal/consentforms'
-    //       ? '/statics/ConsentFormfill.svg'
-    //       : '/statics/ConsentFormout.svg'
-    // },
     // {
     //   name: 'Find A Doctor',
     //   link: '/patientportal/findAdoc',
