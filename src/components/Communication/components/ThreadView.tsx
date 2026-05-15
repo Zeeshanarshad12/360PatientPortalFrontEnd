@@ -6,8 +6,7 @@ import {
   sendReply,
   updateThreadStatus,
   clearSuccess,
-  clearError,
-  Message
+  clearError
 } from '@/slices/messagesSlice';
 import {
   selectActiveThread,
@@ -16,12 +15,12 @@ import {
   selectSuccessMessage
 } from '@/store/selectors';
 import { Avatar } from './shared/Avatar';
+import { MessageBubble } from './MessageBubble';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** communicatedOn from API → "08:24 PM" */
 function formatTime(iso: string | null | undefined): string {
   if (!iso) return '';
   const d = new Date(iso);
@@ -29,7 +28,6 @@ function formatTime(iso: string | null | undefined): string {
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-/** communicatedOn from API → "May 13, 2026" */
 function formatDateHeader(iso: string | null | undefined): string {
   if (!iso) return '';
   const d = new Date(iso);
@@ -40,46 +38,6 @@ function formatDateHeader(iso: string | null | undefined): string {
     year: 'numeric'
   });
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// MessageBubble
-// ALL messages left-aligned: avatar left → name + time → bubble below
-// Bubble color differs: patient = beige, provider = white
-// ─────────────────────────────────────────────────────────────────────────────
-
-interface MessageBubbleProps {
-  message: Message;
-  isOwn: boolean; // patient = beige bubble, provider = white bubble
-}
-
-const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isOwn }) => (
-  <div className="comm-bubble-row">
-    {/* Avatar — always left */}
-    <div className="comm-bubble-avatar">
-      <Avatar name={message.senderName} size={38} />
-    </div>
-
-    {/* Name + time + bubble */}
-    <div className="comm-bubble-group">
-      {/* "Dr. Ethan Sinclair  08:24 PM" */}
-      <div className="comm-bubble-meta">
-        <span className="comm-bubble-sender">{message.senderName}</span>
-        <span className="comm-bubble-time">
-          {formatTime(message.timestamp)}
-        </span>
-      </div>
-
-      {/* Bubble */}
-      <div
-        className={`comm-bubble${
-          isOwn ? ' comm-bubble--own' : ' comm-bubble--other'
-        }`}
-      >
-        {message.content}
-      </div>
-    </div>
-  </div>
-);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // ThreadView
@@ -141,6 +99,10 @@ export const ThreadView: React.FC = () => {
     );
   }
 
+  // ── Derived ────────────────────────────────────────────────────────────────
+  const isClosed = thread.status === 'closed';
+  const statusLabel = isClosed ? 'Closed' : 'Open Message';
+
   // ── Handlers ───────────────────────────────────────────────────────────────
 
   const handleSend = () => {
@@ -153,7 +115,7 @@ export const ThreadView: React.FC = () => {
       sendReply({
         threadId: thread.id,
         patientCommunicationId: thread.patientCommunicationId,
-        recipientId: Number(thread.providerId),
+        recipientId: Number(thread.providerId) || 0,
         subject: thread.subject,
         content: reply.trim(),
         createdBy: thread.patientName
@@ -170,22 +132,13 @@ export const ThreadView: React.FC = () => {
 
   const handleStatusChange = (status: 'open' | 'closed') => {
     if (!thread) return;
-    console.log('updateThreadStatus payload:', {
-      patientId: Number(thread.patientId),
-      userId: 1,
-      assignedTo: Number(thread.providerId),
-      patientCommunicationMediumId: Number(thread.messageType),
-      subject: thread.subject,
-      priority: thread.priority,
-      communicationText: thread.lastMessage
-    });
     dispatch(
       updateThreadStatus({
         threadId: thread.id,
         patientCommunicationId: thread.patientCommunicationId,
         status,
         patientId: Number(thread.patientId),
-        userId: 1, // from your auth
+        userId: 1,
         assignedTo: Number(thread.providerId),
         patientCommunicationMediumId: Number(thread.messageType),
         subject: thread.subject,
@@ -212,29 +165,32 @@ export const ThreadView: React.FC = () => {
     }
   });
 
-  const statusLabel = thread.status === 'open' ? 'Open Message' : 'Closed';
-
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="comm-thread-view">
-      {/* ── Header: patient avatar + name + "to: provider" ── */}
+      {/* ── Header ── */}
       <div className="comm-thread-view__header">
         <div className="comm-thread-view__header-info">
-          <Avatar name={thread.patientName} size={42} />
+          <Avatar
+            name={thread.initiatorName}
+            size={42}
+            role={thread.initiatorRole}
+            isClosed={isClosed}
+          />
           <div className="comm-thread-view__header-text">
             <div className="comm-thread-view__patient-name">
-              {thread.patientName}
+              {thread.initiatorName}
             </div>
             <div className="comm-thread-view__sub">
               to:{' '}
               <span className="comm-thread-view__provider">
-                {thread.providerName}
+                {thread.toName}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Status dropdown — no priority, no count */}
+        {/* Status dropdown */}
         <div className="comm-status-dropdown" ref={menuRef}>
           <button
             className="comm-status-btn"
@@ -297,7 +253,6 @@ export const ThreadView: React.FC = () => {
       <div className="comm-thread-view__messages">
         {messagesByDate.map(({ dateLabel, messages }) => (
           <div key={dateLabel}>
-            {/* Date divider */}
             <div className="comm-date-divider">
               <span>{dateLabel}</span>
             </div>
@@ -315,7 +270,12 @@ export const ThreadView: React.FC = () => {
                       <span>New Message</span>
                     </div>
                   )}
-                  <MessageBubble message={msg} isOwn={isOwn} />
+                  {/* ✅ isClosed passed from thread — no reference to thread inside MessageBubble */}
+                  <MessageBubble
+                    message={msg}
+                    isOwn={isOwn}
+                    isClosed={isClosed}
+                  />
                 </React.Fragment>
               );
             })}
@@ -343,7 +303,7 @@ export const ThreadView: React.FC = () => {
       )}
 
       {/* ── Reply box ── */}
-      {thread.status === 'open' && (
+      {!isClosed && (
         <div className="comm-reply-box">
           <textarea
             ref={textareaRef}
@@ -397,7 +357,7 @@ export const ThreadView: React.FC = () => {
         </div>
       )}
 
-      {thread.status === 'closed' && (
+      {isClosed && (
         <div className="comm-thread-closed">
           This thread is closed. Mark as Open to reply.
         </div>

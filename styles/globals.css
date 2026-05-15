@@ -495,8 +495,8 @@ html {
 }
 
 .comm-thread-item__avatar {
-  position: relative !important;
-  flex-shrink: 0 !important;
+  position: relative;
+  flex-shrink: 0;
 }
 
 .comm-thread-item__dot {
