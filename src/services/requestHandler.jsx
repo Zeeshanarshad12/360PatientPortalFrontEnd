@@ -435,8 +435,7 @@ const apiServicesV2 = {
   resetAuth0PatientPassword,
   UploadPatientDocument,
   AddDocument,
-  GetListOfDocumentType
-  resetAuth0PatientPassword,
+  GetListOfDocumentType,
   GetCommunications,
   AddUpdateCommunication,
   AddCommunicationComment,
