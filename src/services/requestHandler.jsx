@@ -341,6 +341,57 @@ const resetAuth0PatientPassword = (data, flag) =>
     ApiVersion2Req: flag
   });
 
+const UploadPatientDocument = (data) =>
+  post(SERVICE_URLSV2.UploadPatientDocuments, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: 'ApiVersion2Req'
+  });
+
+const AddDocument = (data) =>
+  post(SERVICE_URLSV2.AddDocument, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: 'ApiVersion2Req'
+  });
+
+const GetListOfDocumentType = (data) =>
+  post(SERVICE_URLSV2.GetListOfDocumentType, data, {
+    feature: featureConstants.static,
+    EmrReq: true
+  });
+const GetPatientProviders = (data, flag) =>
+  get(
+    `${SERVICE_URLSV2.GetPatientProviders}?PracticeId=${data.practiceId}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
+const GetCommunications = (data, flag) => {
+  const url = `${SERVICE_URLSV2.GetCommunications}?Status=${data.status}&PracticeId=${data.practiceId}&PatientId=${data.patientId}`;
+  return get(
+    url,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+};
+
+const AddUpdateCommunication = (data, flag) =>
+  post(`${SERVICE_URLSV2.AddUpdateCommunication}`, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
+
+const AddCommunicationComment = (data, flag) =>
+  post(`${SERVICE_URLSV2.AddCommunicationComment}`, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
+
 const apiServicesV2 = {
   GetGeneralLookup,
   ClearCahce,
@@ -381,7 +432,15 @@ const apiServicesV2 = {
   generateResetPasswordOtp,
   resetPatientPassword,
   generateCodeResetPassword,
-  resetAuth0PatientPassword
+  resetAuth0PatientPassword,
+  UploadPatientDocument,
+  AddDocument,
+  GetListOfDocumentType
+  resetAuth0PatientPassword,
+  GetCommunications,
+  AddUpdateCommunication,
+  AddCommunicationComment,
+  GetPatientProviders
 };
 
 export default apiServicesV2;

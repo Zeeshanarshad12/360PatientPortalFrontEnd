@@ -5,7 +5,7 @@ import PrintIcon from '@mui/icons-material/Print';
 import DownloadIcon from '@mui/icons-material/Download';
 import { useRef, useState, useEffect } from 'react';
 import SignatureDialog from './SignatureDialog';
-import { saveConsentForm } from '@/slices/patientprofileslice';
+import { saveConsentForm, uploadAndSaveConsentFormDocument } from '@/slices/patientprofileslice';
 import { useSelector, useDispatch } from '@/store/index';
 import { Snackbar, Alert } from '@mui/material';
 import { useConsentFormContext } from '@/contexts/ConsentFormContext';
@@ -57,8 +57,13 @@ const ConsentFormViewer = ({
       updatedContent = updatedContent.replace(
         /_{10,}/g, // match a long underscore line
         form.Signature
-          ? `<img src="${form.Signature}" alt="Patient Signature" style="max-width: 250px; height: auto;" />`
+          ? `<img src="${form.Signature}" alt="Signature" style="max-width: 250px; height: auto;" />${form.SignedByName ? `<br/><span style="font-size:13px;font-weight:bold">Signed By: ${form.SignedByName}</span>` : ''}`
           : '___________________________'
+      );
+
+      updatedContent = updatedContent.replace(
+        /Patient Signature:/g,
+        'Signature:'
       );
 
       setRenderedContent(updatedContent);
@@ -212,6 +217,75 @@ const ConsentFormViewer = ({
 
         onFormSigned(form.FormID, Signature);
         setCountdown(5);
+
+        let documentFile: File | null = null;
+        try {
+          const jsPDFModule = await import('jspdf');
+          const jsPDF = (jsPDFModule as any).jsPDF ?? jsPDFModule.default;
+          const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+          const pageH = pdf.internal.pageSize.getHeight();
+          const margin = 15;
+          const lineH = 6;
+          let y = 20;
+
+          // Title
+          pdf.setFontSize(16);
+          pdf.text(form.Title, 105, y, { align: 'center' });
+          y += 14;
+
+          // Body text (strip HTML tags)
+          const bodyText =
+            new DOMParser()
+              .parseFromString(renderedContent, 'text/html')
+              .body.innerText.trim() || '';
+          pdf.setFontSize(10);
+          const lines: string[] = pdf.splitTextToSize(bodyText, 180);
+          for (const line of lines) {
+            if (y > pageH - 30) { pdf.addPage(); y = 20; }
+            pdf.text(line, margin, y);
+            y += lineH;
+          }
+
+          // Signature image
+          if (y > pageH - 45) { pdf.addPage(); y = 20; }
+          y += 6;
+          pdf.setFontSize(10);
+          pdf.text('Signature:', margin, y);
+          y += 4;
+          try {
+            pdf.addImage(Signature, 'PNG', margin, y, 60, 20);
+            y += 24;
+          } catch { y += 4; }
+          if (form.SignedByName) {
+            pdf.text(`Signed By: ${form.SignedByName}`, margin, y);
+            y += lineH;
+          }
+          pdf.text(`Date: ${new Date().toLocaleDateString()}`, margin, y);
+
+          const pdfBlob = pdf.output('blob');
+          documentFile = new File(
+            [pdfBlob],
+            `${form.Title.replace(/\s+/g, '_')}.pdf`,
+            { type: 'application/pdf' }
+          );
+        } catch (err) {
+          console.error('PDF conversion failed:', err);
+        }
+
+        try {
+          await dispatch(
+            uploadAndSaveConsentFormDocument({
+              patientId: patientId ?? '',
+              practiceId: practiceId ?? '',
+              title: form.Title,
+              documentFile
+            })
+          );
+        } catch {
+          setSnackbarMessage('Form signed, but document upload failed.');
+          setSnackbarSeverity('error');
+          setSnackbarOpen(true);
+        }
       } else {
         setSnackbarMessage(response.payload.result);
         setSnackbarSeverity('error');

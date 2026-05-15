@@ -468,6 +468,104 @@ export const GetConsentFormContent: any = createAsyncThunk(
   }
 );
 
+export const uploadAndSaveConsentFormDocument: any = createAsyncThunk(
+  'uploadAndSaveConsentFormDocument',
+  async (
+    data: {
+      patientId: string;
+      practiceId: string;
+      title: string;
+      documentFile: File | null;
+    },
+    thunkAPI
+  ) => {
+    const { patientId, practiceId, title, documentFile } = data;
+
+    if (!documentFile) {
+      return thunkAPI.rejectWithValue('No document file to upload');
+    }
+
+    // Resolve document type ID for "Consent Form" using the same API as SidebarMenu
+    let consentFormTypeId: number | null = null;
+    try {
+      const typeRes = await apiServicesV2.getAllDocumentTypes(
+        {
+          patientId: Number(patientId),
+          practiceId: Number(practiceId),
+          fromDate: '2000-01-01T00:00:00.000Z',
+          toDate: new Date(Date.now() + 86400000).toISOString()
+        },
+        'ApiVersion2Req'
+      );
+      if (typeRes?.status === 200 || typeRes?.status === 201) {
+        const types: any[] = typeRes?.data?.result ?? [];
+        outer: for (const parent of types) {
+          const subs: any[] = parent?.documentSubTypes ?? [];
+          for (const sub of subs) {
+            if (
+              typeof sub?.name === 'string' &&
+              sub.name.toLowerCase().includes('consent') &&
+              !sub.isDeleted
+            ) {
+              consentFormTypeId = sub.id;
+              break outer;
+            }
+          }
+          if (
+            typeof parent?.name === 'string' &&
+            parent.name.toLowerCase().includes('consent') &&
+            !parent.isDeleted
+          ) {
+            consentFormTypeId = parent.id;
+            break;
+          }
+        }
+      }
+    } catch {
+      // Continue with upload even if type lookup fails
+    }
+
+    const formData = new FormData();
+    formData.append('files', documentFile);
+
+    try {
+      const uploadRes = await apiServicesV2.UploadPatientDocument(formData);
+      if (uploadRes?.status !== 200 && uploadRes?.status !== 201) {
+        return thunkAPI.rejectWithValue('Document upload failed');
+      }
+
+      const documentUri = uploadRes?.data?.result?.[0]?.documentName;
+
+      const addRes = await apiServicesV2.AddDocument({
+        patientId: Number(patientId),
+        practiceId: Number(practiceId),
+        displayName: title,
+        documentName: title,
+        fileName: documentFile.name,
+        extension: 'pdf',
+        ...(consentFormTypeId !== null && { documentType: consentFormTypeId }),
+        documentUri,
+        sizeInBytes: documentFile.size,
+        signed: true,
+        showOnPortal: true,
+        isActive: true,
+        date: new Date().toISOString(),
+        shareWithPatient: true,
+        isIncomingReferral: false,
+        comments: '',
+        assignedUsers: []
+      });
+
+      if (addRes?.status === 200 || addRes?.status === 201) {
+        return { success: true };
+      }
+      return thunkAPI.rejectWithValue('Failed to save document metadata');
+    } catch {
+      return thunkAPI.rejectWithValue('Document upload failed');
+    }
+  }
+);
+
 export const GetPatientActiveMedications: any = createAsyncThunk(
   'GetPatientActiveMedications',
   async (data, thunkAPI) => {

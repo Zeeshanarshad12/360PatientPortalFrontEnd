@@ -28,7 +28,8 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noFallthroughCasesInSwitch": true,
-    "incremental": true
+    "incremental": true,
+    "types": ["node"]
   },
   "exclude": ["node_modules", "dist"],
   "include": ["src", "next-env.d.ts", "**/*.ts", "**/*.tsx"]

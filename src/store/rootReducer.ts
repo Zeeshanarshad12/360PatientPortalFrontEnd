@@ -1,19 +1,21 @@
-import { combineReducers } from "@reduxjs/toolkit";
-import createWebStorage from "redux-persist/lib/storage/createWebStorage";
-import { persistReducer } from "redux-persist";
-import { createFilter } from "redux-persist-transform-filter";
-import { staticReducer } from "@/slices/static";
-import { patientProfileReducer } from "@/slices/patientprofileslice";
+import { combineReducers } from '@reduxjs/toolkit';
+import createWebStorage from 'redux-persist/lib/storage/createWebStorage';
+import { persistReducer } from 'redux-persist';
+import { createFilter } from 'redux-persist-transform-filter';
+import { staticReducer } from '@/slices/static';
+import { patientProfileReducer } from '@/slices/patientprofileslice';
+import messagesReducer from '@/slices/messagesSlice';
 
 export const rootReducer = combineReducers({
   static: staticReducer,
-  patientprofileslice: patientProfileReducer
+  patientprofileslice: patientProfileReducer,
+  messages: messagesReducer
 });
 
-const GeneralLookupDataFilter = createFilter("static", ["GeneralLookupData"]);
-const PatientProfileFilter = createFilter("patientprofileslice", [
-  "PatientByEmailData",
-  "patientEmail",
+const GeneralLookupDataFilter = createFilter('static', ['GeneralLookupData']);
+const PatientProfileFilter = createFilter('patientprofileslice', [
+  'PatientByEmailData',
+  'patientEmail'
 ]);
 
 const createNoopStorage = () => {
@@ -26,20 +28,20 @@ const createNoopStorage = () => {
     },
     removeItem() {
       return Promise.resolve();
-    },
+    }
   };
 };
 
 const storage =
-  typeof window !== "undefined"
-    ? createWebStorage("local")
+  typeof window !== 'undefined'
+    ? createWebStorage('local')
     : createNoopStorage();
 
 export const persistConfig = {
-  key: "root",
+  key: 'root',
   storage,
-  whitelist: ["static", "patientprofileslice"],
-  transforms: [GeneralLookupDataFilter,PatientProfileFilter],
+  whitelist: ['static', 'patientprofileslice'],
+  transforms: [GeneralLookupDataFilter, PatientProfileFilter]
 };
 const rootReducerWithReset = (state: any, action: any) => {
   if (action.type === 'RESET_ALL_STATE') {

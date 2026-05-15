@@ -128,6 +128,14 @@ function SidebarMenu({ onItemClick }: SidebarMenuProps) {
           : '/statics/docuout.svg'
     },
     {
+      name: 'Communication',
+      link: '/patientportal/communications',
+      icon:
+        pathname === '/patientportal/communications'
+          ? '/statics/Communication_Selected.svg'
+          : '/statics/Communication.svg'
+    },
+    {
       name: 'Consent Forms',
       link: '/patientportal/consentforms',
       icon:
