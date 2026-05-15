@@ -51,6 +51,9 @@ export interface Thread {
   unreadCount: number;
   isRead: boolean;
   isFlagged?: boolean;
+  initiatorName: string;
+  initiatorRole: 'patient' | 'provider';
+  toName: string;
 }
 
 export interface Provider {
@@ -96,6 +99,7 @@ export interface CommunicationComment {
   communicatedOn: string;
   isPrivate: boolean;
   providerID: number;
+  initiator: 'patient' | 'provider';
 }
 
 export interface ApiThread {
@@ -112,6 +116,7 @@ export interface ApiThread {
   status: string;
   createdBy: string;
   communicationComments: CommunicationComment[];
+  initiator: 'patient' | 'provider';
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -178,13 +183,31 @@ export const fetchThreads = createAsyncThunk<
   FetchThreadsParams
 >('messages/fetchThreads', async (data, thunkAPI) => {
   try {
+    const params: Record<string, any> = {
+      patientId: data.patientId,
+      practiceId: data.practiceId,
+      status: data.status
+    };
     const res = await apiServicesV2.GetCommunications(data, 'ApiVersion2Req');
 
     if (res?.status === 200 || res?.status === 201) {
       const apiThreads: ApiThread[] = res.data?.result ?? res.data ?? [];
+
+      const uniqueApiThreads = Array.from(
+        new Map(apiThreads.map((t) => [t.id, t])).values()
+      );
+
+      const mapped = uniqueApiThreads.map(mapApiThreadToThread);
+
+      const sorted = [...mapped].sort(
+        (a, b) =>
+          new Date(b.lastActivity ?? 0).getTime() -
+          new Date(a.lastActivity ?? 0).getTime()
+      );
+
       return {
-        threads: apiThreads.map(mapApiThreadToThread),
-        providers: extractProviders(apiThreads)
+        threads: sorted,
+        providers: extractProviders(uniqueApiThreads)
       };
     }
 
@@ -248,11 +271,11 @@ export const sendReply = createAsyncThunk<
     const res = await apiServicesV2.AddCommunicationComment(
       {
         id: 0,
-        patientCommunicationId: payload.patientCommunicationId, // ✅ key field
+        patientCommunicationId: payload.patientCommunicationId,
         recipientId: payload.recipientId,
         subject: payload.subject,
         communicationText: payload.content,
-        createdBy: payload.createdBy, // ✅ ADD
+        createdBy: payload.createdBy,
         communicatedOn: new Date().toISOString(),
         isPrivate: false
       },
@@ -346,6 +369,9 @@ export const createThread = createAsyncThunk<Thread, CreateThreadPayload>(
           lastActivity: new Date().toISOString(),
           unreadCount: 0,
           isRead: true,
+          initiatorName: payload.patientName || 'Patient', // patient creates from portal
+          initiatorRole: 'patient',
+          toName: payload.providerName,
           messages: [
             {
               id: `msg-${Date.now()}`,

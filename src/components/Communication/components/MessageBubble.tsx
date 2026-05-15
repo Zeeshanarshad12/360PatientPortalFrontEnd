@@ -5,10 +5,9 @@ import { Message } from '@/slices/messagesSlice';
 import { Avatar } from './shared/Avatar';
 import { formatMessageTime } from '@/utils/helpers';
 
-interface MessageBubbleProps {
-  message: Message;
-  isOwn: boolean;
-}
+// ─────────────────────────────────────────────────────────────────────────────
+// Icons
+// ─────────────────────────────────────────────────────────────────────────────
 
 const FileIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="#EF4444">
@@ -37,29 +36,47 @@ const DownloadIcon = () => (
   </svg>
 );
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Props
+// ─────────────────────────────────────────────────────────────────────────────
+
+interface MessageBubbleProps {
+  message: Message;
+  isOwn: boolean;
+  isClosed: boolean; //  ADD — controls avatar gray color
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Component
+// ─────────────────────────────────────────────────────────────────────────────
+
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
   message,
-  isOwn
+  isOwn,
+  isClosed
 }) => {
   return (
-    //  single layout — no --own row variant, always left-to-right
     <div className="comm-bubble-row">
-      {/*  avatar always shown on left for ALL messages */}
+      {/* Avatar — always left */}
       <div className="comm-bubble-avatar">
-        <Avatar name={message.senderName} size={36} />
+        <Avatar
+          name={message.senderName}
+          size={38}
+          role={message.senderRole} //  'patient' | 'provider'
+          isClosed={isClosed} // gray when thread closed
+        />
       </div>
 
       <div className="comm-bubble-group">
-        {/* name + time */}
+        {/* Name + time */}
         <div className="comm-bubble-meta">
           <span className="comm-bubble-sender">{message.senderName}</span>
-          {/*  formatMessageTime receives communicatedOn ISO string from API */}
           <span className="comm-bubble-time">
             {formatMessageTime(message.timestamp)}
           </span>
         </div>
 
-        {/* bubble — only color differs between patient and provider */}
+        {/* Bubble */}
         <div
           className={`comm-bubble${
             isOwn ? ' comm-bubble--own' : ' comm-bubble--other'
@@ -67,7 +84,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         >
           <p className="comm-bubble__text">{message.content}</p>
 
-          {/* attachments — unchanged logic */}
+          {/* Attachments */}
           {message.attachments && message.attachments.length > 0 && (
             <div className="comm-message__attachments">
               {message.attachments.map((att) => (
@@ -80,7 +97,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                   <button className="comm-attachment__dl" aria-label="Download">
                     <DownloadIcon />
                   </button>
-                  s
+                  {/*  removed stray 's' character that was here */}
                 </div>
               ))}
             </div>

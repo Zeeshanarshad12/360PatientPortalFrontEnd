@@ -146,7 +146,7 @@ export const NewMessageModal: React.FC = () => {
           fetchThreads({
             patientId: Number(patientId),
             practiceId: Number(practiceId),
-            status: 'open' // fetch all statuses
+            status: 'open'
           })
         );
       }

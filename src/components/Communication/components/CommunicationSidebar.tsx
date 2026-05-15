@@ -54,11 +54,12 @@ export const CommunicationSidebar: React.FC = () => {
 
   useEffect(() => {
     if (!patientId || !practiceId) return;
+    console.log('Group value', group);
     dispatch(
       fetchThreads({
         patientId: Number(patientId),
         practiceId: Number(practiceId),
-        status: group === 'all' ? undefined : group
+        status: group
       })
     );
   }, [dispatch, patientId, practiceId, group]);
@@ -82,11 +83,15 @@ export const CommunicationSidebar: React.FC = () => {
   const filteredGroups = groups
     .map((g: any) => ({
       ...g,
-      items: g.items.filter(
-        (t: any) =>
-          t.subject.toLowerCase().includes(search.toLowerCase()) ||
-          t.providerName.toLowerCase().includes(search.toLowerCase())
-      )
+      items: g.items.filter((t: any) => {
+        const q = search.toLowerCase();
+        return (
+          (t.subject ?? '').toLowerCase().includes(q) ||
+          (t.initiatorName ?? '').toLowerCase().includes(q) ||
+          (t.toName ?? '').toLowerCase().includes(q) ||
+          (t.lastMessage ?? '').toLowerCase().includes(q)
+        );
+      })
     }))
     .filter((g: any) => g.items.length > 0);
 
@@ -245,44 +250,93 @@ export const CommunicationSidebar: React.FC = () => {
                   onClick={() => dispatch(setActiveThread(thread.id))}
                 >
                   <div className="comm-thread-item__avatar">
-                    <Avatar name={thread.providerName} size={40} />
-                    {!thread.isRead && (
-                      <span className="comm-thread-item__dot" />
+                    <Avatar
+                      name={thread.initiatorName}
+                      size={40}
+                      role={thread.initiatorRole}
+                      isClosed={thread.status === 'closed'}
+                    />
+                    {/* Open — solid green dot */}
+                    {thread.status === 'open' && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          bottom: '0px',
+                          right: '0px',
+                          width: '12px',
+                          height: '12px',
+                          borderRadius: '50%',
+                          background: '#1D9E75',
+                          border: '2px solid var(--color-background-primary)'
+                        }}
+                      />
+                    )}
+
+                    {/* Closed — hollow gray ring only, no text badge */}
+                    {thread.status === 'closed' && (
+                      <span
+                        style={{
+                          position: 'absolute',
+                          bottom: '0px',
+                          right: '0px',
+                          width: '12px',
+                          height: '12px',
+                          borderRadius: '50%',
+                          background: 'var(--color-background-primary)',
+                          border: '2.5px solid #888780'
+                        }}
+                      />
                     )}
                   </div>
+
                   <div className="comm-thread-item__content">
                     <div className="comm-thread-item__top">
-                      <span className="comm-thread-item__name">
-                        {thread.providerName}
+                      <span
+                        className="comm-thread-item__name"
+                        style={{
+                          color:
+                            thread.status === 'closed'
+                              ? 'var(--color-text-secondary)'
+                              : 'var(--color-text-primary)'
+                        }}
+                      >
+                        {thread.initiatorName}
                       </span>
                       <span className="comm-thread-item__time">
                         {formatTimestamp(thread.lastActivity)}
                       </span>
                     </div>
-                    <div className="comm-thread-item__preview">
+                    <div
+                      className="comm-thread-item__preview"
+                      style={{
+                        color:
+                          thread.status === 'closed'
+                            ? 'var(--color-text-tertiary)'
+                            : 'var(--color-text-secondary)'
+                      }}
+                    >
                       {truncate(thread.lastMessage, 45)}
                     </div>
                   </div>
-                  {thread.isFlagged ||
-                    (thread.priority === 'Urgent' && (
-                      <svg
-                        className="comm-thread-item__flag"
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="#EF4444"
-                      >
-                        <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-                        <line
-                          x1="4"
-                          y1="22"
-                          x2="4"
-                          y2="15"
-                          stroke="#EF4444"
-                          strokeWidth="2"
-                        />
-                      </svg>
-                    ))}
+                  {(thread.isFlagged || thread.priority === 'Urgent') && (
+                    <svg
+                      className="comm-thread-item__flag"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 24 24"
+                      fill="#EF4444"
+                    >
+                      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                      <line
+                        x1="4"
+                        y1="22"
+                        x2="4"
+                        y2="15"
+                        stroke="#EF4444"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                  )}
                 </button>
               ))}
             </div>
