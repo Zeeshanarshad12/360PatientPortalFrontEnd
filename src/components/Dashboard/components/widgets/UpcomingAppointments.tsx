@@ -26,7 +26,7 @@ interface Props {
 }
 
 const getStatusColor = (appointmentStatus: string) => {
-  switch (appointmentStatus.toLowerCase()) {
+  switch (appointmentStatus?.toLowerCase()) {
     case 'scheduled':
       return { bgcolor: '#fff3e0', textColor: '#f57c00' };
     case 'completed':

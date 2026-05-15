@@ -31,11 +31,11 @@ export async function getConsentForms() {
         </p>
 
         <p style="margin-top: 2rem;">
-          Patient Signature: <strong>{{patient_signature}}</strong>
+          Patient/Guardian Signature: <strong>{{patient_signature}}</strong>
         </p>
         <p>Date: <strong>{{current_date}}</strong></p>
       `,
-      Status: 'Pending',
+      Status: 'Pending'
     },
     {
       FormID: '2',
@@ -70,12 +70,12 @@ export async function getConsentForms() {
         </p>
 
         <p style="margin-top: 2rem;">
-          Patient Signature: <strong>{{patient_signature}}</strong>
+         Parent / Guardian Signature: <strong>{{patient_signature}}</strong>
         </p>
         <p>Date: <strong>{{current_date}}</strong></p>
       `,
       Status: 'Signed',
-      SignedDate: '2025-07-09',
+      SignedDate: '2025-07-09'
     },
     {
       FormID: '3',
@@ -129,12 +129,12 @@ export async function getConsentForms() {
         <p style="margin-top: 2rem;">Thank you for choosing <strong>{{practice_name}}</strong>!</p>
       `,
       Status: 'Signed',
-      SignedDate: '2025-07-10',
+      SignedDate: '2025-07-10'
     },
     {
-  FormID: '4',
-  Title: 'Medical Procedure',
-  Content: `
+      FormID: '4',
+      Title: 'Medical Procedure',
+      Content: `
     <p><strong>Patient Name:</strong> {{patient_name}}</p>
     <p><strong>Date of Birth:</strong> {{date_of_birth}}</p>
     <p><strong>Procedure:</strong> Laparoscopic Appendectomy</p>
@@ -175,12 +175,12 @@ export async function getConsentForms() {
       <strong>Date:</strong> {{current_date}}
     </p>
   `,
-  Status: 'Pending'
-},
-{
-  FormID: '12',
-  Title: 'Hospital Procedure',
-  Content: `
+      Status: 'Pending'
+    },
+    {
+      FormID: '12',
+      Title: 'Hospital Procedure',
+      Content: `
     <p><strong>Patient Name:</strong> {{patient_name}}</p>
     <p><strong>Date of Birth:</strong> {{date_of_birth}}</p>
     <p><strong>Procedure:</strong> Laparoscopic Appendectomy</p>
@@ -221,7 +221,7 @@ export async function getConsentForms() {
       <strong>Date:</strong> {{current_date}}
     </p>
   `,
-  Status: 'Pending'
-}
+      Status: 'Pending'
+    }
   ]);
 }

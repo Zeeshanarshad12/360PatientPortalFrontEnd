@@ -6,4 +6,5 @@ export interface ConsentForm {
   Status: 'Pending' | 'Signed';
   SignedDate?: string;
   Signature?: string;
+  SignedByName?: string | null;
 }

@@ -28,7 +28,6 @@ import SharedLayout from '@/layouts';
 import { ConsentFormProvider } from '@/contexts/ConsentFormContext';
 import { CurrentPatientProvider } from '@/contexts/CurrentPatientContext';
 import PracticeChangeRefresher from './_PracticeChangeRefresher';
-
 const clientSideEmotionCache = createEmotionCache();
 
 type NextPageWithLayout = NextPage & {
@@ -58,7 +57,12 @@ function MyApp(props: MyAppProps) {
     console.debug = () => {};
   }
 
-  const authPages = ['/auth/signup', '/auth/signin', '/auth/forgotpassword', '/'];
+  const authPages = [
+    '/auth/signup',
+    '/auth/signin',
+    '/auth/forgotpassword',
+    '/'
+  ];
   const isAuthPage = authPages.includes(router.pathname);
 
   return (
@@ -72,48 +76,48 @@ function MyApp(props: MyAppProps) {
         <link rel="icon" href="/statics/Logo.svg" type="image/svg+xml" />
       </Head>
       <ReduxProvider store={store}>
-      {isAuthPage ? (
-    // Auth pages: no PersistGate, minimal providers
-    <ThemeProvider>
-      <CssBaseline />
-      <Component {...pageProps} />
-    </ThemeProvider>
-  ) : (
-    // Main app: full provider tree, wrapped in PersistGate
-    <PersistGate loading={null} persistor={persistor}>
-      <SidebarProvider>
-        <ThemeProvider>
-          <LocalizationProvider dateAdapter={AdapterDateFns}>
-            {/* <AuthProvider> */}
-            <AxiosInterceptor>
-              <SnackbarProvider
-                maxSnack={6}
-                anchorOrigin={{
-                  vertical: 'bottom',
-                  horizontal: 'right'
-                }}
-                action={(key) => <SnackbarCloseButton key={key} />}
-              >
-                <SnackbarUtilsConfigurator />
-                <CssBaseline />
-                {/* <CustomScript /> */}
-                <ConsentFormProvider>
-                  <CurrentPatientProvider>
-                    <PracticeChangeRefresher />
-                    <SharedLayout>
-                      <Component {...pageProps} />
-                    </SharedLayout>
-                  </CurrentPatientProvider>
-                </ConsentFormProvider>
-              </SnackbarProvider>
-            </AxiosInterceptor>
-            {/* </AuthProvider> */}
-          </LocalizationProvider>
-        </ThemeProvider>
-      </SidebarProvider>
-    </PersistGate>
-  )}
-</ReduxProvider>
+        {isAuthPage ? (
+          // Auth pages: no PersistGate, minimal providers
+          <ThemeProvider>
+            <CssBaseline />
+            <Component {...pageProps} />
+          </ThemeProvider>
+        ) : (
+          // Main app: full provider tree, wrapped in PersistGate
+          <PersistGate loading={null} persistor={persistor}>
+            <SidebarProvider>
+              <ThemeProvider>
+                <LocalizationProvider dateAdapter={AdapterDateFns}>
+                  {/* <AuthProvider> */}
+                  <AxiosInterceptor>
+                    <SnackbarProvider
+                      maxSnack={6}
+                      anchorOrigin={{
+                        vertical: 'bottom',
+                        horizontal: 'right'
+                      }}
+                      action={(key) => <SnackbarCloseButton key={key} />}
+                    >
+                      <SnackbarUtilsConfigurator />
+                      <CssBaseline />
+                      {/* <CustomScript /> */}
+                      <ConsentFormProvider>
+                        <CurrentPatientProvider>
+                          <PracticeChangeRefresher />
+                          <SharedLayout>
+                            <Component {...pageProps} />
+                          </SharedLayout>
+                        </CurrentPatientProvider>
+                      </ConsentFormProvider>
+                    </SnackbarProvider>
+                  </AxiosInterceptor>
+                  {/* </AuthProvider> */}
+                </LocalizationProvider>
+              </ThemeProvider>
+            </SidebarProvider>
+          </PersistGate>
+        )}
+      </ReduxProvider>
     </CacheProvider>
   );
 }

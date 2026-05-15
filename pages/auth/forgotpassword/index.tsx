@@ -269,7 +269,6 @@ function ForgotPassword() {
         Password: password.toString(),
         CreatedBy: 'System'
       };
-
       try {
         const patientRestResponse = await dispatch(
           resetAuth0PatientPassword(Passresetobj)

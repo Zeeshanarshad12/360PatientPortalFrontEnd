@@ -24,7 +24,7 @@ function ConsentFormsLayout() {
   const [justSigned, setJustSigned] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(false);
   const { setPendingCount } = useConsentFormContext();
-  
+
   const { patientId, practiceId } = useCurrentPatient();
 
   const { GetConsentFormDataList } = useSelector(
@@ -54,7 +54,8 @@ function ConsentFormsLayout() {
           Content: '',
           Status: form.status,
           SignedDate: form.signedDate,
-          Signature: form.signature
+          Signature: form.signature,
+          SignedByName: form.signedByName ?? null
         }));
 
         setForms(mappedForms);
@@ -92,7 +93,8 @@ function ConsentFormsLayout() {
         Content: form.content,
         Status: form.status,
         SignedDate: form.signedDate,
-        Signature: form.signature
+        Signature: form.signature,
+        SignedByName: form.signedByName ?? null
       }));
       const pending = mappedForms.filter((f) => f.Status === 'Pending');
       setPendingCount(pending.length);
@@ -138,6 +140,9 @@ function ConsentFormsLayout() {
       try {
         const detailedForms = await getConsentFormById(form.FormID);
         const detailedForm = detailedForms[0];
+        {
+          console.log('detailedForm', detailedForm);
+        }
         // const rawContent = JSON.parse(detailedForm.content);
         const rawContent = detailedForm?.content
           ? JSON.parse(detailedForm.content)
@@ -146,7 +151,8 @@ function ConsentFormsLayout() {
         const updatedForm = {
           ...form,
           Content: contenthtml,
-          Signature: detailedForm.signature
+          Signature: detailedForm.signature,
+          SignedByName: detailedForm.signedByName ?? form.SignedByName ?? null
         };
 
         setForms((prev) =>
