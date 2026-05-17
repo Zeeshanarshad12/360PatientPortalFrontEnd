@@ -32,6 +32,10 @@ export function mapApiThreadToThread(item: ApiThread): Thread {
     ? 'patient'
     : 'provider';
 
+  const providerId = isPatientInitiated
+    ? String(item.recipientId || 0)
+    : String(item.providerID || 0);
+
   // ── Root message ────────────────────────────────────────────────────────────
   const rootMessage: Message = {
     id: `comm-${item.id}`,
@@ -78,10 +82,10 @@ export function mapApiThreadToThread(item: ApiThread): Thread {
     patientCommunicationId: item.id,
     recipientId: item.recipientId,
     subject: item.communicationSubject,
-    providerId: String(item.recipientId || 0),
+    providerId: String(providerId),
     providerName: item.recipient?.trim() || 'Unknown Provider',
     providerAvatar: '',
-    patientId: String(item.recipientId),
+    patientId: String(item.patientId),
     patientName: item.patientName?.trim() || 'Unknown Patient',
     patientAvatar: '',
     priority: normalizedPriority,
@@ -97,7 +101,8 @@ export function mapApiThreadToThread(item: ApiThread): Thread {
     isRead: true,
     initiatorName,
     initiatorRole,
-    toName
+    toName,
+    practiceId: item.practiceId ?? 0
   };
 }
 
