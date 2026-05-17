@@ -6,6 +6,7 @@ import {
   mapCommentToMessage,
   extractProviders
 } from '@/utils/communicationMappers';
+import moment from 'moment';
 
 export type Priority = 'Normal' | 'Urgent';
 export type MessageStatus = 'open' | 'closed';
@@ -100,6 +101,7 @@ export interface CommunicationComment {
   isPrivate: boolean;
   providerID: number;
   initiator: 'patient' | 'provider';
+  createdAt: string;
 }
 
 export interface ApiThread {
@@ -117,6 +119,7 @@ export interface ApiThread {
   createdBy: string;
   communicationComments: CommunicationComment[];
   initiator: 'patient' | 'provider';
+  createdAt: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -172,6 +175,7 @@ export interface UpdateThreadStatusPayload {
   priority: string;
   communicationText: string;
   isPrivate: boolean;
+  practiceId: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -186,9 +190,9 @@ export const fetchThreads = createAsyncThunk<
     const params: Record<string, any> = {
       patientId: data.patientId,
       practiceId: data.practiceId,
-      status: data.status
+      status: data?.status
     };
-    const res = await apiServicesV2.GetCommunications(data, 'ApiVersion2Req');
+    const res = await apiServicesV2.GetCommunications(params, 'ApiVersion2Req');
 
     if (res?.status === 200 || res?.status === 201) {
       const apiThreads: ApiThread[] = res.data?.result ?? res.data ?? [];
@@ -201,8 +205,7 @@ export const fetchThreads = createAsyncThunk<
 
       const sorted = [...mapped].sort(
         (a, b) =>
-          new Date(b.lastActivity ?? 0).getTime() -
-          new Date(a.lastActivity ?? 0).getTime()
+          moment(b.lastActivity).valueOf() - moment(a.lastActivity).valueOf()
       );
 
       return {
@@ -290,7 +293,9 @@ export const sendReply = createAsyncThunk<
         senderName: payload.createdBy,
         senderRole: 'patient',
         content: payload.content,
-        timestamp: saved?.communicatedOn ?? new Date().toISOString()
+        timestamp: saved?.createdAt
+          ? moment(saved.createdAt).local().format()
+          : moment().format()
       };
       return {
         threadId: payload.threadId,
@@ -326,7 +331,10 @@ export const createThread = createAsyncThunk<Thread, CreateThreadPayload>(
           patientCommunicationMediumId: payload.patientCommunicationMediumId,
           userId: payload.userId,
           assignedTo: payload.assignedTo,
-          assignedToIds: payload.assignedToIds,
+          assignedToIds: [
+            payload.assignedTo,
+            ...payload.assignedToIds.filter((id) => id !== payload.assignedTo)
+          ],
           subject: payload.subject,
           priority: payload.priority,
           communicationText: payload.body,
@@ -369,6 +377,7 @@ export const createThread = createAsyncThunk<Thread, CreateThreadPayload>(
           lastActivity: new Date().toISOString(),
           unreadCount: 0,
           isRead: true,
+          isFlagged: payload.priority === 'Urgent',
           initiatorName: payload.patientName || 'Patient', // patient creates from portal
           initiatorRole: 'patient',
           toName: payload.providerName,
@@ -423,10 +432,11 @@ export const updateThreadStatus = createAsyncThunk<
         priority: payload.priority,
         communicationText: payload.communicationText,
         communicatedOn: new Date().toISOString(),
-        communicationStatus: payload.status === 'open' ? 'pending' : 'closed',
+        communicationStatus: payload.status === 'open' ? 'open' : 'closed',
         isDeleted: false,
         isPrivate: payload.isPrivate,
-        providerId: payload.assignedTo
+        providerId: payload.assignedTo,
+        practiceId: payload?.practiceId
       },
       'ApiVersion2Req'
     );
@@ -519,8 +529,8 @@ const messagesSlice = createSlice({
       if (payload) {
         const sorted = [...payload.threads].sort(
           (a, b) =>
-            new Date(b.lastActivity ?? 0).getTime() -
-            new Date(a.lastActivity ?? 0).getTime()
+            moment(b.lastActivity ?? 0).valueOf() -
+            moment(a.lastActivity ?? 0).valueOf()
         );
         state.threads = sorted;
         if (state.providers.length === 0) {

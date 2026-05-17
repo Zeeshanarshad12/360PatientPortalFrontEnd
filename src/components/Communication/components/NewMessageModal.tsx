@@ -125,7 +125,7 @@ export const NewMessageModal: React.FC = () => {
         patientCommunicationMediumId: mediumId,
         userId: Number(userId),
         assignedTo: selectedProvider.numericId,
-        assignedToIds: ccProviderIds,
+        assignedToIds: [selectedProvider.numericId, ...ccProviderIds],
         subject: subject.trim(),
         priority,
         body: body.trim(),
