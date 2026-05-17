@@ -17,6 +17,7 @@ import {
 import { Avatar } from './shared/Avatar';
 import { MessageBubble } from './MessageBubble';
 import moment from 'moment';
+import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -51,6 +52,7 @@ export const ThreadView: React.FC = () => {
   const bottomRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { patientId, practiceId } = useCurrentPatient();
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -127,21 +129,23 @@ export const ThreadView: React.FC = () => {
   };
 
   const handleStatusChange = (status: 'open' | 'closed') => {
+    debugger;
     if (!thread) return;
+    console.log('threadData', thread);
     dispatch(
       updateThreadStatus({
         threadId: thread.id,
         patientCommunicationId: thread.patientCommunicationId,
         status,
-        patientId: Number(thread.patientId),
-        userId: 1,
+        patientId: Number(patientId) || Number(thread.practiceId),
+        userId: 1, //need to change it
         assignedTo: Number(thread.providerId),
         patientCommunicationMediumId: Number(thread.messageType),
         subject: thread.subject,
         priority: thread.priority,
         communicationText: thread.lastMessage,
         isPrivate: false,
-        practiceId: Number(thread.practiceId)
+        practiceId: Number(thread.practiceId) || Number(practiceId)
       })
     );
     setStatusMenuOpen(false);

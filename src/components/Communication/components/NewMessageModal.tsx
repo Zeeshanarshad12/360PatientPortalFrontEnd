@@ -52,7 +52,6 @@ export const NewMessageModal: React.FC = () => {
   const apiError = useSelector(selectError);
   const providersLoading = useSelector(selectProvidersLoading);
   // ── Auth / context ─────────────────────────────────────────────────────────
-  const userId = 1; // replace with actual auth selector
   const { patientId, practiceId } = useCurrentPatient();
 
   // ── Form state ─────────────────────────────────────────────────────────────
@@ -123,7 +122,7 @@ export const NewMessageModal: React.FC = () => {
         patientId: Number(patientId),
         patientEmergencyContactId: null,
         patientCommunicationMediumId: mediumId,
-        userId: Number(userId),
+        userId: 1, // need to change
         assignedTo: selectedProvider.numericId,
         assignedToIds: [selectedProvider.numericId, ...ccProviderIds],
         subject: subject.trim(),

@@ -55,6 +55,7 @@ export interface Thread {
   initiatorName: string;
   initiatorRole: 'patient' | 'provider';
   toName: string;
+  practiceId: number;
 }
 
 export interface Provider {
@@ -120,6 +121,8 @@ export interface ApiThread {
   communicationComments: CommunicationComment[];
   initiator: 'patient' | 'provider';
   createdAt: string;
+  practiceId: number;
+  patientId: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -381,6 +384,7 @@ export const createThread = createAsyncThunk<Thread, CreateThreadPayload>(
           initiatorName: payload.patientName || 'Patient', // patient creates from portal
           initiatorRole: 'patient',
           toName: payload.providerName,
+          practiceId: payload.practiceId,
           messages: [
             {
               id: `msg-${Date.now()}`,
