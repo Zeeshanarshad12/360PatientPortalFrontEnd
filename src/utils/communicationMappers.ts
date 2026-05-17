@@ -5,14 +5,23 @@ import {
   Provider,
   CommunicationComment
 } from '@/slices/messagesSlice';
+import moment from 'moment';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // mapApiThreadToThread
 // ─────────────────────────────────────────────────────────────────────────────
 
+const toLocalISO = (iso: string | null | undefined): string => {
+  if (!iso) return moment().format();
+  const m = moment(iso); // handles +05:00 offsets correctly
+  return m.isValid() ? m.local().format() : moment().format();
+};
+
 export function mapApiThreadToThread(item: ApiThread): Thread {
   //  Use API-provided initiator field directly — no guessing
   const isPatientInitiated = item.initiator === 'patient';
+
+  const toName = item.recipient?.trim() || 'Unknown';
 
   // Sidebar shows who started the conversation (like Outlook inbox "From")
   const initiatorName = isPatientInitiated
@@ -23,11 +32,6 @@ export function mapApiThreadToThread(item: ApiThread): Thread {
     ? 'patient'
     : 'provider';
 
-  // "to:" shows the other party
-  const toName = isPatientInitiated
-    ? item.recipient?.trim() || 'Provider' // patient → provider
-    : item.patientName?.trim() || 'Patient'; // provider → patient
-
   // ── Root message ────────────────────────────────────────────────────────────
   const rootMessage: Message = {
     id: `comm-${item.id}`,
@@ -36,10 +40,7 @@ export function mapApiThreadToThread(item: ApiThread): Thread {
     senderAvatar: '',
     senderRole: initiatorRole,
     content: item.communicationText,
-    timestamp:
-      item.communicatedOn ??
-      item.communicationComments?.[0]?.communicatedOn ??
-      new Date().toISOString()
+    timestamp: toLocalISO(item.createdAt ?? item.communicatedOn)
   };
 
   // ── Deduplicate + sort comments oldest → newest ──────────────────────────────
@@ -47,15 +48,22 @@ export function mapApiThreadToThread(item: ApiThread): Thread {
     new Map((item.communicationComments ?? []).map((c) => [c.id, c])).values()
   ).sort(
     (a, b) =>
-      new Date(a.communicatedOn).getTime() -
-      new Date(b.communicatedOn).getTime()
+      moment(a.createdAt || a.communicatedOn).valueOf() -
+      moment(b.createdAt || b.communicatedOn).valueOf()
   );
+
+  const firstComment = uniqueComments[0];
+  const rootDuplicatesFirstComment =
+    firstComment &&
+    firstComment.communicationText?.trim() === item.communicationText?.trim();
 
   const commentMessages: Message[] = uniqueComments.map((c) =>
     mapCommentToMessage(c, item.patientName, item.recipient)
   );
 
-  const allMessages = [rootMessage, ...commentMessages];
+  const allMessages = rootDuplicatesFirstComment
+    ? commentMessages
+    : [rootMessage, ...commentMessages];
   const lastMsg = allMessages[allMessages.length - 1];
 
   // ── Normalize priority ───────────────────────────────────────────────────────
@@ -82,7 +90,9 @@ export function mapApiThreadToThread(item: ApiThread): Thread {
     messageType: String(item.patientCommunicationMediumId),
     messages: allMessages,
     lastMessage: lastMsg?.content ?? '',
-    lastActivity: lastMsg?.timestamp ?? item.communicatedOn,
+    lastActivity: toLocalISO(
+      lastMsg?.timestamp ?? item.createdAt ?? item.communicatedOn
+    ),
     unreadCount: 0,
     isRead: true,
     initiatorName,
@@ -117,7 +127,7 @@ export function mapCommentToMessage(
     senderAvatar: '',
     senderRole: isProviderComment ? 'provider' : 'patient', //  from API initiator
     content: comment.communicationText,
-    timestamp: comment.communicatedOn
+    timestamp: toLocalISO(comment.createdAt ?? comment.communicatedOn)
   };
 }
 

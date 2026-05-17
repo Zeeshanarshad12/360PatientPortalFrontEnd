@@ -16,6 +16,7 @@ import {
 } from '@/store/selectors';
 import { Avatar } from './shared/Avatar';
 import { MessageBubble } from './MessageBubble';
+import moment from 'moment';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -23,20 +24,15 @@ import { MessageBubble } from './MessageBubble';
 
 function formatTime(iso: string | null | undefined): string {
   if (!iso) return '';
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return '';
-  return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const m = moment(iso);
+  return m.isValid() ? m.local().format('hh:mm A') : '';
 }
 
 function formatDateHeader(iso: string | null | undefined): string {
   if (!iso) return '';
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return '';
-  return d.toLocaleDateString([], {
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  });
+  const m = moment(iso);
+  if (!m.isValid()) return '';
+  return m.local().format('MMMM D, YYYY');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -144,7 +140,8 @@ export const ThreadView: React.FC = () => {
         subject: thread.subject,
         priority: thread.priority,
         communicationText: thread.lastMessage,
-        isPrivate: false
+        isPrivate: false,
+        practiceId: Number(thread.practiceId)
       })
     );
     setStatusMenuOpen(false);

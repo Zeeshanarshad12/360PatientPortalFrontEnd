@@ -1,38 +1,29 @@
+import moment from 'moment';
+
 export function formatTimestamp(iso: string | null | undefined): string {
   if (!iso) return '';
-  const date = new Date(iso);
-  if (isNaN(date.getTime())) return '';
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const m = moment(iso).local();
+  if (!m.isValid()) return '';
 
-  if (diffDays === 0) {
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  } else if (diffDays === 1) {
-    return 'Yesterday';
-  } else if (diffDays < 7) {
-    return date.toLocaleDateString('en-US', { weekday: 'short' });
-  } else {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  }
+  const now = moment();
+  const diffDays = now
+    .clone()
+    .startOf('day')
+    .diff(m.clone().startOf('day'), 'days');
+
+  if (diffDays === 0) return m.format('hh:mm A');
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return m.format('ddd');
+  return m.format('MMM D');
 }
 
 export function formatMessageTime(iso: string | null | undefined): string {
   if (!iso) return '';
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return '';
-  return d.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit'
-  });
+  const m = moment(iso).local();
+  if (!m.isValid()) return '';
+  return m.format('hh:mm A');
 }
 
-/**
- * Generate initials from a name
- */
 export function getInitials(name: string): string {
   return name
     ?.split(' ')
@@ -42,9 +33,6 @@ export function getInitials(name: string): string {
     .toUpperCase();
 }
 
-/**
- * Truncate text with ellipsis
- */
 export function truncate(text: string, maxLen: number): string {
   return text?.length > maxLen ? text.slice(0, maxLen) + '...' : text;
 }
