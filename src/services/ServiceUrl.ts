@@ -46,5 +46,11 @@ export const SERVICE_URLSV2 = {
   GetCommunications: 'patientportal/getcommunicationswithpatientid',
   AddUpdateCommunication: 'patientportal/AddUpdateCommunicationFromPatient',
   AddCommunicationComment: 'patientportal/AddCommunicationComments',
-  GetPatientProviders: 'patientportal/GetPatientProviders'
+  GetPatientProviders: 'patientportal/GetPatientProviders',
+  GetIntakeFormSections: 'patientportal/getintakeformsection',
+  GetIntakeFormSectionData: 'patientportal/getintakeformsectiondata',
+  SaveMedicalHistory: 'patientportal/savemedicalhistory',
+  SaveSurgicalHistory: 'patientportal/savesurgicalhistory',
+  SaveFamilyHistory: 'patientportal/savefamilyhistory',
+  SaveSmokingStatus: 'patientportal/savesmokingstatus'
 };

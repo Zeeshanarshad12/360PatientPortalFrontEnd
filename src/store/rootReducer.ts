@@ -5,11 +5,13 @@ import { createFilter } from 'redux-persist-transform-filter';
 import { staticReducer } from '@/slices/static';
 import { patientProfileReducer } from '@/slices/patientprofileslice';
 import messagesReducer from '@/slices/messagesSlice';
+import patientHistoryReducer from '@/slices/patientHistorySlice';
 
 export const rootReducer = combineReducers({
   static: staticReducer,
   patientprofileslice: patientProfileReducer,
-  messages: messagesReducer
+  messages: messagesReducer,
+  patientHistory: patientHistoryReducer
 });
 
 const GeneralLookupDataFilter = createFilter('static', ['GeneralLookupData']);

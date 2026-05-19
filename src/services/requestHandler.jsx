@@ -392,6 +392,52 @@ const AddCommunicationComment = (data, flag) =>
     ApiVersion2Req: flag
   });
 
+const GetIntakeFormSections = (flag) => {
+  return get(
+    `${SERVICE_URLSV2.GetIntakeFormSections}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+};
+
+const GetIntakeFormSectionData = (data, flag) => {
+  return post(`${SERVICE_URLSV2.GetIntakeFormSectionData}`, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
+};
+
+const SaveMedicalHistory = (data, flag) => {
+  return post(`${SERVICE_URLSV2.SaveMedicalHistory}`, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
+};
+
+const SaveSurgicalHistory = (data, flag) => {
+  return post(`${SERVICE_URLSV2.SaveSurgicalHistory}`, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
+};
+
+const SaveFamilyHistory = (data, flag) => {
+  return post(`${SERVICE_URLSV2.SaveFamilyHistory}`, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
+};
+
+const SaveSmokingStatus = (data, flag) => {
+  return post(`${SERVICE_URLSV2.SaveSmokingStatus}`, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
+};
+
 const apiServicesV2 = {
   GetGeneralLookup,
   ClearCahce,
@@ -439,7 +485,13 @@ const apiServicesV2 = {
   GetCommunications,
   AddUpdateCommunication,
   AddCommunicationComment,
-  GetPatientProviders
+  GetPatientProviders,
+  GetIntakeFormSections,
+  GetIntakeFormSectionData,
+  SaveMedicalHistory,
+  SaveSurgicalHistory,
+  SaveFamilyHistory,
+  SaveSmokingStatus
 };
 
 export default apiServicesV2;
