@@ -928,23 +928,31 @@ html {
   word-break: break-word;
 }
 
-/* Provider bubble — white with border, left side, like design */
-.comm-bubble--other {
+.comm-bubble--own {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   color: #1e293b;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  border-radius: 0 12px 12px 12px;
+  box-shadow: none;
+}
+
+/* Provider bubble — white with border, left side, like design */
+.comm-bubble--other {
+  background: #dbeafe;
+  border: 1px solid #c5d8f5;
+  color: #1e293b;
+  border-radius: 0 12px 12px 12px;
+  box-shadow: none;
 }
 
 /* Patient bubble — warm beige/cream, right side, like design */
-.comm-bubble--own,
-.comm-bubble--other {
+/* .comm-bubble--own, */
+/* .comm-bubble--other {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   color: #1e293b;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
   border-radius: 0 12px 12px 12px;
-}
+} */
 /* ── Reply box ──────────────────────────────────────────────────────────────── */
 
 .comm-reply-box {

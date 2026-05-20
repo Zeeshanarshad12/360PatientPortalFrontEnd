@@ -147,7 +147,7 @@ export interface CreateThreadPayload {
   practiceId: number;
   userId: number;
   assignedTo: number; // primary provider id
-  assignedToIds: number[]; // CC'd provider ids (can include assignedTo too)
+  //assignedToIds: number[]; // CC'd provider ids (can include assignedTo too)
   patientEmergencyContactId: number | null;
   patientCommunicationMediumId: number;
   communicationStatus?: string;
@@ -334,10 +334,7 @@ export const createThread = createAsyncThunk<Thread, CreateThreadPayload>(
           patientCommunicationMediumId: payload.patientCommunicationMediumId,
           userId: payload.userId,
           assignedTo: payload.assignedTo,
-          assignedToIds: [
-            payload.assignedTo,
-            ...payload.assignedToIds.filter((id) => id !== payload.assignedTo)
-          ],
+          //assignedToIds: payload.assignedToIds,
           subject: payload.subject,
           priority: payload.priority,
           communicationText: payload.body,
@@ -431,7 +428,7 @@ export const updateThreadStatus = createAsyncThunk<
         patientCommunicationMediumId: payload.patientCommunicationMediumId,
         userId: payload.userId,
         assignedTo: payload.assignedTo,
-        assignedToIds: [payload.assignedTo],
+        //assignedToIds: [payload.assignedTo],
         subject: payload.subject,
         priority: payload.priority,
         communicationText: payload.communicationText,

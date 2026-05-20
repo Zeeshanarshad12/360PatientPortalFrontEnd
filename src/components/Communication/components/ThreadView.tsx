@@ -6,13 +6,15 @@ import {
   sendReply,
   updateThreadStatus,
   clearSuccess,
-  clearError
+  clearError,
+  fetchThreads
 } from '@/slices/messagesSlice';
 import {
   selectActiveThread,
   selectSending,
   selectError,
-  selectSuccessMessage
+  selectSuccessMessage,
+  selectGroupOption
 } from '@/store/selectors';
 import { Avatar } from './shared/Avatar';
 import { MessageBubble } from './MessageBubble';
@@ -53,6 +55,7 @@ export const ThreadView: React.FC = () => {
   const menuRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { patientId, practiceId } = useCurrentPatient();
+  const groupOption = useSelector(selectGroupOption);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -138,7 +141,7 @@ export const ThreadView: React.FC = () => {
         patientCommunicationId: thread.patientCommunicationId,
         status,
         patientId: Number(patientId) || Number(thread.practiceId),
-        userId: 1, //need to change it
+        userId: null, //need to change it
         assignedTo: Number(thread.providerId),
         patientCommunicationMediumId: Number(thread.messageType),
         subject: thread.subject,
@@ -147,8 +150,18 @@ export const ThreadView: React.FC = () => {
         isPrivate: false,
         practiceId: Number(thread.practiceId) || Number(practiceId)
       })
-    );
-    setStatusMenuOpen(false);
+    ).then((result) => {
+      if (result.meta.requestStatus === 'fulfilled') {
+        setStatusMenuOpen(false);
+        dispatch(
+          fetchThreads({
+            patientId: Number(patientId),
+            practiceId: Number(practiceId),
+            status: groupOption
+          })
+        );
+      }
+    });
   };
 
   // ── Group messages by date ─────────────────────────────────────────────────

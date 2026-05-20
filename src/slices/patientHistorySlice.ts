@@ -133,12 +133,9 @@ const buildFamilyPayload = (
     });
   });
 
-  let tempIdCounter = 1; // SP uses TempId to link parent → conditions for NEW records
-
   return Object.keys(byRelation).map((relIdStr) => {
     const resolvedRelId = Number(relIdStr);
 
-    // Find the original DTO for this relation (by exact id match first, then by name overlap)
     const existingDto =
       dtos.find((d) => d.relationId === resolvedRelId) ??
       dtos.find((d) =>
@@ -150,29 +147,22 @@ const buildFamilyPayload = (
       );
 
     const relationId = existingDto?.relationId ?? resolvedRelId;
-    const familyHistoryId = existingDto?.id ?? 0; // 0 = new, actual id = existing
+    const familyHistoryId = existingDto?.id ?? 0;
 
-    const tempId = familyHistoryId === 0 ? tempIdCounter++ : familyHistoryId;
-
-    const conditions = byRelation[resolvedRelId].map((c) => {
-      // For existing conditions: send their real id so SP skips duplicate insert
-      const existingCond = existingDto?.familyHistoryConditions?.find(
-        (fc) => fc.conditionName === c.conditionName
-      );
-      return {
-        tempFamilyHistoryId: tempId,
-        id: existingCond?.id ?? 0,
-        code: c.code,
-        conditionName: c.conditionName
-      };
-    });
+    const conditions = byRelation[resolvedRelId].map((c) => ({
+      id: 0, // always 0 per BE spec
+      code: c.code,
+      conditionName: c.conditionName
+      // tempFamilyHistoryId: removed per BE spec
+    }));
 
     return {
-      tempId,
+      // tempId: removed per BE spec
       id: familyHistoryId, // 0 = new relation, actual id = existing
       relationId,
       patientId,
       createdBy: '',
+      // relationName: not sent per BE spec
       familyHistoryConditions: conditions
     };
   });
@@ -235,7 +225,6 @@ export const fetchSections = createAsyncThunk<SectionItem[], void>(
   }
 );
 
-// ✅ FIX 2: Return type now includes socialConditions field
 export const fetchSectionData = createAsyncThunk<
   {
     sectionId: number;
@@ -273,16 +262,13 @@ export const fetchSectionData = createAsyncThunk<
             stateNow.patientHistory.familyRelations ?? [];
 
           const resolveRelationId = (dto: FamilyHistoryDTO): number => {
-            // Case 1: dto.relationId is already a getfamilyrelation id
             if (apiRelations.some((r) => r.id === dto.relationId)) {
               return dto.relationId;
             }
-            // Case 2: match by relationName (case-insensitive)
             const byName = apiRelations.find(
               (r) => r.name.toLowerCase() === dto.relationName.toLowerCase()
             );
             if (byName) return byName.id;
-            // Case 3: no match — keep original id (legacy, won't match a column but preserves data)
             return dto.relationId;
           };
 
@@ -295,7 +281,6 @@ export const fetchSectionData = createAsyncThunk<
               );
               if (!lookup) return;
               if (!matrix[lookup.id]) matrix[lookup.id] = [];
-              // Store the resolved relation id — matches getfamilyrelation columns in the table
               if (!matrix[lookup.id].includes(resolvedRelId)) {
                 matrix[lookup.id].push(resolvedRelId);
               }
@@ -518,7 +503,6 @@ export const saveSocialHistory = createAsyncThunk<
   'patientHistory/saveSocialHistory',
   async ({ patientId, conditions }, thunkAPI) => {
     try {
-      debugger;
       const res = await apiServicesV2.SaveSocialStatus(
         buildSocialPayload(patientId, conditions),
         'ApiVersion2Req'
@@ -582,7 +566,6 @@ const patientHistorySlice = createSlice({
         (x) => x.id === payload.conditionId
       );
       if (!c) return;
-      // Lock: API item already selected (isConditionSelected=1 and not custom) — cannot uncheck
       if (c.isApiChecked) return; // locked: was checked when loaded from API
       c.isConditionSelected = c.isConditionSelected === 1 ? 0 : 1;
     },
@@ -656,11 +639,9 @@ const patientHistorySlice = createSlice({
       const lookups = section.familyLookups;
       const dtos = section.familyDTO;
 
-      // Find the conditionName for this lookup
       const lookup = lookups.find((l) => l.id === payload.lookupId);
       if (!lookup) return;
 
-      // Check if this cell was already saved in the API (lock it if so)
       const isApiChecked = dtos.some(
         (dto) =>
           dto.relationId === payload.relationId &&
