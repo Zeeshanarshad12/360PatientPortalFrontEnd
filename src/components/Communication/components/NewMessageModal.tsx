@@ -70,9 +70,9 @@ export const NewMessageModal: React.FC = () => {
   const firstInputRef = useRef<HTMLInputElement>(null);
 
   // ── Auto-select if only one provider ──────────────────────────────────────
-  useEffect(() => {
-    if (providers.length > 0 && !providerId) setProviderId(providers[0].id);
-  }, [providers]);
+  // useEffect(() => {
+  //   if (providers.length > 0 && !providerId) setProviderId(providers[0].id);
+  // }, [providers]);
 
   // ── Focus first input on open ──────────────────────────────────────────────
   useEffect(() => {
@@ -159,7 +159,7 @@ export const NewMessageModal: React.FC = () => {
 
   const resetForm = () => {
     setSubject('');
-    setProviderId(providers.length > 0 ? providers[0].id : '');
+    setProviderId('');
     setPriority('Normal');
     setBody('');
     setMediumId(5);
