@@ -20,6 +20,7 @@ import { Avatar } from './shared/Avatar';
 import { MessageBubble } from './MessageBubble';
 import moment from 'moment';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
+import { Snackbar, Alert } from '@mui/material';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -56,6 +57,10 @@ export const ThreadView: React.FC = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { patientId, practiceId } = useCurrentPatient();
   const groupOption = useSelector(selectGroupOption);
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({
+    open: false,
+    message: ''
+  });
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -153,6 +158,13 @@ export const ThreadView: React.FC = () => {
     ).then((result) => {
       if (result.meta.requestStatus === 'fulfilled') {
         setStatusMenuOpen(false);
+        setSnackbar({
+          open: true,
+          message:
+            status === 'closed'
+              ? 'Message closed successfully'
+              : 'Message opened successfully'
+        });
         dispatch(
           fetchThreads({
             patientId: Number(patientId),
@@ -284,7 +296,6 @@ export const ThreadView: React.FC = () => {
                       <span>New Message</span>
                     </div>
                   )}
-                  {/* ✅ isClosed passed from thread — no reference to thread inside MessageBubble */}
                   <MessageBubble
                     message={msg}
                     isOwn={isOwn}
@@ -376,6 +387,20 @@ export const ThreadView: React.FC = () => {
           This thread is closed. Mark as Open to reply.
         </div>
       )}
+      <Snackbar
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        open={snackbar.open}
+        autoHideDuration={3000}
+        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+      >
+        <Alert
+          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          severity="success"
+          variant="filled"
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 };
