@@ -6,15 +6,16 @@ import {
   setActiveSection,
   setPatientContext,
   toggleCondition,
-  addCustomCondition,
   toggleSurgicalCondition,
   setSurgicalDate,
-  addCustomSurgicalCondition,
   selectSmokingStatus,
   toggleFamilyCell,
   addCustomFamilyLookup,
+  toggleSocialCondition,
+  saveSocialHistory,
   resetSavingStatus,
   resetSectionStatus,
+  fetchFamilyRelations,
   fetchSections,
   fetchSectionData,
   saveMedicalHistory,
@@ -38,8 +39,15 @@ export const usePatientHistory = ({
   practiceId
 }: UsePatientHistoryProps) => {
   const dispatch = useDispatch();
-  const { sections, sectionsLoading, activeSection, data, saving } =
-    useSelector((state) => state.patientHistory);
+  const {
+    sections,
+    sectionsLoading,
+    activeSection,
+    data,
+    saving,
+    familyRelations,
+    familyRelationsLoading
+  } = useSelector((state) => state.patientHistory);
 
   const sorted = useMemo(
     () => [...ENABLED_SECTION_IDS].sort((a, b) => a - b),
@@ -52,6 +60,7 @@ export const usePatientHistory = ({
   useEffect(() => {
     dispatch(setPatientContext({ patientId, practiceId }));
     dispatch(fetchSections());
+    dispatch(fetchFamilyRelations()); // fetch relation columns for family history table
   }, [dispatch, patientId, practiceId]);
 
   // Fetch on tab change — StrictMode safe abort
@@ -111,6 +120,14 @@ export const usePatientHistory = ({
           })
         )) as unknown as ThunkResult;
 
+      case 5:
+        return (await dispatch(
+          saveSocialHistory({
+            patientId,
+            conditions: sd?.socialConditions ?? []
+          })
+        )) as unknown as ThunkResult;
+
       default:
         return null;
     }
@@ -150,7 +167,6 @@ export const usePatientHistory = ({
   const handleAddCustomEntry = useCallback(
     async (conditionName: string) => {
       if (activeSection !== 1 && activeSection !== 2) return;
-      dispatch(addCustomCondition({ sectionId: activeSection, conditionName }));
       const existing = data[activeSection]?.conditions ?? [];
       const updated = [
         ...existing,
@@ -169,6 +185,7 @@ export const usePatientHistory = ({
           : saveSurgicalHistory({ patientId, conditions: updated as any })
       )) as unknown as ThunkResult;
       if (result.meta.requestStatus === 'fulfilled') {
+        // resetSectionStatus now clears arrays too — refetch will fully replace
         dispatch(resetSectionStatus(activeSection));
         dispatch(
           fetchSectionData({ patientId, practiceId, sectionId: activeSection })
@@ -192,7 +209,6 @@ export const usePatientHistory = ({
 
   const handleAddCustomSurgical = useCallback(
     async (conditionName: string) => {
-      dispatch(addCustomSurgicalCondition({ conditionName }));
       const existing = data[2]?.surgicalConditions ?? [];
       const updated = [
         ...existing,
@@ -235,6 +251,40 @@ export const usePatientHistory = ({
     [dispatch]
   );
 
+  // ── Social ───────────────────────────────────────────────────────────────────
+  const handleToggleSocialCondition = useCallback(
+    (conditionId: number) => dispatch(toggleSocialCondition({ conditionId })),
+    [dispatch]
+  );
+
+  const handleAddCustomSocial = useCallback(
+    async (conditionName: string, sourceId: number) => {
+      const existing = data[5]?.socialConditions ?? [];
+      const updated = [
+        ...existing,
+        {
+          id: Date.now(),
+          code: '0',
+          conditionName,
+          sourceId,
+          practiceId: 0,
+          formSectionId: 5,
+          patientId,
+          isConditionSelected: 1 as const,
+          isCustom: true as const
+        }
+      ];
+      const result = (await dispatch(
+        saveSocialHistory({ patientId, conditions: updated })
+      )) as unknown as ThunkResult;
+      if (result.meta.requestStatus === 'fulfilled') {
+        dispatch(resetSectionStatus(5));
+        dispatch(fetchSectionData({ patientId, practiceId, sectionId: 5 }));
+      }
+    },
+    [dispatch, data, patientId, practiceId]
+  );
+
   return {
     sections,
     sectionsLoading,
@@ -254,6 +304,10 @@ export const usePatientHistory = ({
     handleAddCustomSurgical,
     handleSmokingSelect,
     handleToggleFamilyCell,
-    handleAddCustomFamilyRow
+    handleAddCustomFamilyRow,
+    familyRelations,
+    familyRelationsLoading,
+    handleToggleSocialCondition,
+    handleAddCustomSocial
   };
 };

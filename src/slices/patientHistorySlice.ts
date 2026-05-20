@@ -1,7 +1,13 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import SnackbarUtils from '../content/snackbar';
 import apiServicesV2 from '@/services/requestHandler';
-import { FAMILY_RELATIONS } from '@/components/PatientHistory/types/patientHistory.types';
+
+import {
+  FAMILY_RELATIONS,
+  groupSocialConditions,
+  SOCIAL_GROUP_RANGES
+} from '@/components/PatientHistory/types/patientHistory.types';
+
 import type {
   Condition,
   CustomEntry,
@@ -13,7 +19,9 @@ import type {
   SectionStatus,
   SavingStatus,
   SectionData,
-  RelationId
+  RelationId,
+  SocialCondition,
+  FamilyRelation
 } from '@/components/PatientHistory/types/patientHistory.types';
 
 export type {
@@ -27,9 +35,11 @@ export type {
   SectionStatus,
   SavingStatus,
   SectionData,
-  RelationId
+  RelationId,
+  SocialCondition
 };
-export { FAMILY_RELATIONS };
+export { FAMILY_RELATIONS, groupSocialConditions, SOCIAL_GROUP_RANGES };
+export type { FamilyRelation };
 
 // ─── State ────────────────────────────────────────────────────────────────────
 
@@ -41,15 +51,18 @@ interface PatientHistoryState {
   practiceId: number;
   data: Record<number, SectionData>;
   saving: Record<number, SavingStatus>;
+  familyRelations: FamilyRelation[]; // from getfamilyrelation API
+  familyRelationsLoading: boolean;
 }
 
-export const ENABLED_SECTION_IDS = [1, 2, 3, 4];
+export const ENABLED_SECTION_IDS = [1, 2, 3, 4, 5];
 
 const buildSectionFlags = (sectionId: number) => ({
   isIncludeMedicalHistory: sectionId === 1,
   isIncludeSurgicalHistory: sectionId === 2,
   isIncludeFamilyHistory: sectionId === 3,
-  isIncludeSmokingStatus: sectionId === 4
+  isIncludeSmokingStatus: sectionId === 4,
+  isIncludeSocialStatus: sectionId === 5
 });
 
 const buildSectionState = (): SectionData => ({
@@ -60,10 +73,11 @@ const buildSectionState = (): SectionData => ({
   smokingConditions: [],
   familyLookups: [],
   familyMatrix: {},
-  familyDTO: []
+  familyDTO: [],
+  socialConditions: []
 });
 
-// ─── Save payload builders ────────────────────────────────────────────────────
+// ─── Payload builders ─────────────────────────────────────────────────────────
 
 const buildMedicalPayload = (patientId: number, conditions: Condition[]) =>
   conditions
@@ -96,32 +110,19 @@ const buildSmokingPayload = (
     .filter((c) => c.isConditionSelected === 1)
     .map((c) => ({ id: c.id, sourceId: c.sourceId, patientId, createdBy: '' }));
 
-/**
- * Build family save payload from the matrix.
- * Matrix: { [lookupId]: [relationId, ...] }
- * Output: one entry per relation that has ≥1 condition checked.
- * - id: 0 for new, actual dto.id for existing
- * - relationName: NOT sent
- * - conditions[].id: always 0
- * - conditions[].familyHistoryId: NOT sent
- * - conditions[].isConditionSelected: NOT sent
- * - conditions[].createdBy: NOT sent
- */
 const buildFamilyPayload = (
   patientId: number,
   matrix: Record<number, number[]>,
   lookups: FamilyHistoryLookup[],
   dtos: FamilyHistoryDTO[]
 ) => {
-  // Group checked cells by relationId
+  // Group checked conditions by resolved relationId
   const byRelation: Record<
     number,
     Array<{ code: string; conditionName: string }>
   > = {};
-
   Object.entries(matrix).forEach(([lookupIdStr, relationIds]) => {
-    const lookupId = Number(lookupIdStr);
-    const lookup = lookups.find((l) => l.id === lookupId);
+    const lookup = lookups.find((l) => l.id === Number(lookupIdStr));
     if (!lookup) return;
     relationIds.forEach((relId) => {
       if (!byRelation[relId]) byRelation[relId] = [];
@@ -132,26 +133,83 @@ const buildFamilyPayload = (
     });
   });
 
-  return FAMILY_RELATIONS.filter((rel) => byRelation[rel.id]?.length > 0).map(
-    (rel) => {
-      // Find existing DTO for this relation (to carry its id)
-      const existing = dtos.find((d) => d.relationId === rel.id);
+  let tempIdCounter = 1; // SP uses TempId to link parent → conditions for NEW records
+
+  return Object.keys(byRelation).map((relIdStr) => {
+    const resolvedRelId = Number(relIdStr);
+
+    // Find the original DTO for this relation (by exact id match first, then by name overlap)
+    const existingDto =
+      dtos.find((d) => d.relationId === resolvedRelId) ??
+      dtos.find((d) =>
+        byRelation[resolvedRelId]?.some((c) =>
+          d.familyHistoryConditions.some(
+            (fc) => fc.conditionName === c.conditionName
+          )
+        )
+      );
+
+    const relationId = existingDto?.relationId ?? resolvedRelId;
+    const familyHistoryId = existingDto?.id ?? 0; // 0 = new, actual id = existing
+
+    const tempId = familyHistoryId === 0 ? tempIdCounter++ : familyHistoryId;
+
+    const conditions = byRelation[resolvedRelId].map((c) => {
+      // For existing conditions: send their real id so SP skips duplicate insert
+      const existingCond = existingDto?.familyHistoryConditions?.find(
+        (fc) => fc.conditionName === c.conditionName
+      );
       return {
-        id: existing?.id ?? 0,
-        relationId: rel.id,
-        patientId,
-        createdBy: '',
-        familyHistoryConditions: (byRelation[rel.id] ?? []).map((c) => ({
-          id: 0,
-          code: c.code,
-          conditionName: c.conditionName
-        }))
+        tempFamilyHistoryId: tempId,
+        id: existingCond?.id ?? 0,
+        code: c.code,
+        conditionName: c.conditionName
       };
-    }
-  );
+    });
+
+    return {
+      tempId,
+      id: familyHistoryId, // 0 = new relation, actual id = existing
+      relationId,
+      patientId,
+      createdBy: '',
+      familyHistoryConditions: conditions
+    };
+  });
 };
 
+const buildSocialPayload = (patientId: number, conditions: SocialCondition[]) =>
+  conditions
+    .filter((c) => c.isConditionSelected === 1)
+    .map((c) => ({
+      patientId,
+      sourceId: c.sourceId,
+      conditionName: c.conditionName,
+      createdBy: ''
+    }));
+
 // ─── Thunks ───────────────────────────────────────────────────────────────────
+
+export const fetchFamilyRelations = createAsyncThunk<FamilyRelation[], void>(
+  'patientHistory/fetchFamilyRelations',
+  async (_, thunkAPI) => {
+    try {
+      const res = await apiServicesV2.GetFamilyRelations('ApiVersion2Req');
+      if (res?.status === 200 || res?.status === 201) {
+        return res.data?.result ?? [];
+      }
+      return thunkAPI.rejectWithValue({
+        message: 'Unexpected response'
+      }) as any;
+    } catch (error: any) {
+      SnackbarUtils.error(
+        error?.response?.data?.message ?? 'Failed to load family relations',
+        false
+      );
+      return thunkAPI.rejectWithValue({ message: 'Failed' }) as any;
+    }
+  }
+);
 
 export const fetchSections = createAsyncThunk<SectionItem[], void>(
   'patientHistory/fetchSections',
@@ -177,6 +235,7 @@ export const fetchSections = createAsyncThunk<SectionItem[], void>(
   }
 );
 
+// ✅ FIX 2: Return type now includes socialConditions field
 export const fetchSectionData = createAsyncThunk<
   {
     sectionId: number;
@@ -186,6 +245,7 @@ export const fetchSectionData = createAsyncThunk<
     familyLookups: FamilyHistoryLookup[];
     familyMatrix: Record<number, number[]>;
     familyDTO: FamilyHistoryDTO[];
+    socialConditions: SocialCondition[];
   } | null,
   { patientId: number; practiceId: number; sectionId: number }
 >(
@@ -203,25 +263,41 @@ export const fetchSectionData = createAsyncThunk<
       if (res?.status === 200 || res?.status === 201) {
         const result = res.data?.result ?? {};
 
-        // ── Section 3: Family History ───────────────────────────────────────
         if (sectionId === 3) {
           const fh = result.familyHistories ?? {};
           const lookups: FamilyHistoryLookup[] = fh.lookups ?? [];
           const dtos: FamilyHistoryDTO[] = fh.familyHistoryDTO ?? [];
+          // Get family relations from Redux state (loaded by fetchFamilyRelations on mount)
+          const stateNow: any = thunkAPI.getState();
+          const apiRelations: Array<{ id: number; name: string }> =
+            stateNow.patientHistory.familyRelations ?? [];
 
-          // Build matrix from existing DTOs
+          const resolveRelationId = (dto: FamilyHistoryDTO): number => {
+            // Case 1: dto.relationId is already a getfamilyrelation id
+            if (apiRelations.some((r) => r.id === dto.relationId)) {
+              return dto.relationId;
+            }
+            // Case 2: match by relationName (case-insensitive)
+            const byName = apiRelations.find(
+              (r) => r.name.toLowerCase() === dto.relationName.toLowerCase()
+            );
+            if (byName) return byName.id;
+            // Case 3: no match — keep original id (legacy, won't match a column but preserves data)
+            return dto.relationId;
+          };
+
           const matrix: Record<number, number[]> = {};
           dtos.forEach((dto) => {
+            const resolvedRelId = resolveRelationId(dto);
             dto.familyHistoryConditions?.forEach((cond) => {
-              // Match condition back to lookup by code+name
               const lookup = lookups.find(
-                (l) =>
-                  l.code === cond.code && l.conditionName === cond.conditionName
+                (l) => l.conditionName === cond.conditionName
               );
               if (!lookup) return;
               if (!matrix[lookup.id]) matrix[lookup.id] = [];
-              if (!matrix[lookup.id].includes(dto.relationId)) {
-                matrix[lookup.id].push(dto.relationId);
+              // Store the resolved relation id — matches getfamilyrelation columns in the table
+              if (!matrix[lookup.id].includes(resolvedRelId)) {
+                matrix[lookup.id].push(resolvedRelId);
               }
             });
           });
@@ -233,37 +309,58 @@ export const fetchSectionData = createAsyncThunk<
             smokingConditions: [],
             familyLookups: lookups,
             familyMatrix: matrix,
-            familyDTO: dtos
+            familyDTO: dtos,
+            socialConditions: []
           };
         }
 
-        // ── Section 4: Smoking ──────────────────────────────────────────────
         if (sectionId === 4) {
           return {
             sectionId,
             conditions: [],
             surgicalConditions: [],
-            smokingConditions: result.smokingHistories ?? [],
+            smokingConditions: (result.smokingHistories ?? []).map(
+              (c: any) => ({ ...c, isApiChecked: c.isConditionSelected === 1 })
+            ),
             familyLookups: [],
             familyMatrix: {},
-            familyDTO: []
+            familyDTO: [],
+            socialConditions: []
           };
         }
 
-        // ── Section 2: Surgical ─────────────────────────────────────────────
         if (sectionId === 2) {
           return {
             sectionId,
             conditions: [],
-            surgicalConditions: result.surgicalHistories ?? [],
+            surgicalConditions: (result.surgicalHistories ?? []).map(
+              (c: any) => ({ ...c, isApiChecked: c.isConditionSelected === 1 })
+            ),
             smokingConditions: [],
             familyLookups: [],
             familyMatrix: {},
-            familyDTO: []
+            familyDTO: [],
+            socialConditions: []
           };
         }
 
-        // ── Section 1: Medical ──────────────────────────────────────────────
+        if (sectionId === 5) {
+          return {
+            sectionId,
+            conditions: [],
+            surgicalConditions: [],
+            smokingConditions: [],
+            familyLookups: [],
+            familyMatrix: {},
+            familyDTO: [],
+            socialConditions: (result.socialHistories ?? []).map((c: any) => ({
+              ...c,
+              isApiChecked: c.isConditionSelected === 1
+            }))
+          };
+        }
+
+        // Section 1: Medical
         return {
           sectionId,
           conditions: result.medicalHistoryConditions ?? [],
@@ -271,7 +368,8 @@ export const fetchSectionData = createAsyncThunk<
           smokingConditions: [],
           familyLookups: [],
           familyMatrix: {},
-          familyDTO: []
+          familyDTO: [],
+          socialConditions: []
         };
       }
 
@@ -362,9 +460,8 @@ export const saveFamilyHistory = createAsyncThunk<
   'patientHistory/saveFamilyHistory',
   async ({ patientId, matrix, lookups, dtos }, thunkAPI) => {
     try {
-      const payload = buildFamilyPayload(patientId, matrix, lookups, dtos);
       const res = await apiServicesV2.SaveFamilyHistory(
-        payload,
+        buildFamilyPayload(patientId, matrix, lookups, dtos),
         'ApiVersion2Req'
       );
       if (res?.status === 200 || res?.status === 201) return { sectionId: 3 };
@@ -414,6 +511,36 @@ export const saveSmokingStatus = createAsyncThunk<
   }
 );
 
+export const saveSocialHistory = createAsyncThunk<
+  { sectionId: 5 },
+  { patientId: number; conditions: SocialCondition[] }
+>(
+  'patientHistory/saveSocialHistory',
+  async ({ patientId, conditions }, thunkAPI) => {
+    try {
+      debugger;
+      const res = await apiServicesV2.SaveSocialStatus(
+        buildSocialPayload(patientId, conditions),
+        'ApiVersion2Req'
+      );
+      if (res?.status === 200 || res?.status === 201) return { sectionId: 5 };
+      return thunkAPI.rejectWithValue({
+        sectionId: 5,
+        message: 'Save failed'
+      }) as any;
+    } catch (error: any) {
+      SnackbarUtils.error(
+        error?.response?.data?.message ?? 'Failed to save social history',
+        false
+      );
+      return thunkAPI.rejectWithValue({
+        sectionId: 5,
+        message: 'Failed'
+      }) as any;
+    }
+  }
+);
+
 // ─── Slice ────────────────────────────────────────────────────────────────────
 
 const patientHistorySlice = createSlice({
@@ -428,16 +555,18 @@ const patientHistorySlice = createSlice({
       1: buildSectionState(),
       2: buildSectionState(),
       3: buildSectionState(),
-      4: buildSectionState()
+      4: buildSectionState(),
+      5: buildSectionState()
     },
-    saving: { 1: 'idle', 2: 'idle', 3: 'idle', 4: 'idle' }
+    saving: { 1: 'idle', 2: 'idle', 3: 'idle', 4: 'idle', 5: 'idle' },
+    familyRelations: [],
+    familyRelationsLoading: false
   } as PatientHistoryState,
 
   reducers: {
     setActiveSection: (state, { payload }: PayloadAction<number>) => {
       state.activeSection = payload;
     },
-
     setPatientContext: (
       state,
       { payload }: PayloadAction<{ patientId: number; practiceId: number }>
@@ -445,8 +574,6 @@ const patientHistorySlice = createSlice({
       state.patientId = payload.patientId;
       state.practiceId = payload.practiceId;
     },
-
-    // ── Medical: toggle checkbox ─────────────────────────────────────────────
     toggleCondition: (
       state,
       { payload }: PayloadAction<{ sectionId: number; conditionId: number }>
@@ -454,16 +581,11 @@ const patientHistorySlice = createSlice({
       const c = state.data[payload.sectionId]?.conditions.find(
         (x) => x.id === payload.conditionId
       );
-      // API conditions are check-only (permanent). Custom entries can be toggled.
-      if (c)
-        c.isConditionSelected = c.isCustom
-          ? c.isConditionSelected === 1
-            ? 0
-            : 1
-          : 1;
+      if (!c) return;
+      // Lock: API item already selected (isConditionSelected=1 and not custom) — cannot uncheck
+      if (c.isApiChecked) return; // locked: was checked when loaded from API
+      c.isConditionSelected = c.isConditionSelected === 1 ? 0 : 1;
     },
-
-    // ── Medical: add custom entry locally ────────────────────────────────────
     addCustomCondition: (
       state,
       { payload }: PayloadAction<{ sectionId: number; conditionName: string }>
@@ -477,8 +599,6 @@ const patientHistorySlice = createSlice({
         isCustom: true
       });
     },
-
-    // ── Surgical: toggle checkbox ────────────────────────────────────────────
     toggleSurgicalCondition: (
       state,
       { payload }: PayloadAction<{ conditionId: number }>
@@ -486,16 +606,10 @@ const patientHistorySlice = createSlice({
       const c = state.data[2]?.surgicalConditions.find(
         (x) => x.id === payload.conditionId
       );
-      // API conditions are check-only. Custom entries can toggle.
-      if (c)
-        c.isConditionSelected = c.isCustom
-          ? c.isConditionSelected === 1
-            ? 0
-            : 1
-          : 1;
+      if (!c) return;
+      if (c.isApiChecked) return;
+      c.isConditionSelected = c.isConditionSelected === 1 ? 0 : 1;
     },
-
-    // ── Surgical: set date for a condition ───────────────────────────────────
     setSurgicalDate: (
       state,
       { payload }: PayloadAction<{ conditionId: number; date: string }>
@@ -505,11 +619,9 @@ const patientHistorySlice = createSlice({
       );
       if (c) {
         c.surgeryDate = payload.date;
-        c.isConditionSelected = 1; // checking date implicitly selects
+        c.isConditionSelected = 1;
       }
     },
-
-    // ── Surgical: add custom entry locally ───────────────────────────────────
     addCustomSurgicalCondition: (
       state,
       { payload }: PayloadAction<{ conditionName: string }>
@@ -523,26 +635,41 @@ const patientHistorySlice = createSlice({
         isCustom: true
       });
     },
-
-    // ── Smoking: select one option (radio behaviour) ─────────────────────────
     selectSmokingStatus: (
       state,
       { payload }: PayloadAction<{ conditionId: number }>
     ) => {
-      const section = state.data[4];
-      if (!section) return;
-      section.smokingConditions.forEach((c) => {
-        c.isConditionSelected = c.id === payload.conditionId ? 1 : 0;
-      });
+      const c = state.data[4]?.smokingConditions.find(
+        (x) => x.id === payload.conditionId
+      );
+      if (!c) return;
+      if (c.isApiChecked) return;
+      c.isConditionSelected = c.isConditionSelected === 1 ? 0 : 1;
     },
-
-    // ── Family: toggle a cell in the matrix ──────────────────────────────────
     toggleFamilyCell: (
       state,
       { payload }: PayloadAction<{ lookupId: number; relationId: number }>
     ) => {
-      const matrix = state.data[3]?.familyMatrix;
-      if (!matrix) return;
+      const section = state.data[3];
+      if (!section) return;
+      const matrix = section.familyMatrix;
+      const lookups = section.familyLookups;
+      const dtos = section.familyDTO;
+
+      // Find the conditionName for this lookup
+      const lookup = lookups.find((l) => l.id === payload.lookupId);
+      if (!lookup) return;
+
+      // Check if this cell was already saved in the API (lock it if so)
+      const isApiChecked = dtos.some(
+        (dto) =>
+          dto.relationId === payload.relationId &&
+          dto.familyHistoryConditions.some(
+            (c) => c.conditionName === lookup.conditionName
+          )
+      );
+      if (isApiChecked) return; // Cannot uncheck API-saved cells
+
       if (!matrix[payload.lookupId]) matrix[payload.lookupId] = [];
       const idx = matrix[payload.lookupId].indexOf(payload.relationId);
       if (idx >= 0) {
@@ -551,80 +678,120 @@ const patientHistorySlice = createSlice({
         matrix[payload.lookupId].push(payload.relationId);
       }
     },
-
-    // ── Family: add custom lookup row ────────────────────────────────────────
     addCustomFamilyLookup: (
       state,
       { payload }: PayloadAction<{ conditionName: string }>
     ) => {
-      const section = state.data[3];
-      if (!section) return;
-      const tempId = Date.now();
-      section.familyLookups.push({
-        id: tempId,
+      state.data[3]?.familyLookups.push({
+        id: Date.now(),
         code: '0',
         conditionName: payload.conditionName,
         sourceId: 0
       });
     },
-
+    toggleSocialCondition: (
+      state,
+      { payload }: PayloadAction<{ conditionId: number }>
+    ) => {
+      const c = state.data[5]?.socialConditions.find(
+        (x) => x.id === payload.conditionId
+      );
+      if (!c) return;
+      if (c.isApiChecked) return;
+      c.isConditionSelected = c.isConditionSelected === 1 ? 0 : 1;
+    },
+    addCustomSocialCondition: (
+      state,
+      { payload }: PayloadAction<{ conditionName: string; sourceId: number }>
+    ) => {
+      state.data[5]?.socialConditions.push({
+        id: Date.now(),
+        code: '0',
+        conditionName: payload.conditionName,
+        sourceId: payload.sourceId,
+        practiceId: 0,
+        formSectionId: 5,
+        patientId: 0,
+        isConditionSelected: 1,
+        isCustom: true
+      });
+    },
     resetSavingStatus: (state, { payload }: PayloadAction<number>) => {
       state.saving[payload] = 'idle';
     },
-
     resetSectionStatus: (state, { payload }: PayloadAction<number>) => {
-      if (state.data[payload]) state.data[payload].status = 'idle';
+      if (!state.data[payload]) return;
+      // Reset status AND clear data arrays so refetch fully replaces (no duplicates)
+      state.data[payload].status = 'idle';
+      state.data[payload].conditions = [];
+      state.data[payload].surgicalConditions = [];
+      state.data[payload].smokingConditions = [];
+      state.data[payload].socialConditions = [];
+      state.data[payload].familyLookups = [];
+      state.data[payload].familyMatrix = {};
+      state.data[payload].familyDTO = [];
     }
   },
 
   extraReducers: {
-    // fetchSections
-    [fetchSections.pending as any]: (state: PatientHistoryState) => {
-      state.sectionsLoading = true;
+    [fetchFamilyRelations.pending as any]: (s: PatientHistoryState) => {
+      s.familyRelationsLoading = true;
     },
-    [fetchSections.fulfilled as any]: (
-      state: PatientHistoryState,
-      { payload }: PayloadAction<SectionItem[]>
+    [fetchFamilyRelations.fulfilled as any]: (
+      s: PatientHistoryState,
+      { payload }: PayloadAction<FamilyRelation[]>
     ) => {
-      state.sectionsLoading = false;
-      state.sections = payload;
+      s.familyRelationsLoading = false;
+      s.familyRelations = payload;
     },
-    [fetchSections.rejected as any]: (state: PatientHistoryState) => {
-      state.sectionsLoading = false;
+    [fetchFamilyRelations.rejected as any]: (s: PatientHistoryState) => {
+      s.familyRelationsLoading = false;
     },
 
-    // fetchSectionData
+    [fetchSections.pending as any]: (s: PatientHistoryState) => {
+      s.sectionsLoading = true;
+    },
+    [fetchSections.fulfilled as any]: (
+      s: PatientHistoryState,
+      { payload }: PayloadAction<SectionItem[]>
+    ) => {
+      s.sectionsLoading = false;
+      s.sections = payload;
+    },
+    [fetchSections.rejected as any]: (s: PatientHistoryState) => {
+      s.sectionsLoading = false;
+    },
+
     [fetchSectionData.pending as any]: (
-      state: PatientHistoryState,
+      s: PatientHistoryState,
       { meta }: any
     ) => {
-      const id = meta.arg.sectionId;
-      if (state.data[id]) state.data[id].status = 'loading';
+      if (s.data[meta.arg.sectionId])
+        s.data[meta.arg.sectionId].status = 'loading';
     },
     [fetchSectionData.fulfilled as any]: (
-      state: PatientHistoryState,
+      s: PatientHistoryState,
       { payload }: PayloadAction<any>
     ) => {
       if (!payload) return;
-      const s = state.data[payload.sectionId];
-      s.status = 'success';
-      s.conditions = payload.conditions;
-      s.surgicalConditions = payload.surgicalConditions;
-      s.smokingConditions = payload.smokingConditions;
-      s.familyLookups = payload.familyLookups;
-      s.familyMatrix = payload.familyMatrix;
-      s.familyDTO = payload.familyDTO;
+      const sec = s.data[payload.sectionId];
+      sec.status = 'success';
+      sec.conditions = payload.conditions;
+      sec.surgicalConditions = payload.surgicalConditions;
+      sec.smokingConditions = payload.smokingConditions;
+      sec.familyLookups = payload.familyLookups;
+      sec.familyMatrix = payload.familyMatrix;
+      sec.familyDTO = payload.familyDTO;
+      sec.socialConditions = payload.socialConditions;
     },
     [fetchSectionData.rejected as any]: (
-      state: PatientHistoryState,
+      s: PatientHistoryState,
       { meta }: any
     ) => {
-      const id = meta.arg.sectionId;
-      if (!state.data[id]) return;
-      state.data[id].status = meta.aborted ? 'idle' : 'error';
+      if (!s.data[meta.arg.sectionId]) return;
+      s.data[meta.arg.sectionId].status = meta.aborted ? 'idle' : 'error';
     },
 
-    // saveMedicalHistory
     [saveMedicalHistory.pending as any]: (s: PatientHistoryState) => {
       s.saving[1] = 'saving';
     },
@@ -634,8 +801,6 @@ const patientHistorySlice = createSlice({
     [saveMedicalHistory.rejected as any]: (s: PatientHistoryState) => {
       s.saving[1] = 'error';
     },
-
-    // saveSurgicalHistory
     [saveSurgicalHistory.pending as any]: (s: PatientHistoryState) => {
       s.saving[2] = 'saving';
     },
@@ -645,8 +810,6 @@ const patientHistorySlice = createSlice({
     [saveSurgicalHistory.rejected as any]: (s: PatientHistoryState) => {
       s.saving[2] = 'error';
     },
-
-    // saveFamilyHistory
     [saveFamilyHistory.pending as any]: (s: PatientHistoryState) => {
       s.saving[3] = 'saving';
     },
@@ -656,8 +819,6 @@ const patientHistorySlice = createSlice({
     [saveFamilyHistory.rejected as any]: (s: PatientHistoryState) => {
       s.saving[3] = 'error';
     },
-
-    // saveSmokingStatus
     [saveSmokingStatus.pending as any]: (s: PatientHistoryState) => {
       s.saving[4] = 'saving';
     },
@@ -666,6 +827,15 @@ const patientHistorySlice = createSlice({
     },
     [saveSmokingStatus.rejected as any]: (s: PatientHistoryState) => {
       s.saving[4] = 'error';
+    },
+    [saveSocialHistory.pending as any]: (s: PatientHistoryState) => {
+      s.saving[5] = 'saving';
+    },
+    [saveSocialHistory.fulfilled as any]: (s: PatientHistoryState) => {
+      s.saving[5] = 'saved';
+    },
+    [saveSocialHistory.rejected as any]: (s: PatientHistoryState) => {
+      s.saving[5] = 'error';
     }
   }
 });
@@ -681,6 +851,8 @@ export const {
   selectSmokingStatus,
   toggleFamilyCell,
   addCustomFamilyLookup,
+  toggleSocialCondition,
+  addCustomSocialCondition,
   resetSavingStatus,
   resetSectionStatus
 } = patientHistorySlice.actions;

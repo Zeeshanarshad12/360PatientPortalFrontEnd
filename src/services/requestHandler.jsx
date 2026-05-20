@@ -392,6 +392,17 @@ const AddCommunicationComment = (data, flag) =>
     ApiVersion2Req: flag
   });
 
+const GetFamilyRelations = (flag) => {
+  return post(
+    `${SERVICE_URLSV2.GetFamilyRelations}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+};
+
 const GetIntakeFormSections = (flag) => {
   return get(
     `${SERVICE_URLSV2.GetIntakeFormSections}`,
@@ -433,6 +444,13 @@ const SaveFamilyHistory = (data, flag) => {
 
 const SaveSmokingStatus = (data, flag) => {
   return post(`${SERVICE_URLSV2.SaveSmokingStatus}`, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
+};
+const SaveSocialStatus = (data, flag) => {
+  debugger;
+  return post(`${SERVICE_URLSV2.SaveSocialStatus}`, data, {
     feature: featureConstants.static,
     ApiVersion2Req: flag
   });
@@ -491,7 +509,9 @@ const apiServicesV2 = {
   SaveMedicalHistory,
   SaveSurgicalHistory,
   SaveFamilyHistory,
-  SaveSmokingStatus
+  SaveSmokingStatus,
+  SaveSocialStatus,
+  GetFamilyRelations
 };
 
 export default apiServicesV2;
