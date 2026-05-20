@@ -41,10 +41,7 @@ const MedicalHistorySection: React.FC<Props> = ({
               display: 'flex',
               alignItems: 'center',
               gap: 8,
-              cursor:
-                c.isConditionSelected === 1 && !c.isCustom
-                  ? 'default'
-                  : 'pointer',
+              cursor: c.isApiChecked ? 'default' : 'pointer',
               userSelect: 'none',
               fontSize: 14,
               color: '#1f2937'
@@ -53,12 +50,14 @@ const MedicalHistorySection: React.FC<Props> = ({
             <input
               type="checkbox"
               checked={c.isConditionSelected === 1}
-              onChange={() => onCheck(c.id)}
-              disabled={c.isConditionSelected === 1 && !c.isCustom}
+              onChange={() => {
+                if (!c.isApiChecked) onCheck(c.id);
+              }}
               style={{
                 width: 16,
                 height: 16,
-                accentColor: '#3b82f6',
+                accentColor:
+                  c.isConditionSelected === 1 ? '#16a34a' : '#3b82f6',
                 cursor: 'inherit',
                 flexShrink: 0
               }}

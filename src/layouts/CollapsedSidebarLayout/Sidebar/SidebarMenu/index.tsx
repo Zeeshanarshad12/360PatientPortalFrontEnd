@@ -144,12 +144,12 @@ function SidebarMenu({ onItemClick }: SidebarMenuProps) {
           : '/statics/ConsentFormout.svg'
     },
     {
-      name: 'Patient History',
+      name: 'My History',
       link: '/patientportal/patienthistory',
       icon:
         pathname === '/patientportal/patienthistory'
-          ? '/statics/ConsentFormfill.svg'
-          : '/statics/ConsentFormout.svg'
+          ? '/statics/historyFilled.svg'
+          : '/statics/historyLined.svg'
     }
     // {
     //   name: 'Find A Doctor',

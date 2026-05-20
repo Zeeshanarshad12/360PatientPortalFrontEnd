@@ -52,5 +52,7 @@ export const SERVICE_URLSV2 = {
   SaveMedicalHistory: 'patientportal/savemedicalhistory',
   SaveSurgicalHistory: 'patientportal/savesurgicalhistory',
   SaveFamilyHistory: 'patientportal/savefamilyhistory',
-  SaveSmokingStatus: 'patientportal/savesmokingstatus'
+  SaveSmokingStatus: 'patientportal/savesmokingstatus',
+  SaveSocialStatus: 'patientportal/savesocailstatus',
+  GetFamilyRelations: 'patientportal/getfamilyrelation'
 };

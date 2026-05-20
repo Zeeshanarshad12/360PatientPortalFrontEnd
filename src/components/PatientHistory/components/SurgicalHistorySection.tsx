@@ -24,18 +24,19 @@ const SurgicalRow: React.FC<{
   <div
     style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}
   >
+    {/* Checkbox */}
     <input
       type="checkbox"
       checked={c.isConditionSelected === 1}
-      onChange={() => onToggle(c.id)}
-      disabled={c.isConditionSelected === 1 && !c.isCustom}
+      onChange={() => {
+        if (!c.isApiChecked) onToggle(c.id);
+      }}
       style={{
         width: 16,
         height: 16,
-        accentColor: '#3b82f6',
+        accentColor: c.isConditionSelected === 1 ? '#16a34a' : '#3b82f6',
         flexShrink: 0,
-        cursor:
-          c.isConditionSelected === 1 && !c.isCustom ? 'default' : 'pointer'
+        cursor: c.isApiChecked ? 'default' : 'pointer'
       }}
     />
 
@@ -44,8 +45,8 @@ const SurgicalRow: React.FC<{
       {c.conditionName}
     </span>
 
-    {/* Date input */}
-    {/* <input
+    {/* Date input
+    <input
       type="date"
       value={c.surgeryDate ?? ''}
       onChange={(e) => onSetDate(c.id, e.target.value)}

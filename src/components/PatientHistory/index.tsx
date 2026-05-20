@@ -7,13 +7,9 @@ import MedicalHistorySection from './components/MedicalHistorySection';
 import SurgicalHistorySection from './components/SurgicalHistorySection';
 import SmokingStatusSection from './components/SmokingStatusSection';
 import FamilyHistorySection from './components/FamilyHistorySection';
+import SocialHistorySection from './components/SocialHistorySection';
 import { ENABLED_SECTION_IDS } from '@/slices/patientHistorySlice';
-import type {
-  SectionData,
-  SectionStatus,
-  SavingStatus,
-  SectionItem
-} from './types/patientHistory.types';
+import type { SectionData, SectionStatus } from './types/patientHistory.types';
 
 interface PatientHistoryPageProps {
   patientId: number;
@@ -45,7 +41,10 @@ const PatientHistoryPage: React.FC<PatientHistoryPageProps> = ({
     handleAddCustomSurgical,
     handleSmokingSelect,
     handleToggleFamilyCell,
-    handleAddCustomFamilyRow
+    handleAddCustomFamilyRow,
+    familyRelations,
+    handleToggleSocialCondition,
+    handleAddCustomSocial
   } = usePatientHistory({ patientId, practiceId });
 
   const activeSectionData = data[activeSection] as SectionData | undefined;
@@ -102,8 +101,18 @@ const PatientHistoryPage: React.FC<PatientHistoryPageProps> = ({
         return (
           <FamilyHistorySection
             sectionData={activeSectionData}
+            familyRelations={familyRelations}
             onToggleCell={handleToggleFamilyCell}
             onAddCustomRow={handleAddCustomFamilyRow}
+            saving={saving[activeSection]}
+          />
+        );
+      case 'Social History':
+        return (
+          <SocialHistorySection
+            sectionData={activeSectionData}
+            onToggle={handleToggleSocialCondition}
+            onAddCustom={handleAddCustomSocial}
             saving={saving[activeSection]}
           />
         );
@@ -182,7 +191,7 @@ const PatientHistoryPage: React.FC<PatientHistoryPageProps> = ({
               {isSaving ? 'Saving…' : 'Save'}
             </button>
 
-            {/* Save & Next — shown for first 3 sections; last section has Save only */}
+            {/* Save & Next — shown for all sections except the last */}
             {!isLastSection && (
               <button
                 type="button"
