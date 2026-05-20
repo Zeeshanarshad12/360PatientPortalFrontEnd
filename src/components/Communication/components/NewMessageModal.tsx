@@ -14,7 +14,8 @@ import {
   selectProviders,
   selectProvidersLoading,
   selectSending,
-  selectError
+  selectError,
+  selectGroupOption
 } from '@/store/selectors';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
@@ -63,9 +64,9 @@ export const NewMessageModal: React.FC = () => {
   const [isPrivate, setIsPrivate] = useState(false);
   const [ccProviderIds, setCcProviderIds] = useState<number[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
+  const groupOption = useSelector(selectGroupOption);
 
   // ── Refs ───────────────────────────────────────────────────────────────────
-  const overlayRef = useRef<HTMLDivElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
   // ── Auto-select if only one provider ──────────────────────────────────────
@@ -122,9 +123,9 @@ export const NewMessageModal: React.FC = () => {
         patientId: Number(patientId),
         patientEmergencyContactId: null,
         patientCommunicationMediumId: mediumId,
-        userId: 1, // need to change
+        userId: null, // need to change
         assignedTo: selectedProvider.numericId,
-        assignedToIds: [selectedProvider.numericId, ...ccProviderIds],
+        //assignedToIds: null,
         subject: subject.trim(),
         priority,
         body: body.trim(),
@@ -145,7 +146,7 @@ export const NewMessageModal: React.FC = () => {
           fetchThreads({
             patientId: Number(patientId),
             practiceId: Number(practiceId),
-            status: 'open'
+            status: groupOption
           })
         );
       }
@@ -172,32 +173,13 @@ export const NewMessageModal: React.FC = () => {
     dispatch(closeNewMessage());
   };
 
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    if (e.target === overlayRef.current) handleClose();
-  };
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Guard
-  // ─────────────────────────────────────────────────────────────────────────
-
   if (!isOpen) return null;
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Derived
-  // ─────────────────────────────────────────────────────────────────────────
-
-  // Providers available for CC (exclude the primary selected provider)
   const ccProviderOptions = providers.filter((p) => p.id !== providerId);
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Render
-  // ─────────────────────────────────────────────────────────────────────────
 
   return (
     <div
       className="comm-modal-overlay"
-      ref={overlayRef}
-      onClick={handleOverlayClick}
       role="dialog"
       aria-modal="true"
       aria-label="New Message"
