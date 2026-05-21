@@ -35,12 +35,24 @@ function SidebarMenu({ onItemClick }: SidebarMenuProps) {
   const pathname = usePathname();
   const router = useRouter();
   const { pendingCount } = useConsentFormContext();
+  const [allowedPractice, setAllowedPractice] = useState(false);
 
   // Set mounted and get localStorage on first load
   useEffect(() => {
     setMounted(true);
     const access = localStorage.getItem('vdtAccess') === 'true';
     setVdtAccess(access);
+
+    const practiceId = localStorage.getItem('PracticeId');
+    const isProd = process.env.NEXT_PUBLIC_NODE_ENV === 'PRODUCTION';
+
+    if (isProd) {
+      // Production: only show sections for practice 92426
+      setAllowedPractice(practiceId === '92426');
+    } else {
+      // Non-production: show sections for everyone
+      setAllowedPractice(true);
+    }
   }, []);
 
   // Fix MUI aria-hidden bug
@@ -135,22 +147,43 @@ function SidebarMenu({ onItemClick }: SidebarMenuProps) {
           ? '/statics/Communication_Selected.svg'
           : '/statics/Communication.svg'
     },
-    {
-      name: 'Consent Forms',
-      link: '/patientportal/consentforms',
-      icon:
-        pathname === '/patientportal/consentforms'
-          ? '/statics/ConsentFormfill.svg'
-          : '/statics/ConsentFormout.svg'
-    },
-    {
-      name: 'My History',
-      link: '/patientportal/patienthistory',
-      icon:
-        pathname === '/patientportal/patienthistory'
-          ? '/statics/historyFilled.svg'
-          : '/statics/historyLined.svg'
-    }
+    ...(allowedPractice
+      ? [
+          {
+            name: 'Consent Forms',
+            link: '/patientportal/consentforms',
+            icon:
+              pathname === '/patientportal/consentforms'
+                ? '/statics/ConsentFormfill.svg'
+                : '/statics/ConsentFormout.svg'
+          },
+          {
+            name: 'My History',
+            link: '/patientportal/patienthistory',
+            icon:
+              pathname === '/patientportal/patienthistory'
+                ? '/statics/historyFilled.svg'
+                : '/statics/historyLined.svg'
+          }
+        ]
+      : [])
+
+    // {
+    //   name: 'Consent Forms',
+    //   link: '/patientportal/consentforms',
+    //   icon:
+    //     pathname === '/patientportal/consentforms'
+    //       ? '/statics/ConsentFormfill.svg'
+    //       : '/statics/ConsentFormout.svg'
+    // },
+    // {
+    //   name: 'My History',
+    //   link: '/patientportal/patienthistory',
+    //   icon:
+    //     pathname === '/patientportal/patienthistory'
+    //       ? '/statics/historyFilled.svg'
+    //       : '/statics/historyLined.svg'
+    // }
     // {
     //   name: 'Find A Doctor',
     //   link: '/patientportal/findAdoc',
