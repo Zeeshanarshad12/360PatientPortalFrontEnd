@@ -102,7 +102,8 @@ export function mapApiThreadToThread(item: ApiThread): Thread {
     initiatorName,
     initiatorRole,
     toName,
-    practiceId: item.practiceId ?? 0
+    practiceId: item.practiceId ?? 0,
+    ccAssigned: item.ccAssigned ?? []
   };
 }
 

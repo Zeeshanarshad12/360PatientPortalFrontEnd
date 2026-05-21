@@ -20,6 +20,11 @@ export interface Attachment {
   type: string;
   url?: string;
 }
+export interface CcAssigned {
+  patientCommunicationsId: number;
+  patientCommunicationsCommentId: number;
+  ccAssignedTo: string;
+}
 
 export interface Message {
   id: string;
@@ -56,6 +61,7 @@ export interface Thread {
   initiatorRole: 'patient' | 'provider';
   toName: string;
   practiceId: number;
+  ccAssigned?: CcAssigned[];
 }
 
 export interface Provider {
@@ -123,6 +129,7 @@ export interface ApiThread {
   createdAt: string;
   practiceId: number;
   patientId: number;
+  ccAssigned?: CcAssigned[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -378,10 +385,11 @@ export const createThread = createAsyncThunk<Thread, CreateThreadPayload>(
           unreadCount: 0,
           isRead: true,
           isFlagged: payload.priority === 'Urgent',
-          initiatorName: payload.patientName || 'Patient', // patient creates from portal
+          initiatorName: payload.patientName || 'Patient',
           initiatorRole: 'patient',
           toName: payload.providerName,
           practiceId: payload.practiceId,
+          ccAssigned: [],
           messages: [
             {
               id: `msg-${Date.now()}`,

@@ -212,6 +212,18 @@ export const ThreadView: React.FC = () => {
               <span className="comm-thread-view__provider">
                 {thread.toName}
               </span>
+              {thread.ccAssigned?.filter((cc) => cc.ccAssignedTo?.trim())
+                .length > 0 && (
+                <span>
+                  &nbsp;·&nbsp;cc:{' '}
+                  <span style={{ color: '#006ad4' }}>
+                    {thread.ccAssigned
+                      .filter((cc) => cc.ccAssignedTo?.trim())
+                      .map((cc) => cc.ccAssignedTo.trim())
+                      .join(', ')}
+                  </span>
+                </span>
+              )}
             </div>
           </div>
         </div>
