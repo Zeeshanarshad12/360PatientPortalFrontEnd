@@ -26,17 +26,18 @@ import { Snackbar, Alert } from '@mui/material';
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
 
-function formatTime(iso: string | null | undefined): string {
-  if (!iso) return '';
-  const m = moment(iso);
-  return m.isValid() ? m.local().format('hh:mm A') : '';
-}
-
 function formatDateHeader(iso: string | null | undefined): string {
   if (!iso) return '';
   const m = moment(iso);
   if (!m.isValid()) return '';
-  return m.local().format('MMMM D, YYYY');
+
+  const today = moment().startOf('day');
+  const yesterday = moment().subtract(1, 'day').startOf('day');
+  const msgDay = m.clone().startOf('day');
+
+  if (msgDay.isSame(today)) return 'Today';
+  if (msgDay.isSame(yesterday)) return 'Yesterday';
+  return m.format('MMMM D, YYYY');
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -107,7 +108,7 @@ export const ThreadView: React.FC = () => {
 
   // ── Derived ────────────────────────────────────────────────────────────────
   const isClosed = thread.status === 'closed';
-  const statusLabel = isClosed ? 'Closed' : 'Open Message';
+  const statusLabel = isClosed ? 'Closed Message' : 'Open Message';
 
   // ── Handlers ───────────────────────────────────────────────────────────────
 
@@ -295,25 +296,15 @@ export const ThreadView: React.FC = () => {
               <span>{dateLabel}</span>
             </div>
 
-            {messages.map((msg, idx) => {
+            {messages.map((msg) => {
               const isOwn = msg.senderRole === 'patient';
-              const prevMsg = messages[idx - 1];
-              const showNewMsg =
-                prevMsg && isOwn !== (prevMsg.senderRole === 'patient');
-
               return (
-                <React.Fragment key={msg.id}>
-                  {showNewMsg && (
-                    <div className="comm-message-divider">
-                      <span>New Message</span>
-                    </div>
-                  )}
-                  <MessageBubble
-                    message={msg}
-                    isOwn={isOwn}
-                    isClosed={isClosed}
-                  />
-                </React.Fragment>
+                <MessageBubble
+                  key={msg.id}
+                  message={msg}
+                  isOwn={isOwn}
+                  isClosed={isClosed}
+                />
               );
             })}
           </div>
@@ -356,7 +347,8 @@ export const ThreadView: React.FC = () => {
               className="comm-send-btn"
               onClick={handleSend}
               disabled={sending || !reply.trim()}
-              aria-label="Send"
+              aria-label="Send Message"
+              data-tooltip="Send Message"
             >
               {sending ? (
                 <svg

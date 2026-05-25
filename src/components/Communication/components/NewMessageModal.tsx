@@ -6,7 +6,6 @@ import {
   closeNewMessage,
   createThread,
   Priority,
-  Provider,
   fetchThreads
 } from '@/slices/messagesSlice';
 import {
@@ -19,31 +18,11 @@ import {
 } from '@/store/selectors';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Types
-// ─────────────────────────────────────────────────────────────────────────────
-
 interface FormErrors {
   subject?: string;
   providerId?: string;
   body?: string;
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Constants
-// ─────────────────────────────────────────────────────────────────────────────
-
-const MEDIUM_OPTIONS = [
-  { label: 'Other', value: 1 },
-  { label: 'Medication Refill', value: 2 },
-  { label: 'General', value: 3 },
-  { label: 'Lab Results', value: 4 },
-  { label: 'Appointment', value: 5 }
-];
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Component
-// ─────────────────────────────────────────────────────────────────────────────
 
 export const NewMessageModal: React.FC = () => {
   const dispatch = useDispatch();
@@ -52,70 +31,65 @@ export const NewMessageModal: React.FC = () => {
   const sending = useSelector(selectSending);
   const apiError = useSelector(selectError);
   const providersLoading = useSelector(selectProvidersLoading);
-  // ── Auth / context ─────────────────────────────────────────────────────────
+  const groupOption = useSelector(selectGroupOption);
+
   const { patientId, practiceId } = useCurrentPatient();
 
   // ── Form state ─────────────────────────────────────────────────────────────
   const [subject, setSubject] = useState('');
-  const [providerId, setProviderId] = useState(''); // string id for <select>
+  const [providerId, setProviderId] = useState('');
   const [priority, setPriority] = useState<Priority>('Normal');
   const [body, setBody] = useState('');
-  const [mediumId, setMediumId] = useState<number>(5); // patientCommunicationMediumId
+  const [mediumId, setMediumId] = useState<number>(5);
   const [isPrivate, setIsPrivate] = useState(false);
   const [ccProviderIds, setCcProviderIds] = useState<number[]>([]);
   const [errors, setErrors] = useState<FormErrors>({});
-  const groupOption = useSelector(selectGroupOption);
 
-  // ── Refs ───────────────────────────────────────────────────────────────────
+  const [showProviderMenu, setShowProviderMenu] = useState(false);
+  const [providerSearch, setProviderSearch] = useState('');
+  const providerDropdownRef = useRef<HTMLDivElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
 
-  // ── Auto-select if only one provider ──────────────────────────────────────
-  // useEffect(() => {
-  //   if (providers.length > 0 && !providerId) setProviderId(providers[0].id);
-  // }, [providers]);
-
-  // ── Focus first input on open ──────────────────────────────────────────────
   useEffect(() => {
     if (isOpen) setTimeout(() => firstInputRef.current?.focus(), 100);
   }, [isOpen]);
 
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (
+        providerDropdownRef.current &&
+        !providerDropdownRef.current.contains(e.target as Node)
+      ) {
+        setShowProviderMenu(false);
+        setProviderSearch('');
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
   if (!isOpen) return null;
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Validation
-  // ─────────────────────────────────────────────────────────────────────────
+  const filteredProviders = providers.filter((p) =>
+    p.name.toLowerCase().includes(providerSearch.toLowerCase())
+  );
+
+  const selectedProviderName =
+    providers.find((p) => p.id === providerId)?.name || '';
 
   const validate = (): boolean => {
     const e: FormErrors = {};
     if (!subject.trim()) e.subject = 'Subject is required';
-    if (!providerId) e.providerId = 'Please select a provider';
-    if (!body.trim()) e.body = 'Message body is required';
+    if (!providerId) e.providerId = 'Provider is required';
+    if (!body.trim()) e.body = 'Description is required';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // CC Provider toggle
-  // ─────────────────────────────────────────────────────────────────────────
-
-  const handleCcToggle = (numericId: number) => {
-    setCcProviderIds(
-      (prev) =>
-        prev.includes(numericId)
-          ? prev.filter((id) => id !== numericId) // remove if already selected
-          : [...prev, numericId] // add if not selected
-    );
-  };
-
-  // ─────────────────────────────────────────────────────────────────────────
-  // Submit
-  // ─────────────────────────────────────────────────────────────────────────
 
   const handleSubmit = () => {
     if (!validate()) return;
 
     const selectedProvider = providers.find((p) => p.id === providerId);
-    console.log('selectedProvider:', selectedProvider);
     if (!selectedProvider) return;
 
     dispatch(
@@ -123,9 +97,9 @@ export const NewMessageModal: React.FC = () => {
         patientId: Number(patientId),
         patientEmergencyContactId: null,
         patientCommunicationMediumId: mediumId,
-        userId: null, // need to change
+        userId: 1,
         assignedTo: selectedProvider.numericId,
-        //assignedToIds: null,
+        // assignedToIds: [selectedProvider.numericId, ...ccProviderIds],
         subject: subject.trim(),
         priority,
         body: body.trim(),
@@ -141,7 +115,6 @@ export const NewMessageModal: React.FC = () => {
       if (result.meta.requestStatus === 'fulfilled') {
         resetForm();
         dispatch(closeNewMessage());
-
         dispatch(
           fetchThreads({
             patientId: Number(patientId),
@@ -153,10 +126,6 @@ export const NewMessageModal: React.FC = () => {
     });
   };
 
-  // ─────────────────────────────────────────────────────────────────────────
-  // Reset / Close
-  // ─────────────────────────────────────────────────────────────────────────
-
   const resetForm = () => {
     setSubject('');
     setProviderId('');
@@ -166,16 +135,14 @@ export const NewMessageModal: React.FC = () => {
     setIsPrivate(false);
     setCcProviderIds([]);
     setErrors({});
+    setProviderSearch('');
+    setShowProviderMenu(false);
   };
 
   const handleClose = () => {
     resetForm();
     dispatch(closeNewMessage());
   };
-
-  if (!isOpen) return null;
-
-  const ccProviderOptions = providers.filter((p) => p.id !== providerId);
 
   return (
     <div
@@ -185,7 +152,7 @@ export const NewMessageModal: React.FC = () => {
       aria-label="New Message"
     >
       <div className="comm-modal">
-        {/* ── Header ────────────────────────────────────────────────────────── */}
+        {/* ── Header ── */}
         <div className="comm-modal__header">
           <h3 className="comm-modal__title">New Message</h3>
           <button
@@ -207,11 +174,13 @@ export const NewMessageModal: React.FC = () => {
           </button>
         </div>
 
-        {/* ── Body ──────────────────────────────────────────────────────────── */}
+        {/* ── Body ── */}
         <div className="comm-modal__body">
           {/* Subject */}
           <div className="comm-form-group">
-            <label className="comm-label">Subject</label>
+            <label className="comm-label">
+              Subject <span style={{ color: 'red' }}>*</span>
+            </label>
             <input
               ref={firstInputRef}
               className={`comm-input${
@@ -231,7 +200,9 @@ export const NewMessageModal: React.FC = () => {
 
           {/* Description */}
           <div className="comm-form-group">
-            <label className="comm-label">Description</label>
+            <label className="comm-label">
+              Description <span style={{ color: 'red' }}>*</span>
+            </label>
             <textarea
               className={`comm-textarea${
                 errors.body ? ' comm-input--error' : ''
@@ -249,55 +220,185 @@ export const NewMessageModal: React.FC = () => {
             )}
           </div>
 
-          {/* Provider + Priority */}
           <div className="comm-form-row">
-            {/* Primary Provider */}
             <div className="comm-form-group comm-form-group--half">
-              <label className="comm-label">Provider</label>
-              <div className="comm-select-wrapper">
-                <select
-                  className={`comm-select${
+              <label className="comm-label">
+                Provider <span style={{ color: 'red' }}>*</span>
+              </label>
+
+              <div ref={providerDropdownRef} style={{ position: 'relative' }}>
+                <button
+                  type="button"
+                  className={`comm-input${
                     errors.providerId ? ' comm-input--error' : ''
                   }`}
-                  value={providerId}
-                  disabled={providersLoading}
-                  onChange={(e) => {
-                    setProviderId(e.target.value);
-                    const selected = providers.find(
-                      (p) => p.id === e.target.value
-                    );
-                    if (selected) {
-                      setCcProviderIds((prev) =>
-                        prev.filter((id) => id !== selected.numericId)
-                      );
-                    }
-                    setErrors((p) => ({ ...p, providerId: undefined }));
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    width: '100%',
+                    background: providersLoading ? '#f8fafc' : '#ffffff'
                   }}
+                  onClick={() => {
+                    if (!providersLoading) setShowProviderMenu((v) => !v);
+                  }}
+                  disabled={providersLoading}
                 >
-                  <option value="">
+                  <span
+                    style={{
+                      color: selectedProviderName ? '#1e293b' : '#94a3b8',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                      flex: 1
+                    }}
+                  >
                     {providersLoading
                       ? 'Loading providers...'
-                      : 'Please Select'}{' '}
-                    {/* */}
-                  </option>
-                  {providers.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name}
-                    </option>
-                  ))}
-                </select>
-                <svg
-                  className="comm-select__chevron"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <polyline points="6 9 12 15 18 9" />
-                </svg>
+                      : selectedProviderName || 'Please Select'}
+                  </span>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="#94a3b8"
+                    strokeWidth="2"
+                    style={{
+                      flexShrink: 0,
+                      marginLeft: 6,
+                      transform: showProviderMenu
+                        ? 'rotate(180deg)'
+                        : 'rotate(0deg)',
+                      transition: 'transform 0.2s'
+                    }}
+                  >
+                    <polyline points="6 9 12 15 18 9" />
+                  </svg>
+                </button>
+
+                {showProviderMenu &&
+                  (() => {
+                    const triggerRect =
+                      providerDropdownRef.current?.getBoundingClientRect();
+                    const spaceBelow = triggerRect
+                      ? window.innerHeight - triggerRect.bottom
+                      : 300;
+                    const openUpward = spaceBelow < 240;
+
+                    return (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          ...(openUpward
+                            ? { bottom: 'calc(100% + 4px)', top: 'auto' }
+                            : { top: 'calc(100% + 4px)', bottom: 'auto' }),
+                          left: 0,
+                          right: 0,
+                          background: '#ffffff',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '8px',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                          zIndex: 1400,
+                          overflow: 'hidden',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          maxHeight: '220px',
+                          minWidth: '100%',
+                          width: 'max-content',
+                          maxWidth: '400px'
+                        }}
+                      >
+                        <div
+                          style={{
+                            padding: '8px',
+                            borderBottom: '1px solid #f1f5f9',
+                            flexShrink: 0
+                          }}
+                        >
+                          <input
+                            className="comm-input"
+                            placeholder="Search provider..."
+                            value={providerSearch}
+                            onChange={(e) => setProviderSearch(e.target.value)}
+                            autoFocus
+                            style={{
+                              padding: '6px 10px',
+                              fontSize: '13px',
+                              marginBottom: 0
+                            }}
+                          />
+                        </div>
+
+                        {/* List */}
+                        <div
+                          style={{
+                            overflowY: 'auto',
+                            overflowX: 'hidden',
+                            flex: 1
+                          }}
+                        >
+                          {filteredProviders.length === 0 ? (
+                            <div
+                              style={{
+                                padding: '12px 14px',
+                                color: '#94a3b8',
+                                fontSize: '13px',
+                                textAlign: 'center'
+                              }}
+                            >
+                              No providers found
+                            </div>
+                          ) : (
+                            filteredProviders.map((p) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                style={{
+                                  display: 'block',
+                                  width: '100%',
+                                  padding: '9px 14px',
+                                  background:
+                                    providerId === p.id ? '#eff6ff' : 'none',
+                                  border: 'none',
+                                  borderBottom: '1px solid #f8fafc',
+                                  textAlign: 'left',
+                                  cursor: 'pointer',
+                                  fontSize: '13.5px',
+                                  color:
+                                    providerId === p.id ? '#006ad4' : '#1e293b',
+                                  fontWeight: providerId === p.id ? 600 : 400,
+                                  fontFamily: 'Open Sans, sans-serif',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis'
+                                }}
+                                title={p.name}
+                                onClick={() => {
+                                  setProviderId(p.id);
+                                  setCcProviderIds((prev) =>
+                                    prev.filter((id) => id !== p.numericId)
+                                  );
+                                  setErrors((e) => ({
+                                    ...e,
+                                    providerId: undefined
+                                  }));
+                                  setShowProviderMenu(false);
+                                  setProviderSearch('');
+                                }}
+                              >
+                                {p.name}
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
               </div>
+
               {errors.providerId && (
                 <span className="comm-error-text">{errors.providerId}</span>
               )}
@@ -323,79 +424,6 @@ export const NewMessageModal: React.FC = () => {
             </div>
           </div>
 
-          {/* CC Providers — only shown when a primary provider is selected and
-              there are other providers available to CC                        */}
-          {/* {providerId && ccProviderOptions.length > 0 && (
-            <div className="comm-form-group">
-              <label className="comm-label">CC Providers</label>
-              <div className="comm-cc-providers">
-                {ccProviderOptions.map((p: Provider) => (
-                  <label
-                    key={p.id}
-                    className={`comm-cc-chip${
-                      ccProviderIds.includes(p.numericId)
-                        ? ' comm-cc-chip--selected'
-                        : ''
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={ccProviderIds.includes(p.numericId)}
-                      onChange={() => handleCcToggle(p.numericId)}
-                      style={{ display: 'none' }}
-                    />
-                    {p.name}
-                  </label>
-                ))}
-              </div>
-            </div>
-          )} */}
-
-          {/* Channel 
-          <div className="comm-form-group">
-            <label className="comm-label">Channel</label>
-            <div className="comm-select-wrapper">
-              <select
-                className="comm-select"
-                value={mediumId}
-                onChange={(e) => setMediumId(Number(e.target.value))}
-              >
-                {MEDIUM_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-              <svg
-                className="comm-select__chevron"
-                width="14"
-                height="14"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            </div>
-          </div>
-
-          Private toggle 
-          <div
-            className="comm-form-group"
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}
-          >
-            <label className="comm-label" style={{ marginBottom: 0 }}>
-              Private Message
-            </label>
-            <input
-              type="checkbox"
-              checked={isPrivate}
-              onChange={(e) => setIsPrivate(e.target.checked)}
-              style={{ width: 16, height: 16, cursor: 'pointer' }}
-            />
-          </div> */}
-
           {/* API Error */}
           {apiError && (
             <div
@@ -407,7 +435,7 @@ export const NewMessageModal: React.FC = () => {
           )}
         </div>
 
-        {/* ── Footer ────────────────────────────────────────────────────────── */}
+        {/* ── Footer ── */}
         <div className="comm-modal__footer">
           <button
             className="comm-btn comm-btn--ghost"
