@@ -82,7 +82,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             isOwn ? ' comm-bubble--own' : ' comm-bubble--other'
           }`}
         >
-          <p className="comm-bubble__text">{message.content}</p>
+          <span className="comm-bubble__text">{message.content}</span>
 
           {/* Attachments */}
           {message.attachments && message.attachments.length > 0 && (

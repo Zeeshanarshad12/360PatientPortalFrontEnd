@@ -25,19 +25,11 @@ const GROUP_OPTIONS: { value: GroupOption; label: string }[] = [
   { value: 'closed', label: 'Closed Messages' }
 ];
 
-const FilterIcon = () => (
-  <svg
-    width="18"
-    height="18"
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth="1.8"
-  >
-    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-    <polyline points="22,6 12,13 2,6" />
-  </svg>
-);
+const FILTER_ICONS: Record<string, string> = {
+  all: '/statics/EmailAll.svg',
+  open: '/statics/Mailopen.svg',
+  closed: '/statics/Emailclose.svg'
+};
 
 export const CommunicationSidebar: React.FC = () => {
   const dispatch = useDispatch();
@@ -54,7 +46,6 @@ export const CommunicationSidebar: React.FC = () => {
 
   useEffect(() => {
     if (!patientId || !practiceId) return;
-    console.log('Group value', group);
     dispatch(
       fetchThreads({
         patientId: Number(patientId),
@@ -64,7 +55,6 @@ export const CommunicationSidebar: React.FC = () => {
     );
   }, [dispatch, patientId, practiceId, group]);
 
-  // Close menu on outside click
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -74,11 +64,6 @@ export const CommunicationSidebar: React.FC = () => {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
-  const handleFilterChange = (value: GroupOption) => {
-    dispatch(setGroupOption(value));
-    setShowGroupMenu(false);
-  };
 
   const filteredGroups = groups
     .map((g: any) => ({
@@ -95,25 +80,49 @@ export const CommunicationSidebar: React.FC = () => {
     }))
     .filter((g: any) => g.items.length > 0);
 
+  useEffect(() => {
+    if (filteredGroups.length === 0 && search.trim()) {
+      dispatch(setActiveThread(null));
+    }
+  }, [filteredGroups.length, search]);
+
+  const handleFilterChange = (value: GroupOption) => {
+    dispatch(setGroupOption(value));
+    setShowGroupMenu(false);
+  };
+
+  const handleRefresh = () => {
+    if (!patientId || !practiceId) return;
+    dispatch(
+      fetchThreads({
+        patientId: Number(patientId),
+        practiceId: Number(practiceId),
+        status: group
+      })
+    );
+  };
+
   return (
     <div className="comm-thread-list">
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="comm-thread-list__header">
         <div className="comm-thread-list__title">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Left: Messages heading + new message button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <h2 className="comm-thread-list__heading">Messages</h2>
             <button
               className="comm-new-btn"
               onClick={() => dispatch(openNewMessage())}
-              aria-label="New message"
+              aria-label="Add New Message"
+              data-tooltip="Add New Message"
             >
               <svg
-                width="22"
-                height="22"
+                width="24"
+                height="24"
                 viewBox="0 0 24 24"
                 fill="none"
-                stroke="currentColor"
-                strokeWidth="2.5"
+                stroke="#006ad4"
+                strokeWidth="2"
               >
                 <circle cx="12" cy="12" r="10" />
                 <line x1="12" y1="8" x2="12" y2="16" />
@@ -122,13 +131,35 @@ export const CommunicationSidebar: React.FC = () => {
             </button>
           </div>
 
-          {/* Filter dropdown */}
+          {/* Right: refresh + filter dropdown */}
           <div className="comm-thread-list__actions">
+            {/* Refresh */}
+            <button
+              className="comm-icon-btn"
+              onClick={handleRefresh}
+              aria-label="Refresh Messages"
+              data-tooltip="Refresh Messages"
+            >
+              <svg
+                width="17"
+                height="17"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <polyline points="23 4 23 10 17 10" />
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+              </svg>
+            </button>
+
+            {/* Filter dropdown */}
             <div className="comm-dropdown" ref={menuRef}>
               <button
                 className="comm-icon-btn"
                 onClick={() => setShowGroupMenu((v) => !v)}
                 aria-label="Filter messages"
+                data-tooltip="Filter Messages"
               >
                 <svg
                   width="18"
@@ -154,14 +185,14 @@ export const CommunicationSidebar: React.FC = () => {
                       }`}
                       onClick={() => handleFilterChange(opt.value)}
                     >
-                      <span
-                        style={{
-                          color: '#64748b',
-                          display: 'flex',
-                          alignItems: 'center'
-                        }}
-                      >
-                        <FilterIcon />
+                      <span className="comm-dropdown__item-icon">
+                        <img
+                          src={FILTER_ICONS[opt.value]}
+                          alt={opt.label}
+                          width="18"
+                          height="18"
+                          style={{ objectFit: 'contain' }}
+                        />
                       </span>
                       <span style={{ flex: 1 }}>{opt.label}</span>
                       {group === opt.value && (
@@ -207,7 +238,7 @@ export const CommunicationSidebar: React.FC = () => {
         </div>
       </div>
 
-      {/* Thread list body */}
+      {/* ── Thread list body ── */}
       <div className="comm-thread-list__body">
         {loading ? (
           <div className="comm-thread-list__loading">
@@ -241,104 +272,126 @@ export const CommunicationSidebar: React.FC = () => {
               {grp.label && (
                 <div className="comm-thread-group__label">{grp.label}</div>
               )}
-              {grp.items.map((thread: any) => (
-                <button
-                  key={thread.id}
-                  className={`comm-thread-item${
-                    activeId === thread.id ? ' comm-thread-item--active' : ''
-                  }${!thread.isRead ? ' comm-thread-item--unread' : ''}`}
-                  onClick={() => dispatch(setActiveThread(thread.id))}
-                >
-                  <div className="comm-thread-item__avatar">
-                    <Avatar
-                      name={thread.initiatorName}
-                      size={40}
-                      role={thread.initiatorRole}
-                      isClosed={thread.status === 'closed'}
-                    />
-                    {/* Open — solid green dot */}
-                    {thread.status === 'open' && (
-                      <span
-                        style={{
-                          position: 'absolute',
-                          bottom: '0px',
-                          right: '0px',
-                          width: '12px',
-                          height: '12px',
-                          borderRadius: '50%',
-                          background: '#1D9E75',
-                          border: '2px solid var(--color-background-primary)'
-                        }}
-                      />
-                    )}
+              {grp.items.map((thread: any) => {
+                const isClosed = thread.status === 'closed';
+                const isUrgent =
+                  thread.isFlagged || thread.priority === 'Urgent';
 
-                    {/* Closed — hollow gray ring only, no text badge */}
-                    {thread.status === 'closed' && (
-                      <span
-                        style={{
-                          position: 'absolute',
-                          bottom: '0px',
-                          right: '0px',
-                          width: '12px',
-                          height: '12px',
-                          borderRadius: '50%',
-                          background: 'var(--color-background-primary)',
-                          border: '2.5px solid #888780'
-                        }}
+                return (
+                  <button
+                    key={thread.id}
+                    className={[
+                      'comm-thread-item',
+                      activeId === thread.id ? 'comm-thread-item--active' : '',
+                      !thread.isRead ? 'comm-thread-item--unread' : ''
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    onClick={() => dispatch(setActiveThread(thread.id))}
+                  >
+                    {/* ── Avatar — no status dot ── */}
+                    <div className="comm-thread-item__avatar">
+                      <Avatar
+                        name={thread.initiatorName}
+                        size={40}
+                        role={thread.initiatorRole}
+                        isClosed={isClosed}
                       />
-                    )}
-                  </div>
+                    </div>
 
-                  <div className="comm-thread-item__content">
-                    <div className="comm-thread-item__top">
-                      <span
-                        className="comm-thread-item__name"
-                        style={{
-                          color:
-                            thread.status === 'closed'
+                    {/* ── Content ── */}
+                    <div className="comm-thread-item__content">
+                      {/* Row 1: Name + time + closed/flag stacked */}
+                      <div className="comm-thread-item__top">
+                        <span
+                          className="comm-thread-item__name"
+                          style={{
+                            color: isClosed
                               ? 'var(--color-text-secondary)'
                               : 'var(--color-text-primary)'
-                        }}
-                      >
-                        {thread.initiatorName}
-                      </span>
-                      <span className="comm-thread-item__time">
-                        {formatTimestamp(thread.lastActivity)}
-                      </span>
-                    </div>
-                    <div
-                      className="comm-thread-item__preview"
-                      style={{
-                        color:
-                          thread.status === 'closed'
+                          }}
+                        >
+                          {thread.initiatorName}
+                        </span>
+
+                        <span
+                          style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'flex-end',
+                            gap: '2px',
+                            flexShrink: 0
+                          }}
+                        >
+                          <span className="comm-thread-item__time">
+                            {formatTimestamp(thread.lastActivity)}
+                          </span>
+
+                          {(isUrgent || isClosed) && (
+                            <span
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '3px'
+                              }}
+                            >
+                              {isUrgent && (
+                                <span
+                                  title="Urgent Priority"
+                                  style={{ display: 'flex' }}
+                                >
+                                  <svg
+                                    width="11"
+                                    height="11"
+                                    viewBox="0 0 24 24"
+                                    fill="#EF4444"
+                                  >
+                                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                                    <line
+                                      x1="4"
+                                      y1="22"
+                                      x2="4"
+                                      y2="15"
+                                      stroke="#EF4444"
+                                      strokeWidth="2"
+                                    />
+                                  </svg>
+                                </span>
+                              )}
+                              {isClosed && (
+                                <span
+                                  style={{
+                                    fontSize: '10px',
+                                    color: '#888780',
+                                    fontWeight: 500,
+                                    lineHeight: 1,
+                                    backgroundColor: '#f1f0ec',
+                                    padding: '1px 5px',
+                                    borderRadius: '3px'
+                                  }}
+                                >
+                                  Closed
+                                </span>
+                              )}
+                            </span>
+                          )}
+                        </span>
+                      </div>
+
+                      <div
+                        className="comm-thread-item__preview"
+                        style={{
+                          color: isClosed
                             ? 'var(--color-text-tertiary)'
                             : 'var(--color-text-secondary)'
-                      }}
-                    >
-                      {truncate(thread.lastMessage, 45)}
+                        }}
+                      >
+                        {truncate(thread.lastMessage, 45)}
+                      </div>
                     </div>
-                  </div>
-                  {(thread.isFlagged || thread.priority === 'Urgent') && (
-                    <svg
-                      className="comm-thread-item__flag"
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="#EF4444"
-                    >
-                      <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-                      <line
-                        x1="4"
-                        y1="22"
-                        x2="4"
-                        y2="15"
-                        stroke="#EF4444"
-                        strokeWidth="2"
-                      />
-                    </svg>
-                  )}
-                </button>
-              ))}
+                  </button>
+                );
+              })}
             </div>
           ))
         )}
