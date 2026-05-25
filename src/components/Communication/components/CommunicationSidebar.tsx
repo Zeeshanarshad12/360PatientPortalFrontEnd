@@ -313,80 +313,80 @@ export const CommunicationSidebar: React.FC = () => {
                         >
                           {thread.initiatorName}
                         </span>
-
-                        <span
-                          style={{
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'flex-end',
-                            gap: '2px',
-                            flexShrink: 0
-                          }}
-                        >
-                          <span className="comm-thread-item__time">
-                            {formatTimestamp(thread.lastActivity)}
-                          </span>
-
-                          {(isUrgent || isClosed) && (
-                            <span
-                              style={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '3px'
-                              }}
-                            >
-                              {isUrgent && (
-                                <span
-                                  title="Urgent Priority"
-                                  style={{ display: 'flex' }}
-                                >
-                                  <svg
-                                    width="11"
-                                    height="11"
-                                    viewBox="0 0 24 24"
-                                    fill="#EF4444"
-                                  >
-                                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-                                    <line
-                                      x1="4"
-                                      y1="22"
-                                      x2="4"
-                                      y2="15"
-                                      stroke="#EF4444"
-                                      strokeWidth="2"
-                                    />
-                                  </svg>
-                                </span>
-                              )}
-                              {isClosed && (
-                                <span
-                                  style={{
-                                    fontSize: '10px',
-                                    color: '#888780',
-                                    fontWeight: 500,
-                                    lineHeight: 1,
-                                    backgroundColor: '#f1f0ec',
-                                    padding: '1px 5px',
-                                    borderRadius: '3px'
-                                  }}
-                                >
-                                  Closed
-                                </span>
-                              )}
-                            </span>
-                          )}
+                        <span className="comm-thread-item__time">
+                          {formatTimestamp(thread.lastActivity)}
                         </span>
                       </div>
 
+                      {/* ── Row 2: Preview + Flag + Closed — single row ── */}
                       <div
-                        className="comm-thread-item__preview"
                         style={{
-                          color: isClosed
-                            ? 'var(--color-text-tertiary)'
-                            : 'var(--color-text-secondary)'
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          minWidth: 0,
+                          overflow: 'hidden'
                         }}
                       >
-                        {truncate(thread.lastMessage, 45)}
+                        {/* Preview — truncated, takes remaining space */}
+                        <span
+                          className="comm-thread-item__preview"
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            color: isClosed
+                              ? 'var(--color-text-tertiary)'
+                              : 'var(--color-text-secondary)'
+                          }}
+                        >
+                          {truncate(thread.lastMessage, 45)}
+                        </span>
+
+                        {isUrgent && (
+                          <span
+                            title="Urgent Priority"
+                            style={{
+                              display: 'flex',
+                              flexShrink: 0,
+                              lineHeight: 1
+                            }}
+                          >
+                            <svg
+                              width="11"
+                              height="11"
+                              viewBox="0 0 24 24"
+                              fill="#EF4444"
+                            >
+                              <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                              <line
+                                x1="4"
+                                y1="22"
+                                x2="4"
+                                y2="15"
+                                stroke="#EF4444"
+                                strokeWidth="2"
+                              />
+                            </svg>
+                          </span>
+                        )}
+
+                        {isClosed && (
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              color: '#888780',
+                              fontWeight: 500,
+                              lineHeight: 1,
+                              backgroundColor: '#f1f0ec',
+                              padding: '1px 5px',
+                              borderRadius: '3px',
+                              flexShrink: 0,
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            Closed
+                          </span>
+                        )}
                       </div>
                     </div>
                   </button>
