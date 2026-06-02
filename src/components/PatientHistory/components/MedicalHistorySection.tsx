@@ -2,6 +2,7 @@
 
 import React from 'react';
 import CustomOptionButton from './CustomOptionButton';
+import ConditionCheckbox from './ConditionCheckbox';
 import type { SectionData, SavingStatus } from '../types/patientHistory.types';
 
 interface Props {
@@ -24,46 +25,17 @@ const MedicalHistorySection: React.FC<Props> = ({
       following?
     </p>
 
-    <div className="ph-card" style={{ padding: 20 }}>
-      {/* 3-column checkbox grid */}
+    <div className="ph-card">
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '10px 24px',
+          gap: '6px 16px',
           marginBottom: 20
         }}
       >
         {sectionData.conditions.map((c) => (
-          <label
-            key={c.id}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              cursor: c.isApiChecked ? 'default' : 'pointer',
-              userSelect: 'none',
-              fontSize: 14,
-              color: '#1f2937'
-            }}
-          >
-            <input
-              type="checkbox"
-              checked={c.isConditionSelected === 1}
-              onChange={() => {
-                if (!c.isApiChecked) onCheck(c.id);
-              }}
-              style={{
-                width: 16,
-                height: 16,
-                accentColor:
-                  c.isConditionSelected === 1 ? '#16a34a' : '#3b82f6',
-                cursor: 'inherit',
-                flexShrink: 0
-              }}
-            />
-            {c.conditionName}
-          </label>
+          <ConditionCheckbox key={c.id} condition={c} onChange={onCheck} />
         ))}
       </div>
 

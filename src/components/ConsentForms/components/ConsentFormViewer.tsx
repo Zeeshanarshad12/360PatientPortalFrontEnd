@@ -5,7 +5,10 @@ import PrintIcon from '@mui/icons-material/Print';
 import DownloadIcon from '@mui/icons-material/Download';
 import { useRef, useState, useEffect } from 'react';
 import SignatureDialog from './SignatureDialog';
-import { saveConsentForm, uploadAndSaveConsentFormDocument } from '@/slices/patientprofileslice';
+import {
+  saveConsentForm,
+  uploadAndSaveConsentFormDocument
+} from '@/slices/patientprofileslice';
 import { useSelector, useDispatch } from '@/store/index';
 import { Snackbar, Alert } from '@mui/material';
 import { useConsentFormContext } from '@/contexts/ConsentFormContext';
@@ -49,21 +52,69 @@ const ConsentFormViewer = ({
   const { decrementPendingCount } = useConsentFormContext();
   const { patientId, practiceId } = useCurrentPatient();
 
+  // useEffect(() => {
+  //   if (form) {
+  //     let updatedContent = form.Content;
+
+  //     // Replace ______________________ with signature if exists
+  //     updatedContent = updatedContent.replace(
+  //       /_{10,}/g, // match a long underscore line
+  //       form.Signature
+  //         ? `<img src="${form.Signature}" alt="Signature" style="max-width: 250px; height: auto;" />${form.SignedByName ? `<br/><span style="font-size:13px;font-weight:bold">Signed By: ${form.SignedByName}</span>` : ''}`
+  //         : '___________________________'
+  //     );
+
+  //     updatedContent = updatedContent.replace(
+  //       /Patient Signature:/g,
+  //       'Signature:'
+  //     );
+
+  //     setRenderedContent(updatedContent);
+  //   }
+  // }, [form]);
+
   useEffect(() => {
     if (form) {
       let updatedContent = form.Content;
 
       // Replace ______________________ with signature if exists
       updatedContent = updatedContent.replace(
-        /_{10,}/g, // match a long underscore line
+        /_{10,}/g,
         form.Signature
-          ? `<img src="${form.Signature}" alt="Signature" style="max-width: 250px; height: auto;" />${form.SignedByName ? `<br/><span style="font-size:13px;font-weight:bold">Signed By: ${form.SignedByName}</span>` : ''}`
+          ? `<img src="${
+              form.Signature
+            }" alt="Signature" style="max-width: 250px; height: auto;" />${
+              form.SignedByName
+                ? `<br/><span style="font-size:13px;font-weight:bold">Signed By: ${form.SignedByName}</span>`
+                : ''
+            }`
           : '___________________________'
       );
 
       updatedContent = updatedContent.replace(
         /Patient Signature:/g,
         'Signature:'
+      );
+
+      updatedContent = updatedContent.replace(
+        /InputTextField/g,
+        `<input
+        type="text"
+        data-field="dynamic"
+        style="
+          border: none;
+          border-bottom: 1.5px solid #555;
+          outline: none;
+          background: transparent;
+          font-size: inherit;
+          font-family: inherit;
+          min-width: 80px;
+          width: auto;
+          padding: 2px 4px;
+          display: inline-block;
+          "
+        oninput="this.style.width = '80px'; this.style.width = Math.max(80, this.scrollWidth) + 'px'"
+      />`
       );
 
       setRenderedContent(updatedContent);
@@ -196,9 +247,21 @@ const ConsentFormViewer = ({
   const handleSaveSignature = async (Signature: string) => {
     if (!form) return;
 
+    let finalContent = form.Content;
+    if (contentRef.current) {
+      const inputs = contentRef.current.querySelectorAll(
+        'input[data-field="dynamic"]'
+      );
+      inputs.forEach((input) => {
+        const value = (input as HTMLInputElement).value || 'InputTextField';
+        finalContent = finalContent.replace('InputTextField', value);
+      });
+    }
+
     const updatedForm: ConsentForm = {
       PatientID: patientId,
       ...form,
+      Content: finalContent,
       Signature,
       Status: 'Signed',
       SignedDate: new Date().toISOString()
@@ -222,7 +285,11 @@ const ConsentFormViewer = ({
         try {
           const jsPDFModule = await import('jspdf');
           const jsPDF = (jsPDFModule as any).jsPDF ?? jsPDFModule.default;
-          const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+          const pdf = new jsPDF({
+            unit: 'mm',
+            format: 'a4',
+            orientation: 'portrait'
+          });
           const pageH = pdf.internal.pageSize.getHeight();
           const margin = 15;
           const lineH = 6;
@@ -241,13 +308,19 @@ const ConsentFormViewer = ({
           pdf.setFontSize(10);
           const lines: string[] = pdf.splitTextToSize(bodyText, 180);
           for (const line of lines) {
-            if (y > pageH - 30) { pdf.addPage(); y = 20; }
+            if (y > pageH - 30) {
+              pdf.addPage();
+              y = 20;
+            }
             pdf.text(line, margin, y);
             y += lineH;
           }
 
           // Signature image
-          if (y > pageH - 45) { pdf.addPage(); y = 20; }
+          if (y > pageH - 45) {
+            pdf.addPage();
+            y = 20;
+          }
           y += 6;
           pdf.setFontSize(10);
           pdf.text('Signature:', margin, y);
@@ -255,7 +328,9 @@ const ConsentFormViewer = ({
           try {
             pdf.addImage(Signature, 'PNG', margin, y, 60, 20);
             y += 24;
-          } catch { y += 4; }
+          } catch {
+            y += 4;
+          }
           if (form.SignedByName) {
             pdf.text(`Signed By: ${form.SignedByName}`, margin, y);
             y += lineH;

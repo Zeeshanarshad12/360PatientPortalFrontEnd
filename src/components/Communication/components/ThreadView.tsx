@@ -63,6 +63,23 @@ export const ThreadView: React.FC = () => {
     message: ''
   });
 
+  const FILTER_ICONS: Record<string, string> = {
+    open: '/statics/Mailopen.svg',
+    closed: '/statics/Emailclose.svg'
+  };
+
+  const handleReplyChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setReply(e.target.value);
+    // Reset height then set to scrollHeight
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(
+        textareaRef.current.scrollHeight,
+        120
+      )}px`;
+    }
+  };
+
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [thread?.messages]);
@@ -70,6 +87,9 @@ export const ThreadView: React.FC = () => {
   useEffect(() => {
     if (successMsg) {
       setReply('');
+      if (textareaRef.current) {
+        textareaRef.current.style.height = '36px';
+      }
       const t = setTimeout(() => dispatch(clearSuccess()), 3000);
       return () => clearTimeout(t);
     }
@@ -235,32 +255,13 @@ export const ThreadView: React.FC = () => {
             className="comm-status-btn"
             onClick={() => setStatusMenuOpen((v) => !v)}
           >
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
-              <polyline points="22,6 12,13 2,6" />
-            </svg>
+            <img
+              src={isClosed ? FILTER_ICONS.closed : FILTER_ICONS.open}
+              alt={statusLabel}
+              width={16}
+              height={16}
+            />
             {statusLabel}
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              style={{
-                transform: statusMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                transition: 'transform 0.2s'
-              }}
-            >
-              <polyline points="6 9 12 15 18 9" />
-            </svg>
           </button>
 
           {statusMenuOpen && (
@@ -270,12 +271,24 @@ export const ThreadView: React.FC = () => {
                 className="comm-status-menu__item"
                 onClick={() => handleStatusChange('open')}
               >
+                <img
+                  src={FILTER_ICONS.open}
+                  alt="open"
+                  width={14}
+                  height={14}
+                />
                 Mark as Open
               </button>
               <button
                 className="comm-status-menu__item"
                 onClick={() => handleStatusChange('closed')}
               >
+                <img
+                  src={FILTER_ICONS.closed}
+                  alt="closed"
+                  width={14}
+                  height={14}
+                />
                 Mark as Closed
               </button>
             </div>
@@ -338,9 +351,16 @@ export const ThreadView: React.FC = () => {
             className="comm-reply-box__input"
             placeholder="text message.."
             value={reply}
-            onChange={(e) => setReply(e.target.value)}
+            onChange={handleReplyChange}
             onKeyDown={handleKeyDown}
             rows={1}
+            style={{
+              height: '36px',
+              minHeight: '36px',
+              maxHeight: '120px',
+              overflowY: 'auto',
+              resize: 'none'
+            }}
           />
           <div className="comm-reply-box__actions">
             <button

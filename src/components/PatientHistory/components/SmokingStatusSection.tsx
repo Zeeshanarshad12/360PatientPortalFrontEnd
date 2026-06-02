@@ -1,7 +1,9 @@
 'use client';
 
 import React from 'react';
+import ConditionCheckbox from './ConditionCheckbox';
 import type { SectionData, SavingStatus } from '../types/patientHistory.types';
+import type { Condition } from '../types/patientHistory.types';
 
 interface Props {
   sectionData: SectionData;
@@ -26,42 +28,13 @@ const SmokingStatusSection: React.FC<Props> = ({ sectionData, onSelect }) => {
           </p>
         )}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          {options.map((c) => {
-            const isSelected = c.isConditionSelected === 1;
-
-            return (
-              <label
-                key={c.id}
-                style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  gap: 10,
-                  cursor: c.isApiChecked ? 'default' : 'pointer',
-                  userSelect: 'none',
-                  fontSize: 14,
-                  color: '#1f2937',
-                  lineHeight: 1.5
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => {
-                    if (!c.isApiChecked) onSelect(c.id);
-                  }}
-                  style={{
-                    width: 17,
-                    height: 17,
-                    marginTop: 2,
-                    flexShrink: 0,
-                    accentColor: isSelected ? '#16a34a' : '#3b82f6',
-                    cursor: 'inherit'
-                  }}
-                />
-                {c.conditionName}
-              </label>
-            );
-          })}
+          {options.map((c) => (
+            <ConditionCheckbox
+              key={c.id}
+              condition={c as unknown as Condition}
+              onChange={onSelect}
+            />
+          ))}
         </div>
       </div>
     </div>

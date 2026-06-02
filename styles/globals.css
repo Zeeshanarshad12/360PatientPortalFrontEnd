@@ -806,9 +806,11 @@ html {
   flex-shrink: 0;
   border-top: 1px solid #e2e8f0;
   background: #ffffff;
-  padding: 10px 16px 14px;
+  padding: 10px 16px !important;
   display: flex;
-  flex-direction: column;
+  flex-direction: row !important;
+  align-items: flex-end !important;
+  gap: 10px !important;
 }
 
 .comm-reply-box__input {
@@ -824,6 +826,7 @@ html {
   min-height: 36px;
   box-sizing: border-box;
   box-shadow: none !important;
+  border-radius: 20px !important;
 }
 
 .comm-reply-box__input::placeholder {
@@ -833,8 +836,8 @@ html {
 .comm-reply-box__actions {
   display: flex !important;
   align-items: center !important;
-  justify-content: flex-end !important;
-  margin-top: 8px !important;
+  flex-shrink: 0 !important;
+  margin-top: 0px !important;
 }
 
 /* ── Send Button ─────────────────────────────────────────── */
@@ -1464,5 +1467,578 @@ html {
   .comm-modal-overlay {
     align-items: flex-end !important;
     padding: 0 !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Patient History —
+   Paste these into globals.css right after the existing ph- block
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Layout ──────────────────────────────────────────────────── */
+.ph-page {
+  display: flex;
+  height: calc(100vh - 64px); /* adjust 64px to your header height */
+  background: #f8fafc;
+  overflow: hidden;
+}
+
+.ph-sidebar {
+  width: 240px;
+  min-width: 240px;
+  background: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.ph-sidebar-header {
+  padding: 24px 20px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.ph-sidebar-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 4px;
+}
+
+.ph-sidebar-subtitle {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* ph-main holds scrollable content + sticky footer */
+.ph-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ph-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 28px 36px;
+}
+
+/* ── Nav Tabs ─────────────────────────────────────────────────── */
+.ph-nav {
+  display: flex;
+  flex-direction: column;
+  padding: 12px 0;
+  flex: 1;
+}
+
+.ph-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 11px 20px;
+  background: none;
+  border: none;
+  border-left: 3px solid transparent;
+  cursor: pointer;
+  font-size: 14px;
+  color: #374151;
+  text-align: left;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.ph-nav-item:hover {
+  background: #f1f5f9;
+  color: #1d4ed8;
+}
+
+.ph-nav-item--active {
+  background: #eff6ff;
+  color: #1d4ed8;
+  font-weight: 600;
+  border-left-color: #2563eb;
+}
+
+.ph-nav-item--error .ph-nav-label {
+  color: #dc2626;
+}
+
+.ph-nav-label {
+  flex: 1;
+}
+
+.ph-nav-status {
+  font-size: 11px;
+  font-weight: 700;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ph-nav-status--done {
+  background: #dcfce7;
+  color: #16a34a;
+}
+.ph-nav-status--err {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.ph-nav-skeleton {
+  height: 40px;
+  margin: 4px 16px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: ph-shimmer 1.4s infinite;
+}
+
+/* ── Progress Bar ─────────────────────────────────────────────── */
+.ph-progress {
+  padding: 16px 20px 20px;
+  border-top: 1px solid #f1f5f9;
+  margin-top: auto;
+}
+
+.ph-progress-label {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.ph-progress-bar {
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.ph-progress-fill {
+  height: 100%;
+  background: #2563eb;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* ── Section Content ──────────────────────────────────────────── */
+.ph-section {
+  flex: 1;
+}
+
+.ph-section-header {
+  margin-bottom: 20px;
+}
+
+.ph-section-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 6px;
+}
+
+.ph-section-hint {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.ph-section-error {
+  padding: 20px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  color: #991b1b;
+  font-size: 14px;
+}
+
+.ph-coming-soon {
+  color: #9ca3af;
+  font-size: 15px;
+  padding-top: 40px;
+}
+
+/* ── Selected Banner ──────────────────────────────────────────── */
+.ph-selected-banner {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 20px;
+}
+
+.ph-selected-banner-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1d4ed8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.ph-selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ── Tags ─────────────────────────────────────────────────────── */
+.ph-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+
+.ph-tag--custom {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.ph-custom-entries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+/* ── Checkbox Grid ────────────────────────────────────────────── */
+.ph-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px 24px;
+  margin-bottom: 24px;
+}
+
+@media (max-width: 900px) {
+  .ph-checkbox-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .ph-checkbox-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ph-checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  color: #374151;
+  line-height: 1.4;
+  transition: background 0.12s;
+}
+
+.ph-checkbox-label:hover {
+  background: #f1f5f9;
+}
+
+.ph-card {
+  background: '#E6F0FB';
+  box-shadow: none;
+  border: none;
+  border-radius: 8px;
+  padding: 20;
+}
+
+/* .ph-checkbox-label--checked {
+  background: #f3f4f6;
+  cursor: default;
+}
+
+.ph-checkbox-label--checked:hover {
+  background: #f3f4f6;
+}
+
+.ph-checkbox-label--checked .ph-checkbox-text {
+  color: #9ca3af;
+  font-weight: 400;
+} */
+
+.ph-checkbox-input {
+  margin-top: 2px;
+  width: 15px;
+  height: 15px;
+  min-width: 15px;
+  cursor: pointer;
+}
+
+.ph-checkbox-input:disabled {
+  cursor: default;
+  opacity: 0.8;
+}
+
+.ph-checkbox-text {
+  flex: 1;
+  color: #374151;
+}
+
+/* ── Smoking List ─────────────────────────────────────────────── */
+.ph-smoking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.ph-smoking-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 16px;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13.5px;
+  color: #374151;
+  line-height: 1.5;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.ph-smoking-option:hover:not(.ph-smoking-option--disabled) {
+  border-color: #93c5fd;
+  background: #f0f9ff;
+}
+
+.ph-smoking-option--selected {
+  border-color: #2563eb;
+  background: #eff6ff;
+  color: #1e40af;
+  font-weight: 500;
+}
+
+.ph-smoking-option--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ph-radio-input {
+  margin-top: 3px;
+  accent-color: #2563eb;
+  width: 15px;
+  height: 15px;
+  min-width: 15px;
+}
+
+.ph-smoking-text {
+  flex: 1;
+}
+
+/* ── Info Banner ──────────────────────────────────────────────── */
+.ph-info-banner {
+  background: #fefce8;
+  border: 1px solid #fde047;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13px;
+  color: #854d0e;
+  margin-bottom: 16px;
+}
+
+/* ── Custom Condition Input ───────────────────────────────────── */
+.ph-custom-input-wrapper {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1.5px dashed #e5e7eb;
+  /* Sits at bottom of section content, above the sticky Next footer */
+}
+
+.ph-custom-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px;
+}
+
+.ph-custom-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.ph-custom-input {
+  flex: 1;
+  border: 1.5px solid #d1d5db;
+  border-radius: 6px;
+  padding: 9px 12px;
+  font-size: 14px;
+  color: #111827;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.ph-custom-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.ph-custom-input--error {
+  border-color: #ef4444;
+}
+
+.ph-custom-add-btn {
+  padding: 9px 18px;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.ph-custom-add-btn:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+.ph-custom-add-btn:disabled {
+  background: #93c5fd;
+  cursor: not-allowed;
+}
+
+.ph-custom-error {
+  font-size: 12px;
+  color: #dc2626;
+  margin: 6px 0 0;
+}
+
+/* ── Save Indicator ───────────────────────────────────────────── */
+.ph-save-status {
+  margin-top: 16px;
+  min-height: 20px;
+}
+
+.ph-save-indicator {
+  font-size: 13px;
+  color: #9ca3af;
+}
+.ph-save-indicator--saved {
+  color: #16a34a;
+}
+.ph-save-indicator--error {
+  color: #dc2626;
+}
+
+/* ── Sticky Footer (Prev / Next) ──────────────────────────────── */
+/* Lives outside .ph-content scroll, always visible at bottom */
+.ph-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 36px;
+  border-top: 1px solid #e5e7eb;
+  background: #ffffff;
+  /* sticky effect — ph-main is flex column so this stays at bottom */
+}
+
+.ph-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ph-footer-error {
+  font-size: 13px;
+  color: #dc2626;
+}
+
+/* ── Buttons ──────────────────────────────────────────────────── */
+.ph-btn {
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.ph-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.ph-btn--primary {
+  background: #2563eb;
+  color: #ffffff;
+}
+.ph-btn--primary:hover:not(:disabled) {
+  background: #1d4ed8;
+}
+
+.ph-btn--secondary {
+  background: #f1f5f9;
+  color: #374151;
+  border: 1px solid #e5e7eb;
+}
+.ph-btn--secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+}
+
+.ph-btn--done {
+  background: #16a34a;
+  color: #ffffff;
+}
+.ph-btn--done:hover {
+  background: #15803d;
+}
+
+/* ── Skeleton Loader ──────────────────────────────────────────── */
+.ph-skeleton-wrapper {
+  padding-top: 4px;
+}
+
+.ph-skeleton {
+  background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+  background-size: 200% 100%;
+  animation: ph-shimmer 1.4s infinite;
+  border-radius: 6px;
+}
+
+.ph-skeleton--title {
+  height: 24px;
+  width: 200px;
+  margin-bottom: 8px;
+}
+.ph-skeleton--subtitle {
+  height: 14px;
+  width: 320px;
+  margin-bottom: 24px;
+}
+
+.ph-skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px 24px;
+}
+
+.ph-skeleton--item {
+  height: 32px;
+}
+
+@keyframes ph-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
   }
 }

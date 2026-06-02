@@ -348,7 +348,10 @@ export const fetchSectionData = createAsyncThunk<
         // Section 1: Medical
         return {
           sectionId,
-          conditions: result.medicalHistoryConditions ?? [],
+          conditions: (result.medicalHistoryConditions ?? []).map((c: any) => ({
+            ...c,
+            isApiChecked: c.isConditionSelected === 1
+          })),
           surgicalConditions: [],
           smokingConditions: [],
           familyLookups: [],
