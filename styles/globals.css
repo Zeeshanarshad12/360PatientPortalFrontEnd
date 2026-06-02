@@ -567,9 +567,11 @@ html {
 .comm-thread-view__subject-bar {
   display: flex;
   align-items: center;
-  padding: 10px 20px;
-  background: #dbeafe;
-  border-bottom: 1px solid #e9ecef;
+  padding: 8px 20px !important;
+  justify-content: space-between !important;
+  background: #e6f0fb !important;
+  border-bottom: 1px solid #c8ddf5 !important;
+  gap: 12px !important;
 }
 
 .comm-thread-view__subject {
@@ -580,6 +582,7 @@ html {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1 !important;
 }
 
 .comm-thread-view__sub {
@@ -728,8 +731,8 @@ html {
 
 /* ── Status Dropdown ─────────────────────────────────────── */
 .comm-status-dropdown {
-  position: relative;
-  flex-shrink: 0;
+  position: relative !important;
+  flex-shrink: 0 !important;
 }
 
 .comm-status-btn {
@@ -739,7 +742,7 @@ html {
   padding: 7px 14px !important;
   border: 1px solid #e2e8f0 !important;
   border-radius: 8px !important;
-  background: #ffffff !important;
+  background: #f6f8fa !important;
   font-size: 13px !important;
   font-weight: 500 !important;
   color: #1e293b !important;
@@ -752,7 +755,7 @@ html {
 }
 
 .comm-status-btn:hover {
-  border-color: #006ad4 !important;
+  background: #edf2f7 !important;
   color: #006ad4 !important;
 }
 
@@ -822,9 +825,9 @@ html {
   color: #1e293b;
   background: transparent;
   font-family: 'Open Sans', sans-serif;
-  padding: 4px 0;
+  padding: 8px 16px !important;
   min-height: 36px;
-  box-sizing: border-box;
+  box-sizing: border-box !important;
   box-shadow: none !important;
   border-radius: 20px !important;
 }
