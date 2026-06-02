@@ -112,8 +112,6 @@ const PatientHistoryPage: React.FC<PatientHistoryPageProps> = ({
           <SocialHistorySection
             sectionData={activeSectionData}
             onToggle={handleToggleSocialCondition}
-            onAddCustom={handleAddCustomSocial}
-            saving={saving[activeSection]}
           />
         );
       default:

@@ -43,7 +43,7 @@ const HistoryNav: React.FC<HistoryNavProps> = ({
         <span style={{ fontWeight: 700, fontSize: 20, color: '#111827' }}>
           My History
         </span>
-        {totalCount != null && (
+        {/* {totalCount != null && (
           <span
             style={{
               background: '#6b7280',
@@ -61,53 +61,7 @@ const HistoryNav: React.FC<HistoryNavProps> = ({
           >
             {totalCount}
           </span>
-        )}
-      </div>
-
-      {/* ── Search bar ──────────────────────────────────────────────────── */}
-      <div style={{ padding: '0 12px 12px', position: 'relative' }}>
-        <input
-          type="text"
-          placeholder="Search"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '8px 36px 8px 12px',
-            border: `1.5px solid ${search.length ? '#3b82f6' : '#d1d5db'}`,
-            borderRadius: 6,
-            fontSize: 14,
-            color: '#374151',
-            outline: 'none',
-            boxSizing: 'border-box',
-            background: '#fff'
-          }}
-        />
-        {/* × clear button */}
-        {search.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setSearch('')}
-            aria-label="Clear search"
-            style={{
-              position: 'absolute',
-              right: 20,
-              top: '50%',
-              transform: 'translateY(-50%)',
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: '#6b7280',
-              fontSize: 18,
-              lineHeight: 1,
-              padding: 0,
-              display: 'flex',
-              alignItems: 'center'
-            }}
-          >
-            ×
-          </button>
-        )}
+        )} */}
       </div>
 
       {/* ── Section list ────────────────────────────────────────────────── */}

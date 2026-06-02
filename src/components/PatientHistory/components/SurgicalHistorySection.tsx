@@ -2,10 +2,12 @@
 
 import React from 'react';
 import CustomOptionButton from './CustomOptionButton';
+import ConditionCheckbox from './ConditionCheckbox';
 import type {
   SectionData,
   SavingStatus,
-  SurgicalCondition
+  SurgicalCondition,
+  Condition
 } from '../types/patientHistory.types';
 
 interface Props {
@@ -20,48 +22,11 @@ const SurgicalRow: React.FC<{
   c: SurgicalCondition;
   onToggle: (id: number) => void;
   onSetDate: (id: number, date: string) => void;
-}> = ({ c, onToggle, onSetDate }) => (
-  <div
-    style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}
-  >
-    {/* Checkbox */}
-    <input
-      type="checkbox"
-      checked={c.isConditionSelected === 1}
-      onChange={() => {
-        if (!c.isApiChecked) onToggle(c.id);
-      }}
-      style={{
-        width: 16,
-        height: 16,
-        accentColor: c.isConditionSelected === 1 ? '#16a34a' : '#3b82f6',
-        flexShrink: 0,
-        cursor: c.isApiChecked ? 'default' : 'pointer'
-      }}
-    />
-
-    {/* Condition name */}
-    <span style={{ fontSize: 14, color: '#1f2937', flex: 1, minWidth: 0 }}>
-      {c.conditionName}
-    </span>
-
-    {/* Date input
-    <input
-      type="date"
-      value={c.surgeryDate ?? ''}
-      onChange={(e) => onSetDate(c.id, e.target.value)}
-      style={{
-        padding: '4px 8px',
-        border: '1px solid #d1d5db',
-        borderRadius: 4,
-        fontSize: 13,
-        color: c.surgeryDate ? '#374151' : '#9ca3af',
-        width: 140,
-        flexShrink: 0,
-        background: '#fff'
-      }}
-    /> */}
-  </div>
+}> = ({ c, onToggle }) => (
+  <ConditionCheckbox
+    condition={c as unknown as Condition}
+    onChange={onToggle}
+  />
 );
 
 const SurgicalHistorySection: React.FC<Props> = ({
@@ -84,7 +49,6 @@ const SurgicalHistorySection: React.FC<Props> = ({
       </p>
 
       <div className="ph-card" style={{ padding: 20 }}>
-        {/* 2-col grid: each cell has [checkbox  name  date] inline */}
         <div
           style={{
             display: 'grid',

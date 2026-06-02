@@ -1,30 +1,20 @@
 'use client';
 
 import React from 'react';
-import CustomOptionButton from './CustomOptionButton';
-import {
-  groupSocialConditions,
-  SOCIAL_GROUP_RANGES
-} from '../types/patientHistory.types';
+import ConditionCheckbox from './ConditionCheckbox';
+import { groupSocialConditions } from '../types/patientHistory.types';
 import type {
   SectionData,
-  SavingStatus,
-  SocialCondition
+  SocialCondition,
+  Condition
 } from '../types/patientHistory.types';
 
 interface Props {
   sectionData: SectionData;
   onToggle: (conditionId: number) => void;
-  onAddCustom: (conditionName: string, sourceId: number) => Promise<void>;
-  saving: SavingStatus;
 }
 
-const SocialHistorySection: React.FC<Props> = ({
-  sectionData,
-  onToggle,
-  onAddCustom,
-  saving
-}) => {
+const SocialHistorySection: React.FC<Props> = ({ sectionData, onToggle }) => {
   const groups = groupSocialConditions(sectionData.socialConditions);
 
   return (
@@ -37,14 +27,8 @@ const SocialHistorySection: React.FC<Props> = ({
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         {groups.map((group) => {
-          // Find the sourceId range for this group to pass to custom entries
-          const range = SOCIAL_GROUP_RANGES.find((r) => r.label === group.name);
-          // Use the min sourceId of the group as the custom entry's sourceId
-          const customSourceId = range?.min ?? 0;
-
           return (
             <div key={group.name} className="ph-card" style={{ padding: 20 }}>
-              {/* Group heading */}
               <h3
                 style={{
                   margin: '0 0 14px',
@@ -56,7 +40,6 @@ const SocialHistorySection: React.FC<Props> = ({
                 {group.name}
               </h3>
 
-              {/* 3-column checkbox grid */}
               <div
                 style={{
                   display: 'grid',
@@ -66,46 +49,13 @@ const SocialHistorySection: React.FC<Props> = ({
                 }}
               >
                 {group.conditions.map((c: SocialCondition) => (
-                  <label
+                  <ConditionCheckbox
                     key={c.id}
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 8,
-                      cursor: c.isApiChecked ? 'default' : 'pointer',
-                      userSelect: 'none',
-                      fontSize: 14,
-                      color: '#1f2937'
-                    }}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={c.isConditionSelected === 1}
-                      onChange={() => {
-                        if (!c.isApiChecked) onToggle(c.id);
-                      }}
-                      // API conditions: check-only
-                      style={{
-                        width: 16,
-                        height: 16,
-                        accentColor:
-                          c.isConditionSelected === 1 ? '#16a34a' : '#3b82f6',
-                        cursor: 'inherit',
-                        flexShrink: 0
-                      }}
-                    />
-                    {c.conditionName}
-                  </label>
+                    condition={c as unknown as Condition}
+                    onChange={onToggle}
+                  />
                 ))}
               </div>
-
-              {/* + Custom Option per group */}
-              <CustomOptionButton
-                onConfirm={(name) => onAddCustom(name, customSourceId)}
-                loading={saving === 'saving'}
-                placeholder={`Enter custom ${group.name.toLowerCase()} option`}
-                popupTitle={`Add Custom ${group.name}`}
-              />
             </div>
           );
         })}
