@@ -325,7 +325,7 @@ export const CommunicationSidebar: React.FC = () => {
                           alignItems: 'center',
                           gap: '4px',
                           minWidth: 0,
-                          overflow: 'hidden'
+                          overflow: 'visible'
                         }}
                       >
                         {/* Preview — truncated, takes remaining space */}
@@ -334,6 +334,7 @@ export const CommunicationSidebar: React.FC = () => {
                           style={{
                             flex: 1,
                             minWidth: 0,
+                            overflow: 'hidden',
                             color: isClosed
                               ? 'var(--color-text-tertiary)'
                               : 'var(--color-text-secondary)'
@@ -344,12 +345,8 @@ export const CommunicationSidebar: React.FC = () => {
 
                         {isUrgent && (
                           <span
-                            title="Urgent Priority"
-                            style={{
-                              display: 'flex',
-                              flexShrink: 0,
-                              lineHeight: 1
-                            }}
+                            className="comm-urgent-flag"
+                            data-tooltip="Urgent Priority"
                           >
                             <svg
                               width="11"

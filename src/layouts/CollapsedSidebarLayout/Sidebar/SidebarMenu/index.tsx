@@ -158,7 +158,7 @@ function SidebarMenu({ onItemClick }: SidebarMenuProps) {
                 : '/statics/ConsentFormout.svg'
           },
           {
-            name: 'My History',
+            name: 'History',
             link: '/patientportal/patienthistory',
             icon:
               pathname === '/patientportal/patienthistory'
