@@ -41,7 +41,7 @@ const HistoryNav: React.FC<HistoryNavProps> = ({
         }}
       >
         <span style={{ fontWeight: 700, fontSize: 20, color: '#111827' }}>
-          My History
+          History
         </span>
         {/* {totalCount != null && (
           <span

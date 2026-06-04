@@ -283,6 +283,7 @@ html {
 
 .comm-thread-list__body {
   flex: 1 !important;
+  overflow-x: visible !important;
   overflow-y: auto !important;
   display: flex !important;
   flex-direction: column !important;
@@ -416,6 +417,7 @@ html {
   min-width: 0 !important;
   display: flex !important;
   flex-direction: column !important;
+  overflow: visible !important;
 }
 
 .comm-thread-item__top {
@@ -703,6 +705,19 @@ html {
   box-shadow: none;
 }
 
+.comm-bubble__text div,
+.comm-bubble__text p,
+.comm-bubble__text br {
+  margin: 0 !important;
+  padding: 0 !important;
+  line-height: 1.6 !important;
+}
+
+.comm-bubble__text a {
+  color: #006ad4 !important;
+  text-decoration: underline !important;
+}
+
 /* ── Priority & Type Badges ──────────────────────────────── */
 .comm-priority {
   display: inline-flex;
@@ -967,7 +982,6 @@ html {
   color: #0056b3 !important;
 }
 
-/* ✅ Shared tooltip for new + icon buttons */
 .comm-new-btn::after,
 .comm-icon-btn::after {
   content: attr(data-tooltip);
@@ -1009,6 +1023,76 @@ html {
 .comm-icon-btn:hover::after,
 .comm-new-btn:hover::before,
 .comm-icon-btn:hover::before {
+  opacity: 1;
+}
+
+.comm-urgent-flag {
+  position: relative !important;
+  display: flex !important;
+  flex-shrink: 0 !important;
+  line-height: 1 !important;
+  cursor: default !important;
+}
+
+.comm-urgent-flag::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  top: auto !important;
+  bottom: calc(100% + 6px) !important;
+  left: auto !important;
+  right: -10px !important;
+  transform: none !important;
+  background: #006ad4;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: 'Open Sans', sans-serif;
+  padding: 5px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0, 106, 212, 0.2);
+}
+
+.comm-urgent-flag::before {
+  content: '';
+  position: absolute;
+  top: auto !important;
+  bottom: calc(100% + 2px) !important;
+  left: auto !important;
+  right: -4px !important;
+  transform: none !important;
+  border: 4px solid transparent !important;
+  border-bottom: 4px solid #006ad4 !important;
+  border-left: none !important;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  z-index: 1000;
+}
+
+.comm-urgent-flag:hover::after,
+.comm-urgent-flag:hover::before {
+  opacity: 1;
+}
+
+.comm-provider-item {
+  position: relative !important;
+}
+.comm-provider-item::after,
+.comm-provider-item::before {
+  display: none !important;
+}
+
+.comm-provider-item:not([data-tooltip])::after,
+.comm-provider-item[data-tooltip='']::after {
+  display: none !important;
+}
+
+.comm-provider-item:hover::after {
   opacity: 1;
 }
 
@@ -1633,6 +1717,8 @@ html {
 /* ── Section Content ──────────────────────────────────────────── */
 .ph-section {
   flex: 1;
+  margin-bottom: 0;
+  padding: 0;
 }
 
 .ph-section-header {
@@ -1643,7 +1729,7 @@ html {
   font-size: 20px;
   font-weight: 700;
   color: #111827;
-  margin: 0 0 6px;
+  margin: 0 0 4px 0;
 }
 
 .ph-section-hint {
@@ -1755,11 +1841,11 @@ html {
 }
 
 .ph-card {
-  background: '#E6F0FB';
+  background: #e6f0fb;
   box-shadow: none;
   border: none;
   border-radius: 8px;
-  padding: 20;
+  padding: 20px;
 }
 
 /* .ph-checkbox-label--checked {
@@ -1988,12 +2074,13 @@ html {
 }
 
 .ph-btn--secondary {
-  background: #f1f5f9;
-  color: #374151;
-  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #3b82f6;
+  border: 1.5px solid #3b82f6;
 }
 .ph-btn--secondary:hover:not(:disabled) {
-  background: #e2e8f0;
+  background: #3b82f6;
+  color: #ffffff;
 }
 
 .ph-btn--done {

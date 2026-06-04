@@ -46,6 +46,37 @@ interface MessageBubbleProps {
   isClosed: boolean; //  ADD — controls avatar gray color
 }
 
+function renderMessageContent(content: string): React.ReactNode {
+  if (!content) return null;
+
+  const withBreaks = content
+    .replace(/\\\\n/g, '<br/>')
+    .replace(/\\n/g, '<br/>');
+
+  const hasHtml = /<[a-z][\s\S]*>/i.test(withBreaks);
+
+  if (hasHtml) {
+    const sanitized = withBreaks
+      .replace(/<script[\s\S]*?<\/script>/gi, '')
+      .replace(/javascript:/gi, '');
+
+    return (
+      <span
+        className="comm-bubble__text"
+        dangerouslySetInnerHTML={{ __html: sanitized }}
+      />
+    );
+  }
+
+  return (
+    <span
+      className="comm-bubble__text"
+      style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+    >
+      {withBreaks}
+    </span>
+  );
+}
 // ─────────────────────────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────────────────────────
@@ -82,7 +113,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             isOwn ? ' comm-bubble--own' : ' comm-bubble--other'
           }`}
         >
-          <span className="comm-bubble__text">{message.content}</span>
+          {renderMessageContent(message.content)}
 
           {/* Attachments */}
           {message.attachments && message.attachments.length > 0 && (

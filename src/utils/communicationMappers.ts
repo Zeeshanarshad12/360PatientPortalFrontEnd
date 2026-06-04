@@ -77,11 +77,21 @@ export function mapApiThreadToThread(item: ApiThread): Thread {
     return 'Normal' as const;
   })();
 
+  function stripHtmlForPreview(text: string): string {
+    if (!text) return '';
+    return text
+      .replace(/\\\\n/g, ' ')
+      .replace(/\\n/g, ' ')
+      .replace(/<br\s*\/?>/gi, ' ')
+      .replace(/<[^>]*>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
   return {
     id: String(item.id),
     patientCommunicationId: item.id,
     recipientId: item.recipientId,
-    subject: item.communicationSubject,
+    subject: item.communicationSubject?.trim() || 'No Subject',
     providerId: String(providerId),
     providerName: item.recipient?.trim() || 'Unknown Provider',
     providerAvatar: '',
@@ -93,7 +103,7 @@ export function mapApiThreadToThread(item: ApiThread): Thread {
     status: item.status?.toLowerCase() === 'closed' ? 'closed' : 'open',
     messageType: String(item.patientCommunicationMediumId),
     messages: allMessages,
-    lastMessage: lastMsg?.content ?? '',
+    lastMessage: stripHtmlForPreview(lastMsg?.content ?? ''),
     lastActivity: toLocalISO(
       lastMsg?.timestamp ?? item.createdAt ?? item.communicatedOn
     ),

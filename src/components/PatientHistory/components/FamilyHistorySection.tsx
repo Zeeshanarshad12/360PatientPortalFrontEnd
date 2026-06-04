@@ -17,8 +17,6 @@ interface Props {
   saving: SavingStatus;
 }
 
-// ── FamilyCheckbox ────────────────────────────────────────────────────────────
-
 interface FamilyCheckboxProps {
   checked: boolean;
   locked: boolean;
@@ -48,7 +46,7 @@ const FamilyCheckbox: React.FC<FamilyCheckboxProps> = ({
         if (!locked) onChange();
       }}
       onMouseDown={(e) => {
-        e.preventDefault(); // prevents browser text selection on click
+        e.preventDefault();
       }}
       onKeyDown={(e) => {
         if (!locked && (e.key === ' ' || e.key === 'Enter')) {
@@ -94,7 +92,11 @@ const FamilyCheckbox: React.FC<FamilyCheckboxProps> = ({
   );
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
+const sortColumns = (relations: FamilyRelation[]): FamilyRelation[] => {
+  const others = relations.filter((r) => r.name.toLowerCase() === 'other');
+  const rest = relations.filter((r) => r.name.toLowerCase() !== 'other');
+  return [...rest, ...others];
+};
 
 const FamilyHistorySection: React.FC<Props> = ({
   sectionData,
@@ -104,8 +106,9 @@ const FamilyHistorySection: React.FC<Props> = ({
 }) => {
   const { familyLookups, familyMatrix, familyDTO } = sectionData;
 
-  const columns: FamilyRelation[] =
-    familyRelations.length > 0 ? familyRelations : FAMILY_RELATIONS;
+  const columns: FamilyRelation[] = sortColumns(
+    familyRelations.length > 0 ? familyRelations : FAMILY_RELATIONS
+  );
 
   const isChecked = (lookupId: number, relationId: number): boolean =>
     (familyMatrix[lookupId] ?? []).includes(relationId);
@@ -132,30 +135,50 @@ const FamilyHistorySection: React.FC<Props> = ({
 
       <div
         className="ph-card"
-        style={{ padding: '20px 24px', overflowX: 'auto' }}
+        style={{
+          padding: '0',
+          overflowX: 'auto',
+          overflowY: 'auto',
+          maxHeight: 520
+        }}
       >
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <table
+          style={{
+            width: '100%',
+            borderCollapse: 'collapse',
+            tableLayout: 'auto'
+          }}
+        >
           <thead>
             <tr>
               <th
                 style={{
+                  position: 'sticky',
+                  top: 0,
+                  left: 0,
+                  zIndex: 3,
                   textAlign: 'left',
-                  padding: '12px 16px 12px 0',
+                  padding: '12px 16px 12px 20px',
                   fontSize: 14,
                   fontWeight: 700,
                   color: '#111827',
                   borderBottom: '1px solid #d1d5db',
                   minWidth: 220,
                   whiteSpace: 'nowrap',
-                  userSelect: 'none'
+                  userSelect: 'none',
+                  background: '#E6F0FB'
                 }}
               >
                 Condition
               </th>
+
               {columns.map((rel) => (
                 <th
                   key={rel.id}
                   style={{
+                    position: 'sticky',
+                    top: 0,
+                    zIndex: 2,
                     padding: '12px 8px',
                     fontSize: 13,
                     fontWeight: 600,
@@ -164,7 +187,8 @@ const FamilyHistorySection: React.FC<Props> = ({
                     borderBottom: '1px solid #d1d5db',
                     minWidth: 80,
                     whiteSpace: 'nowrap',
-                    userSelect: 'none'
+                    userSelect: 'none',
+                    background: '#E6F0FB'
                   }}
                 >
                   {rel.name}
@@ -172,20 +196,32 @@ const FamilyHistorySection: React.FC<Props> = ({
               ))}
             </tr>
           </thead>
+
           <tbody>
-            {familyLookups.map((lookup) => (
-              <tr key={lookup.id}>
+            {familyLookups.map((lookup, idx) => (
+              <tr
+                key={lookup.id}
+                style={{
+                  background: idx % 2 === 0 ? 'transparent' : 'rgba(0,0,0,0.02)'
+                }}
+              >
                 <td
                   style={{
-                    padding: '10px 16px 10px 0',
+                    position: 'sticky',
+                    left: 0,
+                    zIndex: 1,
+                    padding: '10px 16px 10px 20px',
                     fontSize: 13,
                     color: '#1f2937',
                     borderBottom: '1px solid #d1d5db',
-                    userSelect: 'none'
+                    userSelect: 'none',
+                    background: idx % 2 === 0 ? '#E6F0FB' : '#dfe8f5',
+                    whiteSpace: 'nowrap'
                   }}
                 >
                   {lookup.conditionName}
                 </td>
+
                 {columns.map((rel) => {
                   const checked = isChecked(lookup.id, rel.id);
                   const locked = isApiLocked(lookup.id, rel.id);
@@ -213,7 +249,8 @@ const FamilyHistorySection: React.FC<Props> = ({
           </tbody>
         </table>
 
-        <div style={{ marginTop: 16 }}>
+        {/* Custom option sits below the scrollable table */}
+        <div style={{ padding: '16px 20px' }}>
           <CustomOptionButton
             onConfirm={onAddCustomRow}
             popupTitle="Add Custom Condition"

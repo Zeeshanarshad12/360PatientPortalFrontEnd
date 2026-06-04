@@ -229,6 +229,16 @@ export const fetchThreads = createAsyncThunk<
       status: res?.status
     }) as any;
   } catch (error: any) {
+    if (!navigator.onLine) {
+      SnackbarUtils.error(
+        'No internet connection. Please check your network.',
+        false
+      );
+      return thunkAPI.rejectWithValue({
+        message: 'No internet connection',
+        status: 0
+      }) as any;
+    }
     const message = error?.response?.data?.message ?? 'Failed to load messages';
     SnackbarUtils.error(message, false);
     return thunkAPI.rejectWithValue({
@@ -266,6 +276,17 @@ export const fetchPatientProviders = createAsyncThunk<Provider[], number>(
         status: res?.status
       }) as any;
     } catch (error: any) {
+      if (!navigator.onLine) {
+        SnackbarUtils.error(
+          'No internet connection. Please check your network.',
+          false
+        );
+        return thunkAPI.rejectWithValue({
+          message: 'No internet connection',
+          status: 0
+        }) as any;
+      }
+
       const message =
         error?.response?.data?.message ?? 'Failed to load providers';
       SnackbarUtils.error(message, false);
@@ -318,6 +339,16 @@ export const sendReply = createAsyncThunk<
       status: res?.status
     }) as any;
   } catch (error: any) {
+    if (!navigator.onLine) {
+      SnackbarUtils.error(
+        'No internet connection. Please check your network.',
+        false
+      );
+      return thunkAPI.rejectWithValue({
+        message: 'No internet connection',
+        status: 0
+      }) as any;
+    }
     const message = error?.response?.data?.message ?? 'Failed to send reply';
     SnackbarUtils.error(message, false);
     return thunkAPI.rejectWithValue({
@@ -410,6 +441,16 @@ export const createThread = createAsyncThunk<Thread, CreateThreadPayload>(
         status: res?.status
       }) as any;
     } catch (error: any) {
+      if (!navigator.onLine) {
+        SnackbarUtils.error(
+          'No internet connection. Please check your network.',
+          false
+        );
+        return thunkAPI.rejectWithValue({
+          message: 'No internet connection',
+          status: 0
+        }) as any;
+      }
       const message =
         error?.response?.data?.message ?? 'Failed to send message';
       SnackbarUtils.error(message, false);
@@ -459,6 +500,16 @@ export const updateThreadStatus = createAsyncThunk<
       status: res?.status
     }) as any;
   } catch (error: any) {
+    if (!navigator.onLine) {
+      SnackbarUtils.error(
+        'No internet connection. Please check your network.',
+        false
+      );
+      return thunkAPI.rejectWithValue({
+        message: 'No internet connection',
+        status: 0
+      }) as any;
+    }
     const message = error?.response?.data?.message ?? 'Failed to update status';
     SnackbarUtils.error(message, false);
     return thunkAPI.rejectWithValue({

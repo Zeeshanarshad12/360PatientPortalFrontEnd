@@ -158,8 +158,8 @@ export const ThreadView: React.FC = () => {
   };
 
   const handleStatusChange = (status: 'open' | 'closed') => {
-    debugger;
     if (!thread) return;
+    const firstMessage = thread.messages[0]?.content ?? thread.lastMessage;
     console.log('threadData', thread);
     dispatch(
       updateThreadStatus({
@@ -172,7 +172,7 @@ export const ThreadView: React.FC = () => {
         patientCommunicationMediumId: Number(thread.messageType),
         subject: thread.subject,
         priority: thread.priority,
-        communicationText: thread.lastMessage,
+        communicationText: firstMessage,
         isPrivate: false,
         practiceId: Number(thread.practiceId) || Number(practiceId)
       })
@@ -272,30 +272,33 @@ export const ThreadView: React.FC = () => {
           {statusMenuOpen && (
             <div className="comm-status-menu">
               <div className="comm-status-menu__label">Message Status</div>
-              <button
-                className="comm-status-menu__item"
-                onClick={() => handleStatusChange('open')}
-              >
-                <img
-                  src={FILTER_ICONS.open}
-                  alt="open"
-                  width={14}
-                  height={14}
-                />
-                Mark as Open
-              </button>
-              <button
-                className="comm-status-menu__item"
-                onClick={() => handleStatusChange('closed')}
-              >
-                <img
-                  src={FILTER_ICONS.closed}
-                  alt="closed"
-                  width={14}
-                  height={14}
-                />
-                Mark as Closed
-              </button>
+              {isClosed ? (
+                <button
+                  className="comm-status-menu__item"
+                  onClick={() => handleStatusChange('open')}
+                >
+                  <img
+                    src={FILTER_ICONS.open}
+                    alt="open"
+                    width={14}
+                    height={14}
+                  />
+                  Mark as Open
+                </button>
+              ) : (
+                <button
+                  className="comm-status-menu__item"
+                  onClick={() => handleStatusChange('closed')}
+                >
+                  <img
+                    src={FILTER_ICONS.closed}
+                    alt="closed"
+                    width={14}
+                    height={14}
+                  />
+                  Mark as Closed
+                </button>
+              )}
             </div>
           )}
         </div>

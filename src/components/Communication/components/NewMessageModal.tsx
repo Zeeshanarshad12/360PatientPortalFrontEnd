@@ -6,7 +6,8 @@ import {
   closeNewMessage,
   createThread,
   Priority,
-  fetchThreads
+  fetchThreads,
+  clearError
 } from '@/slices/messagesSlice';
 import {
   selectIsNewMessageOpen,
@@ -24,6 +25,8 @@ interface FormErrors {
   body?: string;
 }
 
+const TOOLTIP_ID = 'comm-provider-tooltip';
+
 export const NewMessageModal: React.FC = () => {
   const dispatch = useDispatch();
   const isOpen = useSelector(selectIsNewMessageOpen);
@@ -35,7 +38,6 @@ export const NewMessageModal: React.FC = () => {
 
   const { patientId, practiceId } = useCurrentPatient();
 
-  // ── Form state ─────────────────────────────────────────────────────────────
   const [subject, setSubject] = useState('');
   const [providerId, setProviderId] = useState('');
   const [priority, setPriority] = useState<Priority>('Normal');
@@ -51,7 +53,8 @@ export const NewMessageModal: React.FC = () => {
   const firstInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (isOpen) setTimeout(() => firstInputRef.current?.focus(), 100);
+    if (isOpen) dispatch(clearError());
+    setTimeout(() => firstInputRef.current?.focus(), 100);
   }, [isOpen]);
 
   useEffect(() => {
@@ -68,7 +71,79 @@ export const NewMessageModal: React.FC = () => {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  useEffect(() => {
+    if (!showProviderMenu) {
+      removeTooltip();
+      return;
+    }
+
+    const items = document.querySelectorAll<HTMLElement>(
+      '.comm-provider-item[data-tooltip]'
+    );
+
+    const onEnter = (e: Event) => {
+      const el = e.currentTarget as HTMLElement;
+      const name = el.getAttribute('data-tooltip');
+      if (!name) return;
+
+      removeTooltip();
+
+      const rect = el.getBoundingClientRect();
+      const tip = document.createElement('div');
+      tip.id = TOOLTIP_ID;
+      Object.assign(tip.style, {
+        position: 'fixed',
+        top: `${rect.top - 34}px`,
+        left: `${rect.left}px`,
+        background: '#006ad4',
+        color: '#fff',
+        fontSize: '11px',
+        fontWeight: '500',
+        fontFamily: 'Open Sans, sans-serif',
+        padding: '5px 10px',
+        borderRadius: '6px',
+        whiteSpace: 'nowrap',
+        pointerEvents: 'none',
+        zIndex: '9999',
+        boxShadow: '0 2px 8px rgba(0,106,212,0.2)',
+        transition: 'opacity 0.15s ease',
+        opacity: '0'
+      });
+      tip.textContent = name;
+      document.body.appendChild(tip);
+
+      requestAnimationFrame(() => {
+        const t = document.getElementById(TOOLTIP_ID);
+        if (t) t.style.opacity = '1';
+      });
+    };
+
+    const onLeave = () => removeTooltip();
+
+    items.forEach((item) => {
+      item.addEventListener('mouseenter', onEnter);
+      item.addEventListener('mouseleave', onLeave);
+    });
+
+    return () => {
+      items.forEach((item) => {
+        item.removeEventListener('mouseenter', onEnter);
+        item.removeEventListener('mouseleave', onLeave);
+      });
+      removeTooltip();
+    };
+  }, [showProviderMenu, providerSearch]);
+
+  useEffect(() => {
+    return () => removeTooltip();
+  }, []);
+
   if (!isOpen) return null;
+
+  function removeTooltip() {
+    const tip = document.getElementById(TOOLTIP_ID);
+    if (tip) tip.remove();
+  }
 
   const filteredProviders = providers.filter((p) =>
     p.name.toLowerCase().includes(providerSearch.toLowerCase())
@@ -99,7 +174,6 @@ export const NewMessageModal: React.FC = () => {
         patientCommunicationMediumId: mediumId,
         userId: 1,
         assignedTo: selectedProvider.numericId,
-        // assignedToIds: [selectedProvider.numericId, ...ccProviderIds],
         subject: subject.trim(),
         priority,
         body: body.trim(),
@@ -137,12 +211,19 @@ export const NewMessageModal: React.FC = () => {
     setErrors({});
     setProviderSearch('');
     setShowProviderMenu(false);
+    removeTooltip();
   };
 
   const handleClose = () => {
     resetForm();
     dispatch(closeNewMessage());
   };
+
+  const triggerRect = providerDropdownRef.current?.getBoundingClientRect();
+  const spaceBelow = triggerRect
+    ? window.innerHeight - triggerRect.bottom
+    : 300;
+  const openUpward = spaceBelow < 240;
 
   return (
     <div
@@ -279,124 +360,112 @@ export const NewMessageModal: React.FC = () => {
                   </svg>
                 </button>
 
-                {showProviderMenu &&
-                  (() => {
-                    const triggerRect =
-                      providerDropdownRef.current?.getBoundingClientRect();
-                    const spaceBelow = triggerRect
-                      ? window.innerHeight - triggerRect.bottom
-                      : 300;
-                    const openUpward = spaceBelow < 240;
-
-                    return (
-                      <div
+                {/* Dropdown */}
+                {showProviderMenu && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      ...(openUpward
+                        ? { bottom: 'calc(100% + 4px)', top: 'auto' }
+                        : { top: 'calc(100% + 4px)', bottom: 'auto' }),
+                      left: 0,
+                      right: 0,
+                      background: '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                      zIndex: 1400,
+                      overflow: 'hidden',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      maxHeight: '220px',
+                      minWidth: '100%',
+                      width: 'max-content',
+                      maxWidth: '400px'
+                    }}
+                  >
+                    <div
+                      style={{
+                        padding: '8px',
+                        borderBottom: '1px solid #f1f5f9',
+                        flexShrink: 0
+                      }}
+                    >
+                      <input
+                        className="comm-input"
+                        placeholder="Search provider..."
+                        value={providerSearch}
+                        onChange={(e) => setProviderSearch(e.target.value)}
+                        autoFocus
                         style={{
-                          position: 'absolute',
-                          ...(openUpward
-                            ? { bottom: 'calc(100% + 4px)', top: 'auto' }
-                            : { top: 'calc(100% + 4px)', bottom: 'auto' }),
-                          left: 0,
-                          right: 0,
-                          background: '#ffffff',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '8px',
-                          boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                          zIndex: 1400,
-                          overflow: 'hidden',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          maxHeight: '220px',
-                          minWidth: '100%',
-                          width: 'max-content',
-                          maxWidth: '400px'
+                          padding: '6px 10px',
+                          fontSize: '13px',
+                          marginBottom: 0
                         }}
-                      >
-                        <div
-                          style={{
-                            padding: '8px',
-                            borderBottom: '1px solid #f1f5f9',
-                            flexShrink: 0
-                          }}
-                        >
-                          <input
-                            className="comm-input"
-                            placeholder="Search provider..."
-                            value={providerSearch}
-                            onChange={(e) => setProviderSearch(e.target.value)}
-                            autoFocus
-                            style={{
-                              padding: '6px 10px',
-                              fontSize: '13px',
-                              marginBottom: 0
-                            }}
-                          />
-                        </div>
+                      />
+                    </div>
 
-                        {/* List */}
+                    {/* List */}
+                    <div style={{ overflowY: 'auto', flex: 1 }}>
+                      {filteredProviders.length === 0 ? (
                         <div
                           style={{
-                            overflowY: 'auto',
-                            overflowX: 'hidden',
-                            flex: 1
+                            padding: '12px 14px',
+                            color: '#94a3b8',
+                            fontSize: '13px',
+                            textAlign: 'center'
                           }}
                         >
-                          {filteredProviders.length === 0 ? (
-                            <div
-                              style={{
-                                padding: '12px 14px',
-                                color: '#94a3b8',
-                                fontSize: '13px',
-                                textAlign: 'center'
-                              }}
-                            >
-                              No providers found
-                            </div>
-                          ) : (
-                            filteredProviders.map((p) => (
-                              <button
-                                key={p.id}
-                                type="button"
-                                style={{
-                                  display: 'block',
-                                  width: '100%',
-                                  padding: '9px 14px',
-                                  background:
-                                    providerId === p.id ? '#eff6ff' : 'none',
-                                  border: 'none',
-                                  borderBottom: '1px solid #f8fafc',
-                                  textAlign: 'left',
-                                  cursor: 'pointer',
-                                  fontSize: '13.5px',
-                                  color:
-                                    providerId === p.id ? '#006ad4' : '#1e293b',
-                                  fontWeight: providerId === p.id ? 600 : 400,
-                                  fontFamily: 'Open Sans, sans-serif',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis'
-                                }}
-                                title={p.name}
-                                onClick={() => {
-                                  setProviderId(p.id);
-                                  setCcProviderIds((prev) =>
-                                    prev.filter((id) => id !== p.numericId)
-                                  );
-                                  setErrors((e) => ({
-                                    ...e,
-                                    providerId: undefined
-                                  }));
-                                  setShowProviderMenu(false);
-                                  setProviderSearch('');
-                                }}
-                              >
-                                {p.name}
-                              </button>
-                            ))
-                          )}
+                          No providers found
                         </div>
-                      </div>
-                    );
-                  })()}
+                      ) : (
+                        filteredProviders.map((p) => (
+                          <button
+                            key={p.id}
+                            type="button"
+                            className="comm-provider-item"
+                            data-tooltip={
+                              p.name.length > 30 ? p.name : undefined
+                            }
+                            style={{
+                              display: 'block',
+                              width: '100%',
+                              padding: '9px 14px',
+                              background:
+                                providerId === p.id ? '#eff6ff' : 'none',
+                              border: 'none',
+                              borderBottom: '1px solid #f8fafc',
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              fontSize: '13.5px',
+                              color:
+                                providerId === p.id ? '#006ad4' : '#1e293b',
+                              fontWeight: providerId === p.id ? 600 : 400,
+                              fontFamily: 'Open Sans, sans-serif',
+                              whiteSpace: 'nowrap',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis'
+                            }}
+                            onClick={() => {
+                              setProviderId(p.id);
+                              setCcProviderIds((prev) =>
+                                prev.filter((id) => id !== p.numericId)
+                              );
+                              setErrors((e) => ({
+                                ...e,
+                                providerId: undefined
+                              }));
+                              setShowProviderMenu(false);
+                              setProviderSearch('');
+                            }}
+                          >
+                            {p.name}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {errors.providerId && (
