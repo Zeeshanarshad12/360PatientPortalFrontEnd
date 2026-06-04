@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import { useDispatch, useSelector } from '@/store';
 import {
   setActiveSection,
@@ -55,6 +55,7 @@ export const usePatientHistory = ({
   );
   const isFirstSection = sorted[0] === activeSection;
   const isLastSection = sorted[sorted.length - 1] === activeSection;
+  const [refetchTrigger, setRefetchTrigger] = React.useState(0);
 
   // Bootstrap
   useEffect(() => {
@@ -72,7 +73,7 @@ export const usePatientHistory = ({
     return () => {
       promise.abort();
     };
-  }, [activeSection, dispatch, patientId, practiceId]);
+  }, [activeSection, dispatch, patientId, practiceId, refetchTrigger]);
 
   // Auto-clear saved badge
   useEffect(() => {
@@ -133,17 +134,25 @@ export const usePatientHistory = ({
     }
   }, [dispatch, activeSection, data, patientId]);
 
-  // Save only
   const handleSave = useCallback(async () => {
-    await dispatchSave();
-  }, [dispatchSave]);
+    const result = await dispatchSave();
+    if (!result) return;
+    if (result.meta.requestStatus === 'fulfilled') {
+      dispatch(resetSectionStatus(activeSection));
+      setRefetchTrigger((n) => n + 1);
+    }
+  }, [dispatchSave, dispatch, activeSection]);
 
-  // Save then navigate
   const handleSaveAndNext = useCallback(async () => {
     const result = await dispatchSave();
     if (!result) return;
-    if (result.meta.requestStatus === 'fulfilled' && !isLastSection) {
-      dispatch(setActiveSection(sorted[sorted.indexOf(activeSection) + 1]));
+    if (result.meta.requestStatus === 'fulfilled') {
+      dispatch(resetSectionStatus(activeSection));
+      if (!isLastSection) {
+        dispatch(setActiveSection(sorted[sorted.indexOf(activeSection) + 1]));
+      } else {
+        setRefetchTrigger((n) => n + 1);
+      }
     }
   }, [dispatchSave, dispatch, activeSection, sorted, isLastSection]);
 

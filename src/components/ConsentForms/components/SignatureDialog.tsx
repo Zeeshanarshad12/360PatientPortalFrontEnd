@@ -11,7 +11,7 @@ import {
   FormControlLabel,
   Radio,
   Fade,
-  Alert,
+  Alert
 } from '@mui/material';
 import SignatureCanvas from 'react-signature-canvas';
 const ReactSignatureCanvas = SignatureCanvas as any;
@@ -46,7 +46,9 @@ const SignatureDialog = ({ open, onClose, onSave }: Props) => {
   const handleSave = () => {
     setError('');
     if (mode === 'signature') {
-      const Signature = sigRef.current?.getTrimmedCanvas().toDataURL('image/png');
+      const Signature = sigRef.current
+        ?.getTrimmedCanvas()
+        .toDataURL('image/png');
       if (Signature && !sigRef.current?.isEmpty()) {
         onSave(Signature);
       } else {
@@ -62,37 +64,47 @@ const SignatureDialog = ({ open, onClose, onSave }: Props) => {
   };
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (file) {
-    const validTypes = ['image/jpeg', 'image/png'];
-    if (!validTypes.includes(file.type)) {
-      setError('Only JPG and PNG files are allowed.');
-      setPhotoDataUrl(null);
-      return;
+    const file = e.target.files?.[0];
+    if (file) {
+      const validTypes = ['image/jpeg', 'image/png'];
+      if (!validTypes.includes(file.type)) {
+        setError('Only JPG and PNG files are allowed.');
+        setPhotoDataUrl(null);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoDataUrl(reader.result as string);
+        setFadeIn(true);
+        setError('');
+      };
+      reader.readAsDataURL(file);
     }
+  };
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPhotoDataUrl(reader.result as string);
-      setFadeIn(true);
+  useEffect(() => {
+    if (open) {
       setError('');
-    };
-    reader.readAsDataURL(file);
-  }
-};
-
-useEffect(() => {
-  if (open) {
-    setError('');
-  }
-}, [open]);
+    }
+  }, [open]);
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+    <Dialog
+      open={open}
+      onClose={(event, reason) => {
+        if (reason === 'backdropClick' || reason === 'escapeKeyDown') return;
+        onClose();
+      }}
+      disableEscapeKeyDown
+      fullWidth
+      maxWidth="sm"
+    >
       <DialogTitle>Signature</DialogTitle>
       <DialogContent>
         <Typography variant="body2" mb={2}>
-          Add your eSignature to your consent form using mouse/touchpad or upload a photograph.
+          Add your eSignature to your consent form using mouse/touchpad or
+          upload a photograph.
         </Typography>
 
         <RadioGroup
@@ -103,8 +115,16 @@ useEffect(() => {
             setError('');
           }}
         >
-          <FormControlLabel value="signature" control={<Radio />} label="Signature" />
-          <FormControlLabel value="photograph" control={<Radio />} label="Photograph" />
+          <FormControlLabel
+            value="signature"
+            control={<Radio />}
+            label="Signature"
+          />
+          <FormControlLabel
+            value="photograph"
+            control={<Radio />}
+            label="Photograph"
+          />
         </RadioGroup>
 
         {error && (
@@ -123,15 +143,17 @@ useEffect(() => {
                 p: 2,
                 mt: 2,
                 textAlign: 'center',
-                background: '#f9f9f9',
+                background: '#f9f9f9'
               }}
             >
-
               <ReactSignatureCanvas
                 ref={sigRef}
-                canvasProps={{ width: 500, height: 150, className: 'sigCanvas' }}
+                canvasProps={{
+                  width: 500,
+                  height: 150,
+                  className: 'sigCanvas'
+                }}
               />
-
             </Box>
             <Box sx={{ mt: 1, textAlign: 'right' }}>
               <Button onClick={handleClear} size="small">
@@ -171,13 +193,17 @@ useEffect(() => {
                   alignItems: 'center',
                   width: '100%',
                   height: 160,
-                  overflow: 'hidden',
+                  overflow: 'hidden'
                 }}
               >
                 <img
                   src={photoDataUrl || ''}
                   alt="Uploaded"
-                  style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain' }}
+                  style={{
+                    maxHeight: '100%',
+                    maxWidth: '100%',
+                    objectFit: 'contain'
+                  }}
                 />
               </Box>
             </Fade>
