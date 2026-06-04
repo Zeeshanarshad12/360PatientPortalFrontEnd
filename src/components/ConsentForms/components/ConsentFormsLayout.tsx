@@ -24,6 +24,7 @@ function ConsentFormsLayout() {
   const [justSigned, setJustSigned] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(false);
   const { setPendingCount } = useConsentFormContext();
+  const [searchResetKey, setSearchResetKey] = useState(0);
 
   const { patientId, practiceId } = useCurrentPatient();
 
@@ -119,6 +120,8 @@ function ConsentFormsLayout() {
   const handleFormSigned = (formId: string, Signature: string) => {
     const now = new Date().toISOString();
     setJustSigned(true);
+
+    setSearchResetKey((prev) => prev + 1);
 
     setForms((prevForms) =>
       prevForms.map((f) =>
@@ -240,6 +243,7 @@ function ConsentFormsLayout() {
                       selectedId={selectedForm?.FormID}
                       // onSelect={setSelectedForm}
                       onSelect={handleSelectForm}
+                      resetKey={searchResetKey}
                     />
                   </CardContent>
                 </Card>
@@ -267,6 +271,7 @@ function ConsentFormsLayout() {
                     pendingForms={pendingForms}
                     onSelectForm={handleSelectForm}
                     triggerRefresh={triggerRefresh}
+                    noForms={forms.length === 0}
                   />
                 </Card>
               </Box>

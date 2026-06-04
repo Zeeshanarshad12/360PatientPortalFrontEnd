@@ -20,6 +20,7 @@ interface Props {
   pendingForms: (ConsentForm & { Signature?: string })[];
   onSelectForm: (form: ConsentForm & { Signature?: string }) => void;
   triggerRefresh: () => void;
+  noForms?: boolean;
 }
 
 const bounce = keyframes`
@@ -33,7 +34,8 @@ const ConsentFormViewer = ({
   onFormSigned,
   pendingForms,
   onSelectForm,
-  triggerRefresh
+  triggerRefresh,
+  noForms = false
 }: Props) => {
   const dispatch = useDispatch();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -245,8 +247,6 @@ const ConsentFormViewer = ({
   const handleCloseSignature = () => setSignatureOpen(false);
 
   const handleSaveSignature = async (Signature: string) => {
-    if (!form) return;
-
     let finalContent = form.Content;
     if (contentRef.current) {
       const inputs = contentRef.current.querySelectorAll(
@@ -273,8 +273,9 @@ const ConsentFormViewer = ({
       triggerRefresh();
       //  Forcefully check for result === 'success'
       if (response.payload.result === 'success') {
+        setSignatureOpen(false);
         decrementPendingCount();
-        setSnackbarMessage('Signing Complete!');
+        setSnackbarMessage('Consent form signed successfully.');
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
 
@@ -371,11 +372,11 @@ const ConsentFormViewer = ({
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
     }
-
-    setSignatureOpen(false);
   };
 
   if (!form) {
+    if (noForms) return <Box height="100%" />;
+
     return (
       <Box
         height="100%"
@@ -383,22 +384,6 @@ const ConsentFormViewer = ({
         alignItems="center"
         justifyContent="center"
         color="text.secondary"
-      >
-        <Typography variant="body1">Please select a form to view.</Typography>
-      </Box>
-    );
-  }
-
-  if (!form) {
-    return (
-      <Box
-        sx={{
-          height: '100%',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'text.secondary'
-        }}
       >
         <Typography variant="body1">Please select a form to view.</Typography>
       </Box>
