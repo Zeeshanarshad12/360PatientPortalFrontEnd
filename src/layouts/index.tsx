@@ -23,7 +23,6 @@ const SharedLayout: FC<CollapsedSidebarLayoutProps> = ({ children }) => {
   const { PatientByEmailData, patientEmail } = useSelector(
     (state) => state.patientprofileslice
   );
-  const { patientId, practiceId } = useCurrentPatient();
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -41,7 +40,6 @@ const SharedLayout: FC<CollapsedSidebarLayoutProps> = ({ children }) => {
 
     // Exactly one fetch per user per session
     dispatch(GetPatientByEmail(email));
-    dispatch(GetConsentFormData(patientId));
   }, [dispatch, PatientByEmailData, patientEmail]);
   // if (token) {
   //   return <ThemeLoader loader={isLoading} />;

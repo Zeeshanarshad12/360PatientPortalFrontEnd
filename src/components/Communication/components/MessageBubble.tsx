@@ -88,13 +88,12 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
 }) => {
   return (
     <div className="comm-bubble-row">
-      {/* Avatar — always left */}
       <div className="comm-bubble-avatar">
         <Avatar
           name={message.senderName}
           size={38}
-          role={message.senderRole} //  'patient' | 'provider'
-          isClosed={isClosed} // gray when thread closed
+          role={message.senderRole}
+          isClosed={isClosed}
         />
       </div>
 

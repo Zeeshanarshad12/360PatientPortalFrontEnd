@@ -14,6 +14,8 @@ import HeartProgressLoader from '@/components/ProgressLoaders/components/HeartLo
 import { useConsentFormContext } from '@/contexts/ConsentFormContext';
 import draftToHtml from 'draftjs-to-html';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
+import { syncPendingConsentFormCount } from '@/utils/consentFormCountUtils';
+import { convertDraftToHtml } from '@/utils/draftToHtmlWithAlignment';
 
 function ConsentFormsLayout() {
   const [heartLoading, setHeartLoading] = useState(true);
@@ -61,7 +63,7 @@ function ConsentFormsLayout() {
 
         setForms(mappedForms);
         const pending = mappedForms.filter((f) => f.Status === 'Pending');
-        setPendingCount(pending.length);
+        syncPendingConsentFormCount(pending.length, setPendingCount);
       } catch (error) {
         console.error('Failed to fetch consent forms:', error);
       }
@@ -98,7 +100,7 @@ function ConsentFormsLayout() {
         SignedByName: form.signedByName ?? null
       }));
       const pending = mappedForms.filter((f) => f.Status === 'Pending');
-      setPendingCount(pending.length);
+      syncPendingConsentFormCount(pending.length, setPendingCount);
       setForms(mappedForms);
     } catch (error) {
       console.error('Failed to refresh consent forms:', error);
@@ -150,7 +152,7 @@ function ConsentFormsLayout() {
         const rawContent = detailedForm?.content
           ? JSON.parse(detailedForm.content)
           : null;
-        const contenthtml = draftToHtml(rawContent);
+        const contenthtml = convertDraftToHtml(rawContent);
         const updatedForm = {
           ...form,
           Content: contenthtml,
