@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useMemo,
+  ReactNode
+} from 'react';
 
 interface ConsentFormContextType {
   pendingCount: number;
@@ -6,21 +13,32 @@ interface ConsentFormContextType {
   decrementPendingCount: () => void;
 }
 
-const ConsentFormContext = createContext<ConsentFormContextType | undefined>(undefined);
+const ConsentFormContext = createContext<ConsentFormContextType | undefined>(
+  undefined
+);
 
 export const ConsentFormProvider = ({ children }: { children: ReactNode }) => {
   const [pendingCount, setPendingCountState] = useState<number>(0);
 
-  const setPendingCount = (count: number) => {
+  const setPendingCount = useCallback((count: number) => {
     setPendingCountState(count);
-  };
+  }, []);
 
-  const decrementPendingCount = () => {
-    setPendingCountState(prev => Math.max(prev - 1, 0));
-  };
+  const decrementPendingCount = useCallback(() => {
+    setPendingCountState((prev) => Math.max(prev - 1, 0));
+  }, []); // no deps — pure state updater
+
+  const value = useMemo(
+    () => ({
+      pendingCount,
+      setPendingCount,
+      decrementPendingCount
+    }),
+    [pendingCount, setPendingCount, decrementPendingCount]
+  );
 
   return (
-    <ConsentFormContext.Provider value={{ pendingCount, setPendingCount, decrementPendingCount }}>
+    <ConsentFormContext.Provider value={value}>
       {children}
     </ConsentFormContext.Provider>
   );
@@ -29,7 +47,9 @@ export const ConsentFormProvider = ({ children }: { children: ReactNode }) => {
 export const useConsentFormContext = () => {
   const context = useContext(ConsentFormContext);
   if (!context) {
-    throw new Error('useConsentFormContext must be used within ConsentFormProvider');
+    throw new Error(
+      'useConsentFormContext must be used within ConsentFormProvider'
+    );
   }
   return context;
 };

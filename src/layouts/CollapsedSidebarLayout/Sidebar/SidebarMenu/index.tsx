@@ -20,6 +20,7 @@ import {
 import Image from 'next/image';
 import { useAriaHiddenFixOnDialog } from '@/hooks/useAriaHiddenFixOnDialog';
 import { useConsentFormContext } from '@/contexts/ConsentFormContext';
+import { CONSENT_COUNT_UPDATED_EVENT } from '@/utils/consentFormCountUtils';
 
 const MenuWrapper = styled(Box)(``);
 const SubMenuWrapper = styled(Box)(``);
@@ -81,21 +82,23 @@ function SidebarMenu({ onItemClick }: SidebarMenuProps) {
   const [localPendingCount, setLocalPendingCount] = useState<number>(0);
 
   useEffect(() => {
-    // Initial read from localStorage on first render
-    const storedCount = Number(
-      localStorage.getItem('pendingConsentFormCount') || '0'
-    );
-    setLocalPendingCount(storedCount);
-
-    // Recheck after 500ms (half second) for updated value
-    const timer = setTimeout(() => {
-      const updatedCount = Number(
-        localStorage.getItem('pendingConsentFormCount') || '0'
+    const refreshFromStorage = () => {
+      setLocalPendingCount(
+        Number(localStorage.getItem('pendingConsentFormCount') || '0')
       );
-      setLocalPendingCount(updatedCount);
-    }, 2000);
-
-    return () => clearTimeout(timer);
+    };
+    refreshFromStorage();
+    window.addEventListener('practiceInitialized', refreshFromStorage);
+    window.addEventListener('practiceChanged', refreshFromStorage);
+    window.addEventListener(CONSENT_COUNT_UPDATED_EVENT, refreshFromStorage);
+    return () => {
+      window.removeEventListener('practiceInitialized', refreshFromStorage);
+      window.removeEventListener('practiceChanged', refreshFromStorage);
+      window.removeEventListener(
+        CONSENT_COUNT_UPDATED_EVENT,
+        refreshFromStorage
+      );
+    };
   }, []);
 
   if (!mounted) return null;

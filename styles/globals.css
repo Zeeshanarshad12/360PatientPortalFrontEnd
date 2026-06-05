@@ -632,11 +632,11 @@ html {
 
 /* ── Bubble Row ──────────────────────────────────────────── */
 .comm-bubble-row {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 10px;
+  display: flex !important;
+  align-items: flex-start !important;
+  gap: 10px !important;
   margin-bottom: 12px !important;
+  width: 100% !important;
 }
 
 .comm-bubble-avatar {
@@ -645,9 +645,11 @@ html {
 }
 
 .comm-bubble-group {
-  display: flex;
-  flex-direction: column;
-  max-width: 70%;
+  display: flex !important;
+  flex-direction: column !important;
+  width: auto !important;
+  max-width: 75% !important;
+  min-width: 0 !important;
   gap: 3px !important;
 }
 
@@ -672,21 +674,25 @@ html {
 
 /* ── Bubbles ─────────────────────────────────────────────── */
 .comm-bubble {
-  display: inline-block !important;
+  display: block !important;
   width: fit-content !important;
   max-width: 100% !important;
   padding: 8px 12px !important;
   border-radius: 0 12px 12px 12px !important;
-  font-size: 14px;
-  line-height: 1.6;
-  white-space: pre-wrap;
-  word-break: break-word;
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  white-space: pre-wrap !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
+  box-sizing: border-box !important;
 }
-
 .comm-bubble p,
 .comm-bubble__text {
+  display: block !important;
   margin: 0 !important;
   padding: 0 !important;
+  word-break: break-word !important;
+  overflow-wrap: break-word !important;
 }
 
 .comm-bubble--own {
@@ -2123,6 +2129,112 @@ html {
 .ph-skeleton--item {
   height: 32px;
 }
+
+/* consent form Start */
+.consent-form-content ul,
+.consent-form-content ol {
+  padding-left: 28px !important;
+  margin-top: 4px !important;
+  margin-bottom: 8px !important;
+  margin-left: 0 !important;
+}
+
+.consent-form-content ul {
+  list-style-type: disc !important;
+  list-style-position: outside !important;
+}
+
+.consent-form-content ol {
+  list-style-type: decimal !important;
+  list-style-position: outside !important;
+}
+
+.consent-form-content li {
+  padding-left: 4px !important;
+  margin-bottom: 3px !important;
+  line-height: 1.65 !important;
+  display: list-item !important;
+}
+
+/* Nested lists */
+.consent-form-content ul ul,
+.consent-form-content ol ol,
+.consent-form-content ul ol,
+.consent-form-content ol ul {
+  padding-left: 20px !important;
+  margin-top: 2px !important;
+  margin-bottom: 2px !important;
+}
+
+.body-content ul,
+.body-content ol {
+  padding-left: 24px;
+  margin-top: 6px;
+  margin-bottom: 10px;
+}
+
+.body-content ul {
+  list-style-type: disc;
+}
+
+.body-content ol {
+  list-style-type: decimal;
+}
+
+.body-content li {
+  padding-left: 6px;
+  margin-bottom: 4px;
+  line-height: 1.65;
+}
+
+.body-content ul ul,
+.body-content ol ol,
+.body-content ul ol,
+.body-content ol ul {
+  padding-left: 20px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+
+.consent-form-content .center-align,
+.consent-form-content [style*='text-align:center'],
+.consent-form-content [style*='text-align: center'] {
+  text-align: center !important;
+}
+
+.consent-form-content .right-align,
+.consent-form-content [style*='text-align:right'],
+.consent-form-content [style*='text-align: right'] {
+  text-align: right !important;
+}
+
+.consent-form-content .left-align,
+.consent-form-content [style*='text-align:left'],
+.consent-form-content [style*='text-align: left'] {
+  text-align: left !important;
+}
+
+/* Scalable reusable alignment utilities */
+.text-center {
+  text-align: center !important;
+}
+.text-right {
+  text-align: right !important;
+}
+.text-left {
+  text-align: left !important;
+}
+.center-align {
+  text-align: center !important;
+}
+.right-align {
+  text-align: right !important;
+}
+.left-align {
+  text-align: left !important;
+}
+
+/* consent form END */
 
 @keyframes ph-shimmer {
   0% {
