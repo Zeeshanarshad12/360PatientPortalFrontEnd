@@ -25,13 +25,13 @@ const MedicalHistorySection: React.FC<Props> = ({
       following?
     </p>
 
-    <div className="ph-card">
+    <div className="ph-card" style={{ padding: '10px 16px' }}>
       <div
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: '6px 16px',
-          marginBottom: 20
+          gap: '0px 10px',
+          marginBottom: 10
         }}
       >
         {sectionData.conditions.map((c) => (

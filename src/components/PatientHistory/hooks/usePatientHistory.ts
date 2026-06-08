@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useEffect, useCallback, useMemo } from 'react';
+import { useEffect, useCallback, useMemo, useState } from 'react';
 import { useDispatch, useSelector } from '@/store';
+import SnackbarUtils from '@/content/snackbar';
 import {
   setActiveSection,
   setPatientContext,
@@ -34,6 +35,15 @@ interface UsePatientHistoryProps {
   practiceId: number;
 }
 
+// ── Section display names for success messages ────────────────────────────────
+const SECTION_NAMES: Record<number, string> = {
+  1: 'Medical History',
+  2: 'Surgical History',
+  3: 'Family History',
+  4: 'Smoking Status',
+  5: 'Social History'
+};
+
 export const usePatientHistory = ({
   patientId,
   practiceId
@@ -49,22 +59,31 @@ export const usePatientHistory = ({
     familyRelationsLoading
   } = useSelector((state) => state.patientHistory);
 
+  // ── Fix 1: refetch trigger — increments to re-run fetchSectionData useEffect
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
+
   const sorted = useMemo(
     () => [...ENABLED_SECTION_IDS].sort((a, b) => a - b),
     []
   );
   const isFirstSection = sorted[0] === activeSection;
   const isLastSection = sorted[sorted.length - 1] === activeSection;
-  const [refetchTrigger, setRefetchTrigger] = React.useState(0);
 
   // Bootstrap
   useEffect(() => {
     dispatch(setPatientContext({ patientId, practiceId }));
     dispatch(fetchSections());
-    dispatch(fetchFamilyRelations()); // fetch relation columns for family history table
+    dispatch(fetchFamilyRelations());
   }, [dispatch, patientId, practiceId]);
 
-  // Fetch on tab change — StrictMode safe abort
+  // ── Fix 3: Sub-tab data refresh — resets status on every tab switch so
+  //    fetchSectionData always runs fresh, not skipped due to 'success' cache
+  useEffect(() => {
+    if (!ENABLED_SECTION_IDS.includes(activeSection)) return;
+    dispatch(resetSectionStatus(activeSection));
+  }, [activeSection, dispatch]);
+
+  // ── Fix 1: Fetch on tab change OR refetchTrigger increment ────────────────
   useEffect(() => {
     if (!ENABLED_SECTION_IDS.includes(activeSection)) return;
     const promise = dispatch(
@@ -85,7 +104,7 @@ export const usePatientHistory = ({
     return () => clearTimeout(t);
   }, [saving, activeSection, dispatch]);
 
-  // ── Internal save dispatcher ────────────────────────────────────────────────
+  // ── Internal save dispatcher ──────────────────────────────────────────────
   const dispatchSave = useCallback(async (): Promise<ThunkResult | null> => {
     const sd = data[activeSection];
 
@@ -134,27 +153,47 @@ export const usePatientHistory = ({
     }
   }, [dispatch, activeSection, data, patientId]);
 
+  // ── Fix 2: Shared post-save handler — success message + refetch ───────────
+  const handlePostSave = useCallback(
+    (result: ThunkResult | null) => {
+      if (!result) return false;
+      if (result.meta.requestStatus === 'fulfilled') {
+        // Success snackbar
+        SnackbarUtils.success(
+          `Patient ${SECTION_NAMES[activeSection]} record saved successfully`,
+          false
+        );
+        // Refetch current section fresh
+        dispatch(resetSectionStatus(activeSection));
+        setRefetchTrigger((n) => n + 1);
+        return true;
+      }
+      return false;
+    },
+    [dispatch, activeSection]
+  );
+
+  // Save only
   const handleSave = useCallback(async () => {
     const result = await dispatchSave();
-    if (!result) return;
-    if (result.meta.requestStatus === 'fulfilled') {
-      dispatch(resetSectionStatus(activeSection));
-      setRefetchTrigger((n) => n + 1);
-    }
-  }, [dispatchSave, dispatch, activeSection]);
+    handlePostSave(result);
+  }, [dispatchSave, handlePostSave]);
 
+  // Save then navigate
   const handleSaveAndNext = useCallback(async () => {
     const result = await dispatchSave();
-    if (!result) return;
-    if (result.meta.requestStatus === 'fulfilled') {
-      dispatch(resetSectionStatus(activeSection));
-      if (!isLastSection) {
-        dispatch(setActiveSection(sorted[sorted.indexOf(activeSection) + 1]));
-      } else {
-        setRefetchTrigger((n) => n + 1);
-      }
+    const succeeded = handlePostSave(result);
+    if (succeeded && !isLastSection) {
+      dispatch(setActiveSection(sorted[sorted.indexOf(activeSection) + 1]));
     }
-  }, [dispatchSave, dispatch, activeSection, sorted, isLastSection]);
+  }, [
+    dispatchSave,
+    handlePostSave,
+    dispatch,
+    activeSection,
+    sorted,
+    isLastSection
+  ]);
 
   const handleTabChange = useCallback(
     (id: number) => dispatch(setActiveSection(id)),
@@ -166,7 +205,7 @@ export const usePatientHistory = ({
     if (idx > 0) dispatch(setActiveSection(sorted[idx - 1]));
   }, [dispatch, activeSection, sorted]);
 
-  // ── Medical ─────────────────────────────────────────────────────────────────
+  // ── Medical ───────────────────────────────────────────────────────────────
   const handleToggleCondition = useCallback(
     (conditionId: number) =>
       dispatch(toggleCondition({ sectionId: activeSection, conditionId })),
@@ -194,7 +233,10 @@ export const usePatientHistory = ({
           : saveSurgicalHistory({ patientId, conditions: updated as any })
       )) as unknown as ThunkResult;
       if (result.meta.requestStatus === 'fulfilled') {
-        // resetSectionStatus now clears arrays too — refetch will fully replace
+        SnackbarUtils.success(
+          `Patient ${SECTION_NAMES[activeSection]} record saved successfully`,
+          false
+        );
         dispatch(resetSectionStatus(activeSection));
         dispatch(
           fetchSectionData({ patientId, practiceId, sectionId: activeSection })
@@ -204,7 +246,7 @@ export const usePatientHistory = ({
     [dispatch, activeSection, data, patientId, practiceId]
   );
 
-  // ── Surgical ─────────────────────────────────────────────────────────────────
+  // ── Surgical ──────────────────────────────────────────────────────────────
   const handleToggleSurgicalCondition = useCallback(
     (conditionId: number) => dispatch(toggleSurgicalCondition({ conditionId })),
     [dispatch]
@@ -234,6 +276,10 @@ export const usePatientHistory = ({
         saveSurgicalHistory({ patientId, conditions: updated })
       )) as unknown as ThunkResult;
       if (result.meta.requestStatus === 'fulfilled') {
+        SnackbarUtils.success(
+          `Patient ${SECTION_NAMES[2]} record saved successfully`,
+          false
+        );
         dispatch(resetSectionStatus(2));
         dispatch(fetchSectionData({ patientId, practiceId, sectionId: 2 }));
       }
@@ -241,13 +287,13 @@ export const usePatientHistory = ({
     [dispatch, data, patientId, practiceId]
   );
 
-  // ── Smoking ───────────────────────────────────────────────────────────────────
+  // ── Smoking ───────────────────────────────────────────────────────────────
   const handleSmokingSelect = useCallback(
     (conditionId: number) => dispatch(selectSmokingStatus({ conditionId })),
     [dispatch]
   );
 
-  // ── Family matrix ─────────────────────────────────────────────────────────────
+  // ── Family ────────────────────────────────────────────────────────────────
   const handleToggleFamilyCell = useCallback(
     (lookupId: number, relationId: number) =>
       dispatch(toggleFamilyCell({ lookupId, relationId })),
@@ -260,7 +306,7 @@ export const usePatientHistory = ({
     [dispatch]
   );
 
-  // ── Social ───────────────────────────────────────────────────────────────────
+  // ── Social ────────────────────────────────────────────────────────────────
   const handleToggleSocialCondition = useCallback(
     (conditionId: number) => dispatch(toggleSocialCondition({ conditionId })),
     [dispatch]
@@ -287,12 +333,20 @@ export const usePatientHistory = ({
         saveSocialHistory({ patientId, conditions: updated })
       )) as unknown as ThunkResult;
       if (result.meta.requestStatus === 'fulfilled') {
+        SnackbarUtils.success(
+          `Patient ${SECTION_NAMES[5]} record saved successfully`,
+          false
+        );
         dispatch(resetSectionStatus(5));
         dispatch(fetchSectionData({ patientId, practiceId, sectionId: 5 }));
       }
     },
     [dispatch, data, patientId, practiceId]
   );
+
+  const isSectionLoading =
+    data[activeSection]?.status === 'loading' ||
+    data[activeSection]?.status === 'idle';
 
   return {
     sections,
@@ -302,6 +356,7 @@ export const usePatientHistory = ({
     saving,
     isFirstSection,
     isLastSection,
+    isSectionLoading,
     handleTabChange,
     handlePrev,
     handleSave,

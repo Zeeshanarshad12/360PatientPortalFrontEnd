@@ -48,13 +48,13 @@ const SurgicalHistorySection: React.FC<Props> = ({
         List the most recent dates for any Surgeries/Exams of the following
       </p>
 
-      <div className="ph-card" style={{ padding: 20 }}>
+      <div className="ph-card" style={{ padding: '10px 16px' }}>
         <div
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr',
-            gap: '0 32px',
-            marginBottom: 20
+            gap: '0 24px',
+            marginBottom: 10
           }}
         >
           <div>

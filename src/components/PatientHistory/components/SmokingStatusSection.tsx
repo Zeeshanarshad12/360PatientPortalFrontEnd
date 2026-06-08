@@ -21,9 +21,9 @@ const SmokingStatusSection: React.FC<Props> = ({ sectionData, onSelect }) => {
         Please select your current smoking status
       </p>
 
-      <div className="ph-card" style={{ padding: 20 }}>
+      <div className="ph-card" style={{ padding: '10px 16px' }}>
         {options.length === 0 && (
-          <p style={{ color: '#9ca3af', fontSize: 14 }}>
+          <p style={{ color: '#9ca3af', fontSize: 14, margin: 0 }}>
             No smoking status options available.
           </p>
         )}

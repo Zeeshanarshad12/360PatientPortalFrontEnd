@@ -449,7 +449,6 @@ const SaveSmokingStatus = (data, flag) => {
   });
 };
 const SaveSocialStatus = (data, flag) => {
-  debugger;
   return post(`${SERVICE_URLSV2.SaveSocialStatus}`, data, {
     feature: featureConstants.static,
     ApiVersion2Req: flag
