@@ -82,44 +82,39 @@ const ConsentFormViewer = ({
     let updatedContent = form.Content;
 
     const listStyleFix = `
-  <style>
-    .consent-form-content ul,
-    .consent-form-content ul[style] {
-      margin-left: 20px !important;
-      padding-left: 8px !important;
-      list-style-type: disc !important;
-      list-style-position: outside !important;
-    }
-    .consent-form-content ol,
-    .consent-form-content ol[style] {
-      margin-left: 20px !important;
-      padding-left: 8px !important;
-      list-style-type: decimal !important;
-      list-style-position: outside !important;
-    }
-    .consent-form-content li,
-    .consent-form-content li[style] {
-      display: list-item !important;
-      margin-bottom: 4px !important;
-    }
-    .consent-form-content li p,
-    .consent-form-content li > p {
-      display: inline !important;
-      margin: 0 !important;
-      padding: 0 !important;
-    }
-  </style>
-`;
-
-    const isAlreadyHTML =
-      updatedContent.trim().startsWith('<') ||
-      updatedContent.includes('consent-form-content');
+<style>
+  .consent-form-content ul,
+  .consent-form-content ul[style] {
+    margin-left: 20px !important;
+    padding-left: 8px !important;
+    list-style-type: disc !important;
+    list-style-position: outside !important;
+  }
+  .consent-form-content ol,
+  .consent-form-content ol[style] {
+    margin-left: 20px !important;
+    padding-left: 8px !important;
+    list-style-type: decimal !important;
+    list-style-position: outside !important;
+  }
+  .consent-form-content li,
+  .consent-form-content li[style] {
+    display: list-item !important;
+    margin-bottom: 4px !important;
+  }
+  .consent-form-content li p,
+  .consent-form-content li > p {
+    display: inline !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+</style>`;
 
     if (form.Status === 'Pending') {
       updatedContent = updatedContent.replace(
         /InputTextField/g,
-        `<input type="text" data-field="dynamic" placeholder="Type here..."
-        style="border:none; border-bottom:2px solid #1976d2; outline:none;
+        `<input type="text" data-field="dynamic" placeholder=""
+        style="border:none; border-bottom:2px solid #000;; outline:none;
           background:transparent; font-size:inherit; font-family:inherit;
           min-width:120px; width:120px; padding:2px 4px; display:inline-block;
           color:inherit; cursor:text;"
@@ -134,24 +129,27 @@ const ConsentFormViewer = ({
       );
     }
 
-    if (isAlreadyHTML) {
-      setRenderedContent(listStyleFix + updatedContent);
-      return;
-    }
+    if (form.Signature) {
+      const signatureImg = `<img src="${form.Signature}" alt="Signature"
+      style="max-width:250px; height:auto; display:block; margin:4px 0;" />${
+        form.SignedByName
+          ? `<br/><span style="font-size:13px;font-weight:bold">
+            Signed By: ${form.SignedByName}</span>`
+          : ''
+      }`;
 
-    updatedContent = updatedContent.replace(
-      /((?:<\/strong>|<\/b>|<\/em>|<\/i>|<p[^>]*>|\s))\s*_{10,}\s*(?=<\/p>|<br|$)/gi,
-      (match, before) =>
-        form.Signature
-          ? `${before}<img src="${form.Signature}" alt="Signature"
-          style="max-width:250px; height:auto; display:block; margin:4px 0;" />${
-            form.SignedByName
-              ? `<br/><span style="font-size:13px;font-weight:bold">
-                Signed By: ${form.SignedByName}</span>`
-              : ''
-          }`
-          : match
-    );
+      updatedContent = updatedContent.replace(
+        /(\s|<br\s*\/?>|<p[^>]*>)\s*_{10,}\s*(<\/p>|<br\s*\/?>|$)/gi,
+        (match, before, after) => `${before}${signatureImg}${after}`
+      );
+
+      updatedContent = updatedContent.replace(
+        /((?:<\/strong>|<\/b>|<\/em>|<\/i>|\s))\s*_{10,}\s*(?=<\/p>|<br|$)/gi,
+        (match, before) => `${before}${signatureImg}`
+      );
+
+      updatedContent = updatedContent.replace(/_{10,}/g, signatureImg);
+    }
 
     updatedContent = updatedContent.replace(
       /Patient Signature:/g,

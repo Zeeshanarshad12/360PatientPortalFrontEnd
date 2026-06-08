@@ -165,14 +165,26 @@ function ConsentFormsLayout() {
       try {
         const detailedForms = await getConsentFormById(form.FormID);
         const detailedForm = detailedForms[0];
-        {
-          console.log('detailedForm', detailedForm);
+
+        const rawContent = detailedForm?.content ?? null;
+
+        const isHTML =
+          typeof rawContent === 'string' && rawContent.trim().startsWith('<');
+
+        let contenthtml = '';
+
+        if (isHTML) {
+          contenthtml = rawContent;
+        } else if (rawContent) {
+          try {
+            const parsed = JSON.parse(rawContent);
+            contenthtml = convertDraftToHtml(parsed);
+          } catch (parseErr) {
+            console.error('Failed to parse DraftJS JSON:', parseErr);
+            contenthtml = rawContent;
+          }
         }
-        // const rawContent = JSON.parse(detailedForm.content);
-        const rawContent = detailedForm?.content
-          ? JSON.parse(detailedForm.content)
-          : null;
-        const contenthtml = convertDraftToHtml(rawContent);
+
         const updatedForm = {
           ...form,
           Content: contenthtml,
@@ -189,7 +201,7 @@ function ConsentFormsLayout() {
         console.error('Failed to load form content:', error);
       }
     } else {
-      setSelectedForm(form); // Already has content
+      setSelectedForm(form);
     }
   };
 
