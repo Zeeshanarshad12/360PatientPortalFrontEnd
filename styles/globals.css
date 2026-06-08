@@ -645,10 +645,10 @@ html {
 }
 
 .comm-bubble-group {
+  flex: 1 !important;
   display: flex !important;
   flex-direction: column !important;
-  width: auto !important;
-  max-width: 75% !important;
+  max-width: calc(100% - 58px) !important;
   min-width: 0 !important;
   gap: 3px !important;
 }
@@ -709,6 +709,7 @@ html {
   color: #1e293b;
   border-radius: 0 12px 12px 12px;
   box-shadow: none;
+  max-width: 100% !important;
 }
 
 .comm-bubble__text div,

@@ -7,6 +7,7 @@ import {
   openNewMessage,
   setActiveThread,
   setGroupOption,
+  GetAllComments,
   GroupOption
 } from '@/slices/messagesSlice';
 import {
@@ -287,7 +288,12 @@ export const CommunicationSidebar: React.FC = () => {
                     ]
                       .filter(Boolean)
                       .join(' ')}
-                    onClick={() => dispatch(setActiveThread(thread.id))}
+                    onClick={() => {
+                      dispatch(setActiveThread(thread.id));
+                      if (thread.id) {
+                        dispatch(GetAllComments(thread.id));
+                      }
+                    }}
                   >
                     {/* ── Avatar — no status dot ── */}
                     <div className="comm-thread-item__avatar">

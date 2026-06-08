@@ -22,7 +22,11 @@ import {
 // ── Types ─────────────────────────────────────────────────────────────────
 interface Props {
   form: (ConsentForm & { Signature?: string }) | null;
-  onFormSigned: (formId: string, Signature: string) => void;
+  onFormSigned: (
+    formId: string,
+    Signature: string,
+    renderedHTML: string
+  ) => void;
   pendingForms: (ConsentForm & { Signature?: string })[];
   onSelectForm: (form: ConsentForm & { Signature?: string }) => void;
   triggerRefresh: () => void;
@@ -77,21 +81,6 @@ const ConsentFormViewer = ({
 
     let updatedContent = form.Content;
 
-    updatedContent = updatedContent.replace(
-      /<ul(\s[^>]*)?>/gi,
-      '<ul$1 style="padding-left:28px !important; margin:4px 0 8px 0 !important; list-style-type:disc !important; list-style-position:outside !important;">'
-    );
-
-    updatedContent = updatedContent.replace(
-      /<ol(\s[^>]*)?>/gi,
-      '<ol$1 style="padding-left:28px !important; margin:4px 0 8px 0 !important; list-style-type:decimal !important; list-style-position:outside !important;">'
-    );
-
-    updatedContent = updatedContent.replace(
-      /<li(\s[^>]*)?>/gi,
-      '<li$1 style="padding-left:4px; margin-bottom:3px; line-height:1.65; display:list-item !important;">'
-    );
-
     const listStyleFix = `
   <style>
     .consent-form-content ul,
@@ -122,8 +111,54 @@ const ConsentFormViewer = ({
   </style>
 `;
 
-    updatedContent = listStyleFix + updatedContent;
-    setRenderedContent(updatedContent);
+    const isAlreadyHTML =
+      updatedContent.trim().startsWith('<') ||
+      updatedContent.includes('consent-form-content');
+
+    if (form.Status === 'Pending') {
+      updatedContent = updatedContent.replace(
+        /InputTextField/g,
+        `<input type="text" data-field="dynamic" placeholder="Type here..."
+        style="border:none; border-bottom:2px solid #1976d2; outline:none;
+          background:transparent; font-size:inherit; font-family:inherit;
+          min-width:120px; width:120px; padding:2px 4px; display:inline-block;
+          color:inherit; cursor:text;"
+        oninput="this.style.width='120px'; this.style.width=Math.max(120,this.scrollWidth)+'px'"
+      />`
+      );
+    } else {
+      updatedContent = updatedContent.replace(
+        /InputTextField/g,
+        `<span style="border-bottom:1.5px solid #555; padding:0 4px;
+        min-width:80px; display:inline-block;">&nbsp;</span>`
+      );
+    }
+
+    if (isAlreadyHTML) {
+      setRenderedContent(listStyleFix + updatedContent);
+      return;
+    }
+
+    updatedContent = updatedContent.replace(
+      /((?:<\/strong>|<\/b>|<\/em>|<\/i>|<p[^>]*>|\s))\s*_{10,}\s*(?=<\/p>|<br|$)/gi,
+      (match, before) =>
+        form.Signature
+          ? `${before}<img src="${form.Signature}" alt="Signature"
+          style="max-width:250px; height:auto; display:block; margin:4px 0;" />${
+            form.SignedByName
+              ? `<br/><span style="font-size:13px;font-weight:bold">
+                Signed By: ${form.SignedByName}</span>`
+              : ''
+          }`
+          : match
+    );
+
+    updatedContent = updatedContent.replace(
+      /Patient Signature:/g,
+      'Signature:'
+    );
+
+    setRenderedContent(listStyleFix + updatedContent);
   }, [form]);
 
   useEffect(() => {
@@ -763,9 +798,32 @@ const ConsentFormViewer = ({
         'input[data-field="dynamic"]'
       );
       inputs.forEach((input) => {
-        const value = (input as HTMLInputElement).value || 'InputTextField';
+        const value = (input as HTMLInputElement).value.trim() || '';
         finalContent = finalContent.replace('InputTextField', value);
       });
+    }
+
+    if (contentRef.current) {
+      const inputs = contentRef.current.querySelectorAll(
+        'input[data-field="dynamic"]'
+      );
+      let updatedRendered = renderedContent;
+      inputs.forEach((input) => {
+        const value = (input as HTMLInputElement).value.trim() || '';
+        // Replace the <input> element in rendered HTML with a styled span
+        updatedRendered = updatedRendered.replace(
+          /<input[^>]*data-field="dynamic"[^>]*\/?>(<\/input>)?/i,
+          `<span style="
+          border-bottom: 1.5px solid #555;
+          padding: 0 4px;
+          font-size: inherit;
+          font-family: inherit;
+          display: inline-block;
+          min-width: 80px;
+        ">${value}</span>`
+        );
+      });
+      setRenderedContent(updatedRendered);
     }
 
     const updatedForm: ConsentForm = {
@@ -789,7 +847,21 @@ const ConsentFormViewer = ({
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
 
-        onFormSigned(form.FormID, Signature);
+        let finalRendered = renderedContent;
+        if (contentRef.current) {
+          const inputs = contentRef.current.querySelectorAll(
+            'input[data-field="dynamic"]'
+          );
+          inputs.forEach((input) => {
+            const value = (input as HTMLInputElement).value.trim() || '';
+            finalRendered = finalRendered.replace(
+              /<input[^>]*data-field="dynamic"[^>]*\/?>(<\/input>)?/i,
+              `<span style="border-bottom:1.5px solid #555; padding:0 4px; font-size:inherit; font-family:inherit; display:inline-block; min-width:80px;">${value}</span>`
+            );
+          });
+        }
+
+        onFormSigned(form.FormID, Signature, finalRendered);
         setCountdown(5);
 
         // Generate PDF for document upload

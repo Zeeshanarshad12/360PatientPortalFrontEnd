@@ -34,6 +34,11 @@ export const selectActiveThread = createSelector(
   (threads, id) => threads.find((t) => t.id === id) ?? null
 );
 
+// Comments Selectos
+
+export const selectCommentsLoading = (state: any) =>
+  state.messages.commentsLoading;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // selectSortedThreads
 // Sorts threads by lastActivity descending, then filters by sortOption

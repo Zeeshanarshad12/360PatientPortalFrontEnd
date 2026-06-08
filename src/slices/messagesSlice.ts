@@ -4,6 +4,7 @@ import apiServicesV2 from '@/services/requestHandler';
 import {
   mapApiThreadToThread,
   mapCommentToMessage,
+  mapCommentDetailToMessage,
   extractProviders
 } from '@/utils/communicationMappers';
 import moment from 'moment';
@@ -90,6 +91,7 @@ export interface MessagesState {
   sending: boolean;
   error: string | null;
   successMessage: string | null;
+  commentsLoading: boolean;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -107,6 +109,22 @@ export interface CommunicationComment {
   communicatedOn: string;
   isPrivate: boolean;
   providerID: number;
+  initiator: 'patient' | 'provider';
+  createdAt: string;
+}
+
+export interface CommunicationCommentDetail {
+  id: number;
+  recipient: string;
+  patientName: string;
+  recipientId: string;
+  patientCommunicationId: number;
+  communicationSubject: string;
+  communicationText: string;
+  communicatedOn: string;
+  isPrivate: boolean;
+  createdBy: string;
+  providerId: number;
   initiator: 'patient' | 'provider';
   createdAt: string;
 }
@@ -294,6 +312,45 @@ export const fetchPatientProviders = createAsyncThunk<Provider[], number>(
     }
   }
 );
+
+//  New thunk — call on every thread click
+export const GetAllComments = createAsyncThunk<
+  { threadId: string; messages: Message[] },
+  number
+>('messages/GetAllComments', async (patientCommunicationId, thunkAPI) => {
+  try {
+    const res = await apiServicesV2.GetAllComments(
+      { patientCommunicationId },
+      'ApiVersion2Req'
+    );
+
+    if (res?.status === 200 || res?.status === 201) {
+      const comments: CommunicationCommentDetail[] =
+        res.data?.result ?? res.data ?? [];
+
+      const state = thunkAPI.getState() as any;
+      const threadId = state.messages.activeThreadId;
+
+      const sorted = [...comments].sort(
+        (a, b) => moment(a.createdAt).valueOf() - moment(b.createdAt).valueOf()
+      );
+
+      const messages: Message[] = sorted.map(mapCommentDetailToMessage);
+
+      return { threadId, messages };
+    }
+
+    return thunkAPI.rejectWithValue({
+      message: 'Failed to load comments',
+      status: res?.status
+    }) as any;
+  } catch (error: any) {
+    console.error('GetAllComments failed:', error);
+    return thunkAPI.rejectWithValue({
+      message: error?.response?.data?.message ?? 'Failed to load comments'
+    }) as any;
+  }
+});
 
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -534,7 +591,8 @@ const initialState: MessagesState = {
   loading: false,
   sending: false,
   error: null,
-  successMessage: null
+  successMessage: null,
+  commentsLoading: false
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -683,6 +741,30 @@ const messagesSlice = createSlice({
     },
     [updateThreadStatus.rejected.type]: (state: MessagesState) => {
       state.error = 'Failed to update message status. Please try again.';
+    },
+    [GetAllComments.pending.type]: (state: MessagesState) => {
+      state.commentsLoading = true;
+    },
+    [GetAllComments.fulfilled.type]: (
+      state: MessagesState,
+      { payload }: PayloadAction<{ threadId: string; messages: Message[] }>
+    ) => {
+      state.commentsLoading = false;
+      if (payload) {
+        const thread = state.threads.find((t) => t.id === payload.threadId);
+        if (thread && payload.messages.length > 0) {
+          thread.messages = payload.messages;
+          thread.lastMessage =
+            payload.messages[payload.messages.length - 1]?.content ??
+            thread.lastMessage;
+          thread.lastActivity =
+            payload.messages[payload.messages.length - 1]?.timestamp ??
+            thread.lastActivity;
+        }
+      }
+    },
+    [GetAllComments.rejected.type]: (state: MessagesState) => {
+      state.commentsLoading = false;
     }
   } as any // object syntax requires this for TS compatibility with RTK
 });

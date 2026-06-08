@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePatientHistory } from '@/components/PatientHistory/hooks/usePatientHistory';
 import HistoryNav from './components/HistoryNav';
 import MedicalHistorySection from './components/MedicalHistorySection';
@@ -10,6 +10,7 @@ import FamilyHistorySection from './components/FamilyHistorySection';
 import SocialHistorySection from './components/SocialHistorySection';
 import { ENABLED_SECTION_IDS } from '@/slices/patientHistorySlice';
 import type { SectionData, SectionStatus } from './types/patientHistory.types';
+import HeartProgressLoader from '@/components/ProgressLoaders/components/HeartLoader';
 
 interface PatientHistoryPageProps {
   patientId: number;
@@ -22,6 +23,7 @@ const PatientHistoryPage: React.FC<PatientHistoryPageProps> = ({
   practiceId,
   onComplete
 }) => {
+  const [heartLoading, setHeartLoading] = useState(true);
   const {
     sections,
     sectionsLoading,
@@ -46,6 +48,13 @@ const PatientHistoryPage: React.FC<PatientHistoryPageProps> = ({
     handleToggleSocialCondition,
     handleAddCustomSocial
   } = usePatientHistory({ patientId, practiceId });
+
+  useEffect(() => {
+    const timer = setTimeout(() => setHeartLoading(false), 2000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (heartLoading) return <HeartProgressLoader />;
 
   const activeSectionData = data[activeSection] as SectionData | undefined;
   const activeSectionItem = sections.find((s) => s.id === activeSection);

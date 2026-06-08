@@ -49,7 +49,20 @@ interface MessageBubbleProps {
 function renderMessageContent(content: string): React.ReactNode {
   if (!content) return null;
 
-  const withBreaks = content
+  const decoded = content
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#x27;/g, "'")
+    .replace(/&#39;/g, "'")
+    .replace(/&apos;/g, "'")
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&#x2F;/g, '/')
+    .replace(/&#x60;/g, '`')
+    .replace(/&#x3D;/g, '=');
+
+  const withBreaks = decoded
     .replace(/\\\\n/g, '<br/>')
     .replace(/\\n/g, '<br/>');
 
