@@ -25,13 +25,17 @@ const SocialHistorySection: React.FC<Props> = ({ sectionData, onToggle }) => {
         following?
       </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {groups.map((group) => {
           return (
-            <div key={group.name} className="ph-card" style={{ padding: 20 }}>
+            <div
+              key={group.name}
+              className="ph-card"
+              style={{ padding: '10px 16px' }}
+            >
               <h3
                 style={{
-                  margin: '0 0 14px',
+                  margin: '0 0 8px 0',
                   fontSize: 15,
                   fontWeight: 700,
                   color: '#111827'
@@ -44,8 +48,8 @@ const SocialHistorySection: React.FC<Props> = ({ sectionData, onToggle }) => {
                 style={{
                   display: 'grid',
                   gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '10px 24px',
-                  marginBottom: 16
+                  gap: '4px 16px',
+                  marginBottom: 0
                 }}
               >
                 {group.conditions.map((c: SocialCondition) => (

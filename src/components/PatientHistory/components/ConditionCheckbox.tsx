@@ -25,12 +25,12 @@ const ConditionCheckbox: React.FC<ConditionCheckboxProps> = ({
         display: 'flex',
         alignItems: 'center',
         gap: 8,
-        padding: '4px 0', // ← just vertical spacing, no bg
+        padding: '3px 0', // ← just vertical spacing, no bg
         cursor: locked ? 'default' : 'pointer',
         userSelect: 'none',
         fontSize: 14,
         color: text,
-        minHeight: 32
+        minHeight: 28
       }}
     >
       {/* Hidden native checkbox for form/a11y */}

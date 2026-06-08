@@ -116,11 +116,12 @@ const buildFamilyPayload = (
   lookups: FamilyHistoryLookup[],
   dtos: FamilyHistoryDTO[]
 ) => {
-  // Group checked conditions by resolved relationId
+  // Group checked conditions by relationId
   const byRelation: Record<
     number,
     Array<{ code: string; conditionName: string }>
   > = {};
+
   Object.entries(matrix).forEach(([lookupIdStr, relationIds]) => {
     const lookup = lookups.find((l) => l.id === Number(lookupIdStr));
     if (!lookup) return;
@@ -136,33 +137,23 @@ const buildFamilyPayload = (
   return Object.keys(byRelation).map((relIdStr) => {
     const resolvedRelId = Number(relIdStr);
 
-    const existingDto =
-      dtos.find((d) => d.relationId === resolvedRelId) ??
-      dtos.find((d) =>
-        byRelation[resolvedRelId]?.some((c) =>
-          d.familyHistoryConditions.some(
-            (fc) => fc.conditionName === c.conditionName
-          )
-        )
-      );
+    // ✅ FIXED: only match dto by exact relationId — never fall back to
+    // condition-name matching which causes cross-relation ID bleed
+    const existingDto = dtos.find((d) => d.relationId === resolvedRelId);
 
-    const relationId = existingDto?.relationId ?? resolvedRelId;
     const familyHistoryId = existingDto?.id ?? 0;
 
     const conditions = byRelation[resolvedRelId].map((c) => ({
-      id: 0, // always 0 per BE spec
+      id: 0,
       code: c.code,
       conditionName: c.conditionName
-      // tempFamilyHistoryId: removed per BE spec
     }));
 
     return {
-      // tempId: removed per BE spec
       id: familyHistoryId, // 0 = new relation, actual id = existing
-      relationId,
+      relationId: resolvedRelId, // ← always uses the correct relation
       patientId,
       createdBy: '',
-      // relationName: not sent per BE spec
       familyHistoryConditions: conditions
     };
   });

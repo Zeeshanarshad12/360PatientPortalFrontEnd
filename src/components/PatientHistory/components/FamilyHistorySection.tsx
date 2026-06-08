@@ -139,7 +139,7 @@ const FamilyHistorySection: React.FC<Props> = ({
           padding: '0',
           overflowX: 'auto',
           overflowY: 'auto',
-          maxHeight: 520
+          maxHeight: 720
         }}
       >
         <table
@@ -158,7 +158,7 @@ const FamilyHistorySection: React.FC<Props> = ({
                   left: 0,
                   zIndex: 3,
                   textAlign: 'left',
-                  padding: '12px 16px 12px 20px',
+                  padding: '8px 16px 8px 20px',
                   fontSize: 14,
                   fontWeight: 700,
                   color: '#111827',
@@ -179,7 +179,7 @@ const FamilyHistorySection: React.FC<Props> = ({
                     position: 'sticky',
                     top: 0,
                     zIndex: 2,
-                    padding: '12px 8px',
+                    padding: '8px 8px',
                     fontSize: 13,
                     fontWeight: 600,
                     color: '#374151',
@@ -210,7 +210,7 @@ const FamilyHistorySection: React.FC<Props> = ({
                     position: 'sticky',
                     left: 0,
                     zIndex: 1,
-                    padding: '10px 16px 10px 20px',
+                    padding: '7px 16px 7px 20px',
                     fontSize: 13,
                     color: '#1f2937',
                     borderBottom: '1px solid #d1d5db',
@@ -230,7 +230,7 @@ const FamilyHistorySection: React.FC<Props> = ({
                       key={rel.id}
                       style={{
                         textAlign: 'center',
-                        padding: '10px 8px',
+                        padding: '7px 8px',
                         borderBottom: '1px solid #d1d5db',
                         userSelect: 'none'
                       }}
