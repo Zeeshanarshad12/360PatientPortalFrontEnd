@@ -3,7 +3,8 @@ import {
   Thread,
   Message,
   Provider,
-  CommunicationComment
+  CommunicationComment,
+  CommunicationCommentDetail
 } from '@/slices/messagesSlice';
 import moment from 'moment';
 
@@ -80,6 +81,13 @@ export function mapApiThreadToThread(item: ApiThread): Thread {
   function stripHtmlForPreview(text: string): string {
     if (!text) return '';
     return text
+      .replace(/&#x27;/g, "'")
+      .replace(/&#39;/g, "'")
+      .replace(/&apos;/g, "'")
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&nbsp;/g, ' ')
       .replace(/\\\\n/g, ' ')
       .replace(/\\n/g, ' ')
       .replace(/<br\s*\/?>/gi, ' ')
@@ -144,6 +152,27 @@ export function mapCommentToMessage(
     senderRole: isProviderComment ? 'provider' : 'patient', //  from API initiator
     content: comment.communicationText,
     timestamp: toLocalISO(comment.createdAt ?? comment.communicatedOn)
+  };
+}
+
+// Map GetAllComments response item to Message
+export function mapCommentDetailToMessage(
+  item: CommunicationCommentDetail
+): Message {
+  const isProvider = item.initiator === 'provider';
+
+  return {
+    id: `comment-${item.id}`,
+    senderId: String(item.providerId ?? item.recipientId ?? 0),
+    senderName:
+      item.createdBy?.trim() ||
+      (isProvider ? item.recipient : item.patientName),
+    senderAvatar: '',
+    senderRole: isProvider ? 'provider' : 'patient',
+    content: item.communicationText ?? '',
+    timestamp: item.createdAt
+      ? moment(item.createdAt).toISOString()
+      : moment(item.communicatedOn).toISOString()
   };
 }
 

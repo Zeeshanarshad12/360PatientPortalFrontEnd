@@ -12,9 +12,11 @@ import {
 } from '@/slices/patientprofileslice';
 import HeartProgressLoader from '@/components/ProgressLoaders/components/HeartLoader';
 import { useConsentFormContext } from '@/contexts/ConsentFormContext';
-import draftToHtml from 'draftjs-to-html';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
-import { syncPendingConsentFormCount } from '@/utils/consentFormCountUtils';
+import {
+  applyPendingConsentFormCount,
+  notifyConsentCountUpdated
+} from '@/utils/consentFormCountUtils';
 import { convertDraftToHtml } from '@/utils/draftToHtmlWithAlignment';
 
 function ConsentFormsLayout() {
@@ -63,7 +65,8 @@ function ConsentFormsLayout() {
 
         setForms(mappedForms);
         const pending = mappedForms.filter((f) => f.Status === 'Pending');
-        syncPendingConsentFormCount(pending.length, setPendingCount);
+        applyPendingConsentFormCount(pending.length, setPendingCount);
+        notifyConsentCountUpdated();
       } catch (error) {
         console.error('Failed to fetch consent forms:', error);
       }
@@ -100,7 +103,8 @@ function ConsentFormsLayout() {
         SignedByName: form.signedByName ?? null
       }));
       const pending = mappedForms.filter((f) => f.Status === 'Pending');
-      syncPendingConsentFormCount(pending.length, setPendingCount);
+      applyPendingConsentFormCount(pending.length, setPendingCount);
+      notifyConsentCountUpdated();
       setForms(mappedForms);
     } catch (error) {
       console.error('Failed to refresh consent forms:', error);
@@ -119,7 +123,11 @@ function ConsentFormsLayout() {
     }
   }, [forms]);
 
-  const handleFormSigned = (formId: string, Signature: string) => {
+  const handleFormSigned = (
+    formId: string,
+    Signature: string,
+    renderedHTML: string
+  ) => {
     const now = new Date().toISOString();
     setJustSigned(true);
 
@@ -128,14 +136,26 @@ function ConsentFormsLayout() {
     setForms((prevForms) =>
       prevForms.map((f) =>
         f.FormID === formId
-          ? { ...f, Status: 'Signed', Signature, SignedDate: now }
+          ? {
+              ...f,
+              Status: 'Signed',
+              Signature,
+              SignedDate: now,
+              Content: renderedHTML
+            }
           : f
       )
     );
 
     setSelectedForm((prevForm) =>
       prevForm && prevForm.FormID === formId
-        ? { ...prevForm, Status: 'Signed', Signature, SignedDate: now }
+        ? {
+            ...prevForm,
+            Status: 'Signed',
+            Signature,
+            SignedDate: now,
+            Content: renderedHTML
+          }
         : prevForm
     );
   };

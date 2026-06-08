@@ -21,6 +21,7 @@ import { MessageBubble } from './MessageBubble';
 import moment from 'moment';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { Snackbar, Alert } from '@mui/material';
+import { selectCommentsLoading } from '@/store/selectors';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
@@ -58,6 +59,7 @@ export const ThreadView: React.FC = () => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { patientId, practiceId } = useCurrentPatient();
   const groupOption = useSelector(selectGroupOption);
+  const commentsLoading = useSelector(selectCommentsLoading);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string }>({
     open: false,
     message: ''
@@ -306,26 +308,66 @@ export const ThreadView: React.FC = () => {
 
       {/* ── Messages ── */}
       <div className="comm-thread-view__messages">
-        {messagesByDate.map(({ dateLabel, messages }) => (
-          <div key={dateLabel}>
-            <div className="comm-date-divider">
-              <span>{dateLabel}</span>
-            </div>
-
-            {messages.map((msg) => {
-              const isOwn = msg.senderRole === 'patient';
-              return (
-                <MessageBubble
-                  key={msg.id}
-                  message={msg}
-                  isOwn={isOwn}
-                  isClosed={isClosed}
-                />
-              );
-            })}
+        {commentsLoading ? (
+          <div
+            style={{
+              padding: '20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px'
+            }}
+          >
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                style={{
+                  display: 'flex',
+                  gap: '10px',
+                  alignItems: 'flex-start'
+                }}
+              >
+                <div className="comm-skeleton-avatar" />
+                <div
+                  style={{
+                    flex: 1,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}
+                >
+                  <div className="comm-skeleton-line comm-skeleton-line--short" />
+                  <div className="comm-skeleton-line" />
+                  <div
+                    className="comm-skeleton-line"
+                    style={{ width: '60%' }}
+                  />
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-        <div ref={bottomRef} />
+        ) : (
+          <>
+            {messagesByDate.map(({ dateLabel, messages }) => (
+              <div key={dateLabel}>
+                <div className="comm-date-divider">
+                  <span>{dateLabel}</span>
+                </div>
+                {messages.map((msg) => {
+                  const isOwn = msg.senderRole === 'patient';
+                  return (
+                    <MessageBubble
+                      key={msg.id}
+                      message={msg}
+                      isOwn={isOwn}
+                      isClosed={isClosed}
+                    />
+                  );
+                })}
+              </div>
+            ))}
+            <div ref={bottomRef} />
+          </>
+        )}
       </div>
 
       {/* ── Notifications ── */}

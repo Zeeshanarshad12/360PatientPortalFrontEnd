@@ -46,6 +46,7 @@ export const SERVICE_URLSV2 = {
   GetCommunications: 'patientportal/getcommunicationswithpatientid',
   AddUpdateCommunication: 'patientportal/AddUpdateCommunicationFromPatient',
   AddCommunicationComment: 'patientportal/AddCommunicationComments',
+  GetAllComments: 'patientportal/GetAllCommentsWithPatientCommunication',
   GetPatientProviders: 'patientportal/GetPatientProviders',
   GetIntakeFormSections: 'patientportal/getintakeformsection',
   GetIntakeFormSectionData: 'patientportal/getintakeformsectiondata',

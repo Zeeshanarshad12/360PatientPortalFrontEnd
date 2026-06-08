@@ -380,6 +380,18 @@ const GetCommunications = (data, flag) => {
   );
 };
 
+const GetAllComments = (data, flag) => {
+  const url = `${SERVICE_URLSV2.GetAllComments}?CommunicationID=${data.patientCommunicationId}`;
+  return get(
+    url,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+};
+
 const AddUpdateCommunication = (data, flag) =>
   post(`${SERVICE_URLSV2.AddUpdateCommunication}`, data, {
     feature: featureConstants.static,
@@ -500,6 +512,7 @@ const apiServicesV2 = {
   AddDocument,
   GetListOfDocumentType,
   GetCommunications,
+  GetAllComments,
   AddUpdateCommunication,
   AddCommunicationComment,
   GetPatientProviders,
