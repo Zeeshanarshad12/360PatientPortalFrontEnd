@@ -103,8 +103,8 @@ const SignatureDialog = ({ open, onClose, onSave }: Props) => {
       <DialogTitle>Signature</DialogTitle>
       <DialogContent>
         <Typography variant="body2" mb={2}>
-          Add your eSignature to your consent form using mouse/touchpad or
-          upload a photograph.
+          Add your eSignature to the consent form using your mouse or touchpad,
+          or upload a photo of your signature.
         </Typography>
 
         <RadioGroup
