@@ -236,7 +236,7 @@ function ConsentFormsLayout() {
           sx={{
             flexGrow: 1,
             padding: 1,
-            overflowY: 'auto',
+            overflowY: 'hidden',
             height: 'calc(100vh - 60px)'
           }}
           tabIndex={0}
@@ -256,7 +256,11 @@ function ConsentFormsLayout() {
                     display: 'flex',
                     flexDirection: 'column',
                     justifyContent: 'space-between',
-                    pb: 2
+                    pb: 2,
+                    scrollbarWidth: 'none',
+                    '&::-webkit-scrollbar': {
+                      display: 'none'
+                    }
                   }}
                 >
                   <CardContent>
