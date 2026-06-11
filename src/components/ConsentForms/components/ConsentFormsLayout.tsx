@@ -161,6 +161,7 @@ function ConsentFormsLayout() {
   };
 
   const handleSelectForm = async (form: ConsentForm) => {
+    setJustSigned(false);
     if (!form.Content) {
       try {
         const detailedForms = await getConsentFormById(form.FormID);

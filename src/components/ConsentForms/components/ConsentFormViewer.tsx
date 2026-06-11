@@ -423,8 +423,6 @@ const ConsentFormViewer = ({
 
     const cleanBodyContent = renderedContent
       .replace(/<style[\s\S]*?<\/style>/gi, '')
-      .replace(/<img[^>]*alt="Signature"[^>]*\/?>/gi, '')
-      .replace(/<br\s*\/?><span[^>]*>Signed By:[^<]*<\/span>/gi, '')
       .replace(/_{10,}/g, '')
       .replace(/<(h[1-3])[^>]*>([\s\S]*?)<\/\1>/gi, (match, tag, inner) => {
         const text = inner.replace(/<[^>]*>/g, '').trim();
@@ -454,7 +452,7 @@ const ConsentFormViewer = ({
         <style>
           *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-          @page { size: A4 portrait; margin: 22mm 16mm 22mm 16mm; }
+          @page { size: A4 portrait; margin: 0; }
 
           html, body {
             font-family: Arial, sans-serif;
@@ -464,7 +462,7 @@ const ConsentFormViewer = ({
             line-height: 1.65;
           }
 
-          .page-wrapper { width: 100%; max-width: 178mm; margin: 0 auto; }
+          .page-wrapper { width: 100%; max-width: 178mm; margin: 0 auto; padding-top: 22mm; padding-bottom: 22mm; }
 
           .print-header {
             display: flex;
@@ -556,10 +554,10 @@ const ConsentFormViewer = ({
           }
 
           @media print {
-            html, body { width: 210mm; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-            .page-wrapper { max-width: 100%; }
+            html, body { width: 210mm; print-color-adjust: exact; -webkit-print-color-adjust: exact; height: auto !important; overflow: hidden !important; }
+            .page-wrapper { max-width: 100%; page-break-after: avoid; }
             .signature-block { page-break-inside: avoid !important; break-inside: avoid !important; }
-            .audit-footer    { page-break-inside: avoid !important; break-inside: avoid !important; }
+            .audit-footer    { page-break-inside: avoid !important; break-inside: avoid !important; page-break-before: avoid !important; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             .no-print { display: none !important; }
           }
@@ -575,21 +573,6 @@ const ConsentFormViewer = ({
           <h1 class="doc-title">${form.Title}</h1>
 
           <div class="body-content">${cleanBodyContent}</div>
-
-          <hr class="section-divider" />
-
-          <div class="signature-block">
-            <div class="sig-section-heading">Acknowledgement &amp; Signature</div>
-            <div class="sig-label">Signature of Patient, Parent, or Legal Guardian:</div>
-            <div class="sig-image-wrap">${signatureHTML}</div>
-            <div class="sig-meta-row">
-              <div class="meta-col"><strong>Signed By:</strong> ${signedByValue}</div>
-              <div class="meta-col"><strong>Date:</strong> ${signedDate}</div>
-            </div>
-            <div class="doc-status">Document Status: ${(
-              form.Status ?? 'PENDING'
-            ).toUpperCase()}</div>
-          </div>
 
           <div class="audit-footer">
             <span>Generated: ${generatedAt}</span>
@@ -703,9 +686,15 @@ const ConsentFormViewer = ({
       const cleanedHTML = renderedContent
         .replace(/<style[\s\S]*?<\/style>/gi, '')
         .replace(/<script[\s\S]*?<\/script>/gi, '')
-        .replace(/<img[^>]*alt="Signature"[^>]*\/?>/gi, '')
-        .replace(/<br\s*\/?><span[^>]*>Signed By:[^<]*<\/span>/gi, '')
         .replace(/_{10,}/g, '')
+        .replace(
+          /<span\s[^>]*style="[^"]*font-weight\s*:\s*bold[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
+          '<strong>$1</strong>'
+        )
+        .replace(
+          /<span\s[^>]*style="[^"]*font-weight\s*:\s*700[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
+          '<strong>$1</strong>'
+        )
         .replace(/\s*style="[^"]*"/gi, '')
         .replace(/\s*class="[^"]*"/gi, '');
 
@@ -720,6 +709,8 @@ const ConsentFormViewer = ({
         fontSize: number;
         align: 'left' | 'center' | 'right';
         isHeading: boolean;
+        isImage?: boolean;
+        imageDataUrl?: string;
       }
 
       const paragraphs: PdfParagraph[] = [];
@@ -746,7 +737,7 @@ const ConsentFormViewer = ({
       ): PdfParagraph | null => {
         if (node.nodeType === Node.ELEMENT_NODE) {
           const tag = (node as Element).tagName.toLowerCase();
-          if (tag === 'style' || tag === 'script' || tag === 'img') return para;
+          if (tag === 'style' || tag === 'script') return para;
         }
 
         if (node.nodeType === Node.TEXT_NODE) {
@@ -771,6 +762,22 @@ const ConsentFormViewer = ({
         if (tag === 'strong' || tag === 'b') isBold = true;
         if (tag === 'em' || tag === 'i') isItalic = true;
 
+        const styleAttr = el.getAttribute('style') ?? '';
+        if (
+          styleAttr.includes('font-weight:bold') ||
+          styleAttr.includes('font-weight: bold') ||
+          styleAttr.includes('font-weight:700') ||
+          styleAttr.includes('font-weight: 700')
+        ) {
+          isBold = true;
+        }
+        if (
+          styleAttr.includes('font-style:italic') ||
+          styleAttr.includes('font-style: italic')
+        ) {
+          isItalic = true;
+        }
+
         if (tag === 'h1') {
           fSize = 16;
           isBold = true;
@@ -794,7 +801,33 @@ const ConsentFormViewer = ({
 
         if (tag === 'br') {
           if (para && para.chunks.length > 0) paragraphs.push(para);
-          return null;
+          return {
+            chunks: [],
+            fontSize: fSize,
+            align: elAlign,
+            isHeading: false
+          };
+        }
+
+        if (tag === 'img') {
+          const src = el.getAttribute('src') ?? '';
+          if (src) {
+            if (para && para.chunks.length > 0) paragraphs.push(para);
+            paragraphs.push({
+              chunks: [],
+              fontSize: fSize,
+              align: elAlign,
+              isHeading: false,
+              isImage: true,
+              imageDataUrl: src
+            });
+          }
+          return {
+            chunks: [],
+            fontSize: fSize,
+            align: elAlign,
+            isHeading: false
+          };
         }
 
         const isBlock = BLOCK_TAGS.has(tag);
@@ -870,6 +903,20 @@ const ConsentFormViewer = ({
       };
 
       for (const p of paragraphs) {
+        if (p.isImage && p.imageDataUrl) {
+          if (y + 22 > contentBottom) {
+            pdf.addPage();
+            y = contentTop + 4;
+          }
+          try {
+            pdf.addImage(p.imageDataUrl, 'PNG', margin, y, 60, 18);
+            y += 22;
+          } catch {
+            y += 4;
+          }
+          continue;
+        }
+
         const fullText = p.chunks
           .map((c) => c.text)
           .join('')
@@ -1044,73 +1091,6 @@ const ConsentFormViewer = ({
       pdf.setFontSize(10);
       pdf.setFont('helvetica', 'normal');
 
-      // ── Signature block ───────────────────────────────────────────────
-      if (y + 62 > contentBottom) {
-        pdf.addPage();
-        y = contentTop + 4;
-      }
-
-      y += 6;
-      pdf.setDrawColor(200, 200, 200);
-      pdf.setLineWidth(0.3);
-      pdf.line(margin, y, pageW - margin, y);
-      y += 6;
-
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('ACKNOWLEDGEMENT & SIGNATURE', margin, y);
-      pdf.setFont('helvetica', 'normal');
-      y += 7;
-
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Signature of Patient, Parent, or Legal Guardian:', margin, y);
-      pdf.setFont('helvetica', 'normal');
-      y += 5;
-
-      if (form.Signature) {
-        try {
-          pdf.addImage(form.Signature, 'PNG', margin, y, 60, 18);
-          y += 22;
-        } catch {
-          pdf.text('___________________________', margin, y);
-          y += 8;
-        }
-      } else {
-        pdf.text('___________________________', margin, y);
-        y += 10;
-      }
-
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Signed By: ', margin, y);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(
-        sanitizeForPDF(form.SignedByName ?? '___________________________'),
-        margin + pdf.getTextWidth('Signed By: '),
-        y
-      );
-      pdf.setFont('helvetica', 'bold');
-      pdf.text('Date: ', pageW / 2, y);
-      pdf.setFont('helvetica', 'normal');
-      pdf.text(signedDate, pageW / 2 + pdf.getTextWidth('Date: '), y);
-      y += 8;
-
-      pdf.setFontSize(9);
-      pdf.setFont('helvetica', 'bold');
-      pdf.setTextColor(
-        form.Status === 'Signed' ? 0 : 180,
-        form.Status === 'Signed' ? 128 : 80,
-        0
-      );
-      pdf.text(
-        sanitizeForPDF(
-          `Document Status: ${form.Status?.toUpperCase() ?? 'PENDING'}`
-        ),
-        margin,
-        y
-      );
-      pdf.setTextColor(0, 0, 0);
-      pdf.setFont('helvetica', 'normal');
-
       const totalPages = (pdf.internal as any).getNumberOfPages();
       for (let i = 1; i <= totalPages; i++) {
         pdf.setPage(i);
@@ -1134,8 +1114,10 @@ const ConsentFormViewer = ({
   const handleSaveSignature = async (Signature: string) => {
     if (!form) return;
 
-    // Capture dynamic input field values
+    // Capture dynamic input field values and build updated rendered HTML in one pass
+    // (must happen before any await so the DOM inputs still exist with their typed values)
     let finalContent = form.Content;
+    let updatedRendered = renderedContent;
     if (contentRef.current) {
       const inputs = contentRef.current.querySelectorAll(
         'input[data-field="dynamic"]'
@@ -1143,17 +1125,6 @@ const ConsentFormViewer = ({
       inputs.forEach((input) => {
         const value = (input as HTMLInputElement).value.trim() || '';
         finalContent = finalContent.replace('InputTextField', value);
-      });
-    }
-
-    // Update rendered content replacing inputs with static spans
-    if (contentRef.current) {
-      const inputs = contentRef.current.querySelectorAll(
-        'input[data-field="dynamic"]'
-      );
-      let updatedRendered = renderedContent;
-      inputs.forEach((input) => {
-        const value = (input as HTMLInputElement).value.trim() || '';
         updatedRendered = updatedRendered.replace(
           /<input[^>]*data-field="dynamic"[^>]*\/?>(<\/input>)?/i,
           `<span style="border-bottom:1.5px solid #555; padding:0 4px;
@@ -1184,23 +1155,7 @@ const ConsentFormViewer = ({
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
 
-        let finalRendered = renderedContent;
-        if (contentRef.current) {
-          const inputs = contentRef.current.querySelectorAll(
-            'input[data-field="dynamic"]'
-          );
-          inputs.forEach((input) => {
-            const value = (input as HTMLInputElement).value.trim() || '';
-            finalRendered = finalRendered.replace(
-              /<input[^>]*data-field="dynamic"[^>]*\/?>(<\/input>)?/i,
-              `<span style="border-bottom:1.5px solid #555; padding:0 4px;
-              font-size:inherit; font-family:inherit; display:inline-block;
-              min-width:80px;">${value}</span>`
-            );
-          });
-        }
-
-        onFormSigned(form.FormID, Signature, finalRendered);
+        onFormSigned(form.FormID, Signature, updatedRendered);
         setCountdown(5);
 
         // ── Upload PDF — existing plain text logic preserved ────────────
@@ -1229,7 +1184,7 @@ const ConsentFormViewer = ({
           pdf.setFont('helvetica', 'normal');
           y += 16;
 
-          const bodyText = extractBodyText(renderedContent, form.Title);
+          const bodyText = extractBodyText(updatedRendered, form.Title);
           pdf.setFontSize(10);
           const lines: string[] = pdf.splitTextToSize(bodyText, usableWidth);
 
@@ -1275,13 +1230,16 @@ const ConsentFormViewer = ({
           if (form.SignedByName) {
             pdf.setFont('helvetica', 'bold');
             pdf.text('Signed By: ', margin, y);
+            const uploadLabelW = pdf.getTextWidth('Signed By: ');
             pdf.setFont('helvetica', 'normal');
-            pdf.text(
+            const uploadNameLines: string[] = pdf.splitTextToSize(
               form.SignedByName,
-              margin + pdf.getTextWidth('Signed By: '),
-              y
+              usableWidth - uploadLabelW
             );
-            y += lineH;
+            uploadNameLines.forEach((line: string, idx: number) => {
+              pdf.text(line, margin + uploadLabelW, y + idx * lineH);
+            });
+            y += lineH * uploadNameLines.length;
           }
 
           pdf.setFont('helvetica', 'bold');
