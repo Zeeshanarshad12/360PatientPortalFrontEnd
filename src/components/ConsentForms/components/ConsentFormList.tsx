@@ -61,7 +61,7 @@ const ConsentFormList = ({ forms, onSelect, selectedId, resetKey }: Props) => {
             sx={{
               textAlign: 'center',
               py: 6,
-              color: 'error.main'
+              color: '#94a3b8'
             }}
           >
             <Typography variant="body1" fontWeight={500}>
