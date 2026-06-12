@@ -525,6 +525,35 @@ export const uploadAndSaveConsentFormDocument: any = createAsyncThunk(
       // Continue with upload even if type lookup fails
     }
 
+    // Skip upload if a document with the same title already exists for this patient
+    // (prevents duplicate when the backend's SubmitConsentForm also creates a document)
+    if (consentFormTypeId !== null) {
+      try {
+        const existingRes = await apiServicesV2.getAllSelectedDocuments(
+          {
+            patientId: Number(patientId),
+            practiceId: Number(practiceId),
+            documentTypeId: consentFormTypeId,
+            fromDate: '2000-01-01',
+            toDate: new Date(Date.now() + 86400000).toISOString().split('T')[0]
+          },
+          'ApiVersion2Req'
+        );
+        if (existingRes?.status === 200 || existingRes?.status === 201) {
+          const existingDocs: any[] = existingRes?.data?.result ?? [];
+          const alreadyExists = existingDocs.some(
+            (doc: any) =>
+              doc.documentName === title || doc.displayName === title
+          );
+          if (alreadyExists) {
+            return { success: true };
+          }
+        }
+      } catch {
+        // Continue with upload if the existence check fails
+      }
+    }
+
     const formData = new FormData();
     formData.append('files', documentFile);
 
