@@ -92,10 +92,26 @@ const FamilyCheckbox: React.FC<FamilyCheckboxProps> = ({
   );
 };
 
+const COLUMN_ORDER = [
+  'mother',
+  'father',
+  'grandmother',
+  'grandfather',
+  'brother',
+  'sister',
+  'other'
+];
+
 const sortColumns = (relations: FamilyRelation[]): FamilyRelation[] => {
-  const others = relations.filter((r) => r.name.toLowerCase() === 'other');
-  const rest = relations.filter((r) => r.name.toLowerCase() !== 'other');
-  return [...rest, ...others];
+  return [...relations].sort((a, b) => {
+    const aIndex = COLUMN_ORDER.indexOf(a.name.toLowerCase());
+    const bIndex = COLUMN_ORDER.indexOf(b.name.toLowerCase());
+
+    const aOrder = aIndex === -1 ? COLUMN_ORDER.length : aIndex;
+    const bOrder = bIndex === -1 ? COLUMN_ORDER.length : bIndex;
+
+    return aOrder - bOrder;
+  });
 };
 
 const FamilyHistorySection: React.FC<Props> = ({

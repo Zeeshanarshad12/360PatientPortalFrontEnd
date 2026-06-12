@@ -26,6 +26,7 @@ import axios from 'axios';
 export const BASEURLV2 = process.env.NEXT_PUBLIC_APP_API_PATH_V2;
 export const getToken = () =>
   localStorage.getItem('token') ? localStorage.getItem('token') : null;
+import { generateFormattedPDF } from '@/components/ConsentForms/components/ConsentFormViewer';
 
 interface AssignedUser {
   userId: string;
@@ -61,11 +62,9 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
   const [docType, setDocType] = useState<string>('');
 
   const viewerRef = useRef<DocViewerRef>(null);
-  
-  
-const { patientId, practiceId } = useCurrentPatient();
 
-  
+  const { patientId, practiceId } = useCurrentPatient();
+
   const getDateRange = (range: string) => {
     const to = new Date();
     let from = new Date();
@@ -170,31 +169,21 @@ const { patientId, practiceId } = useCurrentPatient();
     try {
       const mimeType = getMimeTypeFromExtension(menuDoc?.documentUri);
 
-      await axios({
+      const response = await axios({
         url:
           BASEURLV2 +
           `patientportal/downloadpatientdocument?fileName=${menuDoc?.documentUri}`,
         method: 'GET',
         responseType: 'blob',
-        headers: {
-          Authorization: `Bearer ${getToken()}`
-        }
-      })
-        .then((response) => {
-          const imageUrl = URL.createObjectURL(response.data);
+        headers: { Authorization: `Bearer ${getToken()}` }
+      });
 
-          setDocUrl(imageUrl);
-          setDocType(mimeType);
-          setOpenViewerDialog(true);
-        })
-        .catch((err) => {
-          console.error('Error viewing document:', err);
-        })
-        .finally(() => {
-          setDocLoading(false);
-        });
-    } catch (error) {
-      console.error('Error viewing document:', error);
+      const imageUrl = URL.createObjectURL(response.data);
+      setDocUrl(imageUrl);
+      setDocType(mimeType);
+      setOpenViewerDialog(true);
+    } catch (err) {
+      console.error('Error viewing document:', err);
     } finally {
       setDocLoading(false);
     }
@@ -291,8 +280,7 @@ const { patientId, practiceId } = useCurrentPatient();
         .catch((err) => {
           console.error('Error downloading document:', err);
         })
-        .finally(() => {
-        });
+        .finally(() => {});
     } catch (error) {
       console.error('Error downloading document:', error);
     } finally {
@@ -352,7 +340,10 @@ const { patientId, practiceId } = useCurrentPatient();
       minWidth: 80,
       flex: 0,
       renderCell: (params) => (
-        <IconButton aria-label={`Actions for ${params.row.documentName}`} onClick={(e) => handleMenuOpen(e, params.row)}>
+        <IconButton
+          aria-label={`Actions for ${params.row.documentName}`}
+          onClick={(e) => handleMenuOpen(e, params.row)}
+        >
           <MoreVertIcon />
         </IconButton>
       )
@@ -421,7 +412,7 @@ const { patientId, practiceId } = useCurrentPatient();
           }}
         >
           <Typography variant="h4" noWrap>
-            {'Document Viewer: ' + menuDoc?.documentName }
+            {'Document Viewer: ' + menuDoc?.documentName}
           </Typography>
           <IconButton onClick={handleDialogClose}>
             <CloseIcon />
@@ -449,7 +440,11 @@ const { patientId, practiceId } = useCurrentPatient();
                 }
               ]}
               pluginRenderers={DocViewerRenderers}
-              style={{ width: '100%', height: '100%', padding: "0px 10px 0px 10px" }}
+              style={{
+                width: '100%',
+                height: '100%',
+                padding: '0px 10px 0px 10px'
+              }}
               config={{
                 header: {
                   disableFileName: true,
