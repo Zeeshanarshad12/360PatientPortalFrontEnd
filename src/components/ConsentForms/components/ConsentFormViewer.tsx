@@ -40,7 +40,7 @@ const bounce = keyframes`
   100% { transform: scale(1); opacity: 0.8; }
 `;
 
-// ── extractBodyText — plain text for upload PDF ───────────────────────────
+// ── extractBodyText — plain text fallback ─────────────────────────────────
 const extractBodyText = (html: string, titleToExclude: string): string => {
   const parsed = new DOMParser().parseFromString(html, 'text/html');
   return parsed.body.innerText
@@ -51,30 +51,150 @@ const extractBodyText = (html: string, titleToExclude: string): string => {
     .join('\n');
 };
 
-// ── Segment type ──────────────────────────────────────────────────────────
-interface TextSegment {
+// ── sanitizeForPDF ────────────────────────────────────────────────────────
+const sanitizeForPDF = (text: string): string =>
+  text
+    .replace(/[\u2018\u2019]/g, "'")
+    .replace(/[\u201C\u201D]/g, '"')
+    .replace(/[\u2013\u2014]/g, '-')
+    .replace(/\u2026/g, '...')
+    .replace(/\u00A0/g, ' ')
+    .replace(/[^\x00-\xFF]/g, '');
+
+const cleanHTMLForExport = (html: string, formTitle: string): string =>
+  html
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/_{10,}/g, '')
+    .replace(/<img[^>]*alt="Signature"[^>]*\/?>/gi, '')
+    .replace(/<br\s*\/?><span[^>]*>Signed By:[^<]*<\/span>/gi, '')
+    .replace(
+      /<span\s[^>]*style="[^"]*font-weight\s*:\s*bold[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
+      '<strong>$1</strong>'
+    )
+    .replace(
+      /<span\s[^>]*style="[^"]*font-weight\s*:\s*700[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
+      '<strong>$1</strong>'
+    )
+    .replace(/\s*style="[^"]*"/gi, '')
+    .replace(/\s*class="[^"]*"/gi, '')
+    .replace(/<(h[1-3])[^>]*>([\s\S]*?)<\/\1>/gi, (match, tag, inner) => {
+      const text = inner.replace(/<[^>]*>/g, '').trim();
+      return text.toLowerCase() === formTitle.trim().toLowerCase() ? '' : match;
+    });
+
+// ── PDF paragraph model ───────────────────────────────────────────────────
+interface PdfChunk {
   text: string;
   bold: boolean;
   italic: boolean;
+}
+interface PdfParagraph {
+  chunks: PdfChunk[];
   fontSize: number;
-  isNewline: boolean;
   align: 'left' | 'center' | 'right';
+  isHeading: boolean;
+  isImage?: boolean;
+  imageDataUrl?: string;
 }
 
-// ── extractFormattedSegments ──────────────────────────────────────────────
-// Walks DOM preserving bold/italic/heading per node for jsPDF rendering.
-// Key fix: inline elements (strong/em) do NOT emit newlines — only block
-// elements do, preventing bold text from breaking onto separate lines.
-const extractFormattedSegments = (
-  html: string,
-  titleToExclude: string
-): TextSegment[] => {
-  // Strip injected <style> tag before parsing to avoid garbage chars
-  const cleanHtml = html.replace(/<style[\s\S]*?<\/style>/gi, '');
-  const parser = new DOMParser();
-  const doc = parser.parseFromString(cleanHtml, 'text/html');
-  const segments: TextSegment[] = [];
+// ── generateFormattedPDF ──────────────────────────────────────────────────
+// ── generateFormattedPDF ──────────────────────────────────────────────────
+// Shared PDF generation pipeline — used by BOTH handleDownloadPDF AND
+// the upload-on-sign flow so Document Viewer shows identical output.
+//
+// KEY DESIGN DECISION:
+// cleanHTMLForExport strips the embedded signature image + "Signed By" span
+// (injected by useEffect for web display only). The signature block is ALWAYS
+// appended here using signatureDataUrl. This ensures consistent output whether
+// called at sign-time (renderedContent has no sig yet) or at download-time
+// (renderedContent has embedded sig from useEffect).
+export const generateFormattedPDF = async (
+  formData: ConsentForm & { Signature?: string; SignedByName?: string },
+  htmlContent: string,
+  signatureDataUrl: string
+): Promise<Blob> => {
+  const jsPDFModule = await import('jspdf');
+  const jsPDF = (jsPDFModule as any).jsPDF ?? jsPDFModule.default;
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
 
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = 15;
+  const usableW = pageW - margin * 2;
+  const headerH = 12;
+  const footerH = 12;
+  const contentTop = margin + headerH;
+  const contentBottom = pageH - margin - footerH;
+
+  const generatedAt = new Date().toLocaleString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: true
+  });
+
+  const signedDate = formData.SignedDate
+    ? new Date(formData.SignedDate).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit'
+      })
+    : new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit'
+      });
+
+  // ── Header / Footer ───────────────────────────────────────────────────
+  const drawHeader = (pageNum: number, totalPages: number) => {
+    pdf.setDrawColor(180, 180, 180);
+    pdf.setLineWidth(0.3);
+    pdf.line(
+      margin,
+      margin + headerH - 1,
+      pageW - margin,
+      margin + headerH - 1
+    );
+    pdf.setFontSize(8);
+    pdf.setFont('helvetica', 'bold');
+    pdf.setTextColor(80, 80, 80);
+    pdf.text(sanitizeForPDF(formData.Title), margin, margin + 7);
+    pdf.setFont('helvetica', 'normal');
+    pdf.text(`Page ${pageNum} of ${totalPages}`, pageW - margin, margin + 7, {
+      align: 'right'
+    });
+    pdf.setTextColor(0, 0, 0);
+  };
+
+  const drawFooter = () => {
+    pdf.setDrawColor(180, 180, 180);
+    pdf.setLineWidth(0.3);
+    pdf.line(
+      margin,
+      pageH - margin - footerH + 1,
+      pageW - margin,
+      pageH - margin - footerH + 1
+    );
+    pdf.setFontSize(7.5);
+    pdf.setFont('helvetica', 'normal');
+    pdf.setTextColor(120, 120, 120);
+    pdf.text(`Generated: ${generatedAt}`, margin, pageH - margin - 3);
+    pdf.text(
+      'CONFIDENTIAL - Patient Medical Record',
+      pageW - margin,
+      pageH - margin - 3,
+      { align: 'right' }
+    );
+    pdf.setTextColor(0, 0, 0);
+  };
+
+  const cleanedHTML = cleanHTMLForExport(htmlContent, formData.Title);
+
+  // ── Parse HTML into paragraph model ──────────────────────────────────
+  const paragraphs: PdfParagraph[] = [];
   const BLOCK_TAGS = new Set([
     'p',
     'h1',
@@ -85,151 +205,403 @@ const extractFormattedSegments = (
     'h6',
     'li',
     'div',
-    'br',
     'blockquote'
   ]);
-  const INLINE_TAGS = new Set(['strong', 'b', 'em', 'i', 'u', 'span', 'a']);
 
-  const getAlign = (el: Element): 'left' | 'center' | 'right' => {
-    const style = el.getAttribute('style') ?? '';
-    const cls = el.getAttribute('class') ?? '';
-    if (
-      style.includes('text-align:center') ||
-      style.includes('text-align: center') ||
-      cls.includes('center-align')
-    )
-      return 'center';
-    if (
-      style.includes('text-align:right') ||
-      style.includes('text-align: right') ||
-      cls.includes('right-align')
-    )
-      return 'right';
-    return 'left';
-  };
-
-  const walk = (
+  const parseNode = (
     node: Node,
     bold: boolean,
     italic: boolean,
     fontSize: number,
-    align: 'left' | 'center' | 'right'
-  ) => {
+    align: 'left' | 'center' | 'right',
+    para: PdfParagraph | null
+  ): PdfParagraph | null => {
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      const t = (node as Element).tagName.toLowerCase();
+      if (t === 'style' || t === 'script') return para;
+    }
     if (node.nodeType === Node.TEXT_NODE) {
       const text = node.textContent ?? '';
-      if (text.trim()) {
-        segments.push({
-          text,
-          bold,
-          italic,
-          fontSize,
-          isNewline: false,
-          align
-        });
-      }
-      return;
+      if (text.trim() && para) para.chunks.push({ text, bold, italic });
+      return para;
     }
+    if (node.nodeType !== Node.ELEMENT_NODE) return para;
 
-    if (node.nodeType !== Node.ELEMENT_NODE) return;
     const el = node as Element;
     const tag = el.tagName.toLowerCase();
+    let isBold = bold,
+      isItalic = italic,
+      fSize = fontSize,
+      elAlign = align,
+      isHeading = false;
 
-    let isBold = bold;
-    let isItalic = italic;
-    let fSize = fontSize;
-    let blockAlign = align;
-
-    // Inline style modifiers — no newlines emitted
     if (tag === 'strong' || tag === 'b') isBold = true;
     if (tag === 'em' || tag === 'i') isItalic = true;
 
-    // Block elements — set heading size and emit newline BEFORE
-    if (BLOCK_TAGS.has(tag)) {
-      blockAlign = getAlign(el);
+    // Inline style detection — safety net after span→strong conversion
+    const sa = el.getAttribute('style') ?? '';
+    if (
+      sa.includes('font-weight:bold') ||
+      sa.includes('font-weight: bold') ||
+      sa.includes('font-weight:700') ||
+      sa.includes('font-weight: 700')
+    )
+      isBold = true;
+    if (sa.includes('font-style:italic') || sa.includes('font-style: italic'))
+      isItalic = true;
 
-      if (tag === 'h1') {
-        fSize = 16;
-        isBold = true;
-      }
-      if (tag === 'h2') {
-        fSize = 13;
-        isBold = true;
-      }
-      if (tag === 'h3') {
-        fSize = 12;
-        isBold = true;
-      }
-      if (tag === 'h4') {
-        fSize = 11;
-        isBold = true;
-      }
+    if (tag === 'h1') {
+      fSize = 16;
+      isBold = true;
+      isHeading = true;
+    }
+    if (tag === 'h2') {
+      fSize = 13;
+      isBold = true;
+      isHeading = true;
+    }
+    if (tag === 'h3') {
+      fSize = 12;
+      isBold = true;
+      isHeading = true;
+    }
+    if (tag === 'h4') {
+      fSize = 11;
+      isBold = true;
+      isHeading = true;
+    }
 
-      if (tag === 'br') {
-        segments.push({
-          text: '\n',
-          bold: false,
-          italic: false,
+    if (tag === 'br') {
+      if (para && para.chunks.length > 0) paragraphs.push(para);
+      return { chunks: [], fontSize: fSize, align: elAlign, isHeading: false };
+    }
+    if (tag === 'img') {
+      // Signature images stripped by cleanHTMLForExport — only non-sig images reach here
+      const src = el.getAttribute('src') ?? '';
+      if (src) {
+        if (para && para.chunks.length > 0) paragraphs.push(para);
+        paragraphs.push({
+          chunks: [],
           fontSize: fSize,
-          isNewline: true,
-          align: 'left'
+          align: elAlign,
+          isHeading: false,
+          isImage: true,
+          imageDataUrl: src
         });
-        return;
       }
-
-      // Newline before block
-      segments.push({
-        text: '\n',
-        bold: false,
-        italic: false,
-        fontSize: fSize,
-        isNewline: true,
-        align: 'left'
-      });
+      return { chunks: [], fontSize: fSize, align: elAlign, isHeading: false };
     }
 
-    // Skip img tags — handled separately in signature section
-    if (tag === 'img') return;
-
-    el.childNodes.forEach((child) =>
-      walk(child, isBold, isItalic, fSize, blockAlign)
-    );
-
-    // Newline after block
-    if (BLOCK_TAGS.has(tag)) {
-      segments.push({
-        text: '\n',
-        bold: false,
-        italic: false,
-        fontSize: fSize,
-        isNewline: true,
-        align: 'left'
-      });
+    const isBlock = BLOCK_TAGS.has(tag);
+    let currentPara = para;
+    if (isBlock) {
+      if (currentPara && currentPara.chunks.length > 0)
+        paragraphs.push(currentPara);
+      currentPara = { chunks: [], fontSize: fSize, align: elAlign, isHeading };
     }
+    el.childNodes.forEach((child) => {
+      currentPara = parseNode(
+        child,
+        isBold,
+        isItalic,
+        fSize,
+        elAlign,
+        currentPara
+      );
+    });
+    if (isBlock) {
+      if (currentPara && currentPara.chunks.length > 0)
+        paragraphs.push(currentPara);
+      return null;
+    }
+    return currentPara;
   };
 
-  doc.body.childNodes.forEach((node) => walk(node, false, false, 10, 'left'));
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(cleanedHTML, 'text/html');
+  let activePara: PdfParagraph | null = null;
+  doc.body.childNodes.forEach((node) => {
+    activePara = parseNode(node, false, false, 10, 'left', activePara);
+  });
+  if (activePara && (activePara as PdfParagraph).chunks.length > 0)
+    paragraphs.push(activePara as PdfParagraph);
 
-  return segments.filter(
-    (s) => s.isNewline || s.text.trim() !== titleToExclude.trim()
-  );
-};
+  // ── Render title ──────────────────────────────────────────────────────
+  let y = contentTop + 6;
+  pdf.setFontSize(16);
+  pdf.setFont('helvetica', 'bold');
+  pdf.text(sanitizeForPDF(formData.Title), pageW / 2, y, { align: 'center' });
+  pdf.setFont('helvetica', 'normal');
+  pdf.setFontSize(10);
+  y += 14;
 
-const sanitizeForPDF = (text: string): string => {
-  return (
-    text
-      // Smart quotes → straight quotes
-      .replace(/[\u2018\u2019]/g, "'") // ' ' → '
-      .replace(/[\u201C\u201D]/g, '"') // " " → "
-      // Dashes
-      .replace(/[\u2013\u2014]/g, '-') // – — → -
-      // Ellipsis
-      .replace(/\u2026/g, '...') // … → ...
-      // Non-breaking space
-      .replace(/\u00A0/g, ' ') // &nbsp; → space
-      // Any remaining non-Latin-1 characters → remove
-      // Latin-1 range is 0x00-0xFF
-      .replace(/[^\x00-\xFF]/g, '')
+  // ── Word-width helper ─────────────────────────────────────────────────
+  const getWordWidth = (
+    word: string,
+    bold: boolean,
+    italic: boolean
+  ): number => {
+    const style =
+      bold && italic
+        ? 'bolditalic'
+        : bold
+        ? 'bold'
+        : italic
+        ? 'italic'
+        : 'normal';
+    pdf.setFont('helvetica', style);
+    return pdf.getTextWidth(sanitizeForPDF(word));
+  };
+
+  // ── Render paragraphs ─────────────────────────────────────────────────
+  for (const p of paragraphs) {
+    // Non-signature image (e.g. letterhead logo)
+    if (p.isImage && p.imageDataUrl) {
+      if (y + 22 > contentBottom) {
+        pdf.addPage();
+        y = contentTop + 4;
+      }
+      try {
+        pdf.addImage(p.imageDataUrl, 'PNG', margin, y, 60, 18);
+        y += 22;
+      } catch {
+        y += 4;
+      }
+      continue;
+    }
+
+    const fullText = p.chunks
+      .map((c) => c.text)
+      .join('')
+      .trim();
+    if (!fullText) {
+      y += 2;
+      continue;
+    }
+
+    // Skip duplicate title (already rendered above)
+    if (fullText.toLowerCase() === formData.Title.trim().toLowerCase())
+      continue;
+
+    const fSize = p.fontSize ?? 10;
+
+    // Heading paragraph
+    if (p.isHeading) {
+      y += 3;
+      pdf.setFontSize(fSize);
+      pdf.setFont('helvetica', 'bold');
+      const xPos =
+        p.align === 'center'
+          ? pageW / 2
+          : p.align === 'right'
+          ? pageW - margin
+          : margin;
+      const align =
+        p.align === 'center'
+          ? 'center'
+          : p.align === 'right'
+          ? 'right'
+          : 'left';
+      const lines = pdf.splitTextToSize(sanitizeForPDF(fullText), usableW);
+      for (const line of lines) {
+        if (y + fSize * 0.45 > contentBottom) {
+          pdf.addPage();
+          y = contentTop + 4;
+        }
+        pdf.text(sanitizeForPDF(line), xPos, y, { align: align as any });
+        y += fSize * 0.5;
+      }
+      y += 2;
+      continue;
+    }
+
+    // Normal paragraph — word-level tokens for mixed bold/italic inline
+    pdf.setFontSize(fSize);
+    interface WordToken {
+      word: string;
+      bold: boolean;
+      italic: boolean;
+    }
+    const tokens: WordToken[] = [];
+    for (const chunk of p.chunks) {
+      const parts = sanitizeForPDF(chunk.text).split(/(\s+)/);
+      for (const part of parts)
+        if (part)
+          tokens.push({ word: part, bold: chunk.bold, italic: chunk.italic });
+    }
+
+    // Word-wrap tokens into visual lines
+    interface RenderedWord {
+      word: string;
+      bold: boolean;
+      italic: boolean;
+    }
+    const lines: RenderedWord[][] = [];
+    let currentLine: RenderedWord[] = [],
+      currentLineWidth = 0;
+
+    for (const token of tokens) {
+      if (/^\s+$/.test(token.word)) {
+        if (currentLine.length > 0) {
+          currentLine.push(token);
+          currentLineWidth += getWordWidth(' ', token.bold, token.italic);
+        }
+        continue;
+      }
+      const ww = getWordWidth(token.word, token.bold, token.italic);
+      if (currentLineWidth + ww > usableW && currentLine.length > 0) {
+        while (
+          currentLine.length > 0 &&
+          /^\s+$/.test(currentLine[currentLine.length - 1].word)
+        )
+          currentLine.pop();
+        lines.push(currentLine);
+        currentLine = [];
+        currentLineWidth = 0;
+      }
+      currentLine.push(token);
+      currentLineWidth += ww;
+    }
+    if (currentLine.length > 0) {
+      while (
+        currentLine.length > 0 &&
+        /^\s+$/.test(currentLine[currentLine.length - 1].word)
+      )
+        currentLine.pop();
+      lines.push(currentLine);
+    }
+
+    const lineH = fSize * 0.5;
+    for (const rLine of lines) {
+      if (y + lineH > contentBottom) {
+        pdf.addPage();
+        y = contentTop + 4;
+      }
+
+      if (p.align !== 'left') {
+        const lineText = sanitizeForPDF(rLine.map((w) => w.word).join(''));
+        const hasBold = rLine.some((w) => w.bold);
+        const hasItalic = rLine.some((w) => w.italic);
+        const fontStyle =
+          hasBold && hasItalic
+            ? 'bolditalic'
+            : hasBold
+            ? 'bold'
+            : hasItalic
+            ? 'italic'
+            : 'normal';
+        pdf.setFont('helvetica', fontStyle);
+        pdf.text(
+          lineText,
+          p.align === 'center' ? pageW / 2 : pageW - margin,
+          y,
+          { align: p.align as any }
+        );
+      } else {
+        let xCursor = margin;
+        for (const w of rLine) {
+          if (/^\s+$/.test(w.word)) {
+            xCursor += getWordWidth(' ', w.bold, w.italic);
+            continue;
+          }
+          const style =
+            w.bold && w.italic
+              ? 'bolditalic'
+              : w.bold
+              ? 'bold'
+              : w.italic
+              ? 'italic'
+              : 'normal';
+          pdf.setFont('helvetica', style);
+          pdf.text(sanitizeForPDF(w.word), xCursor, y);
+          xCursor += getWordWidth(w.word, w.bold, w.italic);
+        }
+      }
+      y += lineH;
+    }
+    y += 1;
+  }
+
+  pdf.setFontSize(10);
+  pdf.setFont('helvetica', 'normal');
+  if (y + 62 > contentBottom) {
+    pdf.addPage();
+    y = contentTop + 4;
+  }
+
+  y += 6;
+  pdf.setDrawColor(200, 200, 200);
+  pdf.setLineWidth(0.3);
+  pdf.line(margin, y, pageW - margin, y);
+  y += 6;
+
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('ACKNOWLEDGEMENT & SIGNATURE', margin, y);
+  pdf.setFont('helvetica', 'normal');
+  y += 7;
+
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Signature of Patient, Parent, or Legal Guardian:', margin, y);
+  pdf.setFont('helvetica', 'normal');
+  y += 5;
+
+  if (signatureDataUrl) {
+    try {
+      pdf.addImage(signatureDataUrl, 'PNG', margin, y, 60, 18);
+      y += 22;
+    } catch {
+      pdf.text('___________________________', margin, y);
+      y += 8;
+    }
+  } else {
+    pdf.text('___________________________', margin, y);
+    y += 10;
+  }
+
+  // Signed By + Date on the same line
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Signed By: ', margin, y);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text(
+    sanitizeForPDF(formData.SignedByName ?? '___________________________'),
+    margin + pdf.getTextWidth('Signed By: '),
+    y
   );
+  pdf.setFont('helvetica', 'bold');
+  pdf.text('Date: ', pageW / 2, y);
+  pdf.setFont('helvetica', 'normal');
+  pdf.text(
+    sanitizeForPDF(signedDate),
+    pageW / 2 + pdf.getTextWidth('Date: '),
+    y
+  );
+  y += 8;
+
+  // Document status
+  pdf.setFontSize(9);
+  pdf.setFont('helvetica', 'bold');
+  pdf.setTextColor(
+    formData.Status === 'Signed' ? 0 : 180,
+    formData.Status === 'Signed' ? 128 : 80,
+    0
+  );
+  pdf.text(
+    `Document Status: ${formData.Status?.toUpperCase() ?? 'SIGNED'}`,
+    margin,
+    y
+  );
+  pdf.setTextColor(0, 0, 0);
+  pdf.setFont('helvetica', 'normal');
+
+  // ── Header + footer on every page ────────────────────────────────────
+  const totalPages = (pdf.internal as any).getNumberOfPages();
+  for (let i = 1; i <= totalPages; i++) {
+    pdf.setPage(i);
+    drawHeader(i, totalPages);
+    drawFooter();
+  }
+
+  return pdf.output('blob');
 };
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -263,36 +635,24 @@ const ConsentFormViewer = ({
   // ── 1. Render content ─────────────────────────────────────────────────
   useEffect(() => {
     if (!form) return;
-
     let updatedContent = form.Content;
 
     const listStyleFix = `
 <style>
   .consent-form-content ul,
   .consent-form-content ul[style] {
-    margin-left: 20px !important;
-    padding-left: 8px !important;
-    list-style-type: disc !important;
-    list-style-position: outside !important;
+    margin-left: 20px !important; padding-left: 8px !important;
+    list-style-type: disc !important; list-style-position: outside !important;
   }
   .consent-form-content ol,
   .consent-form-content ol[style] {
-    margin-left: 20px !important;
-    padding-left: 8px !important;
-    list-style-type: decimal !important;
-    list-style-position: outside !important;
+    margin-left: 20px !important; padding-left: 8px !important;
+    list-style-type: decimal !important; list-style-position: outside !important;
   }
   .consent-form-content li,
-  .consent-form-content li[style] {
-    display: list-item !important;
-    margin-bottom: 4px !important;
-  }
+  .consent-form-content li[style] { display: list-item !important; margin-bottom: 4px !important; }
   .consent-form-content li p,
-  .consent-form-content li > p {
-    display: inline !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
+  .consent-form-content li > p { display: inline !important; margin: 0 !important; padding: 0 !important; }
 </style>`;
 
     // InputTextField replacement
@@ -310,31 +670,26 @@ const ConsentFormViewer = ({
     } else {
       updatedContent = updatedContent.replace(
         /InputTextField/g,
-        `<span style="border-bottom:1.5px solid #555; padding:0 4px;
-        min-width:80px; display:inline-block;">&nbsp;</span>`
+        `<span style="border-bottom:1.5px solid #555; padding:0 4px; min-width:80px; display:inline-block;">&nbsp;</span>`
       );
     }
 
-    // Signature replacement
+    // Signature replacement — embeds image + Signed By into body
     if (form.Signature) {
       const signatureImg = `<img src="${form.Signature}" alt="Signature"
       style="max-width:250px; height:auto; display:block; margin:4px 0;" />${
         form.SignedByName
-          ? `<br/><span style="font-size:13px;font-weight:bold">
-            Signed By: ${form.SignedByName}</span>`
+          ? `<br/><span style="font-size:13px;font-weight:bold">Signed By: ${form.SignedByName}</span>`
           : ''
       }`;
-
       updatedContent = updatedContent.replace(
         /(\s|<br\s*\/?>|<p[^>]*>)\s*_{10,}\s*(<\/p>|<br\s*\/?>|$)/gi,
         (match, before, after) => `${before}${signatureImg}${after}`
       );
-
       updatedContent = updatedContent.replace(
         /((?:<\/strong>|<\/b>|<\/em>|<\/i>|\s))\s*_{10,}\s*(?=<\/p>|<br|$)/gi,
         (match, before) => `${before}${signatureImg}`
       );
-
       updatedContent = updatedContent.replace(/_{10,}/g, signatureImg);
     }
 
@@ -342,25 +697,22 @@ const ConsentFormViewer = ({
       /Patient Signature:/g,
       'Signature:'
     );
-
     setRenderedContent(listStyleFix + updatedContent);
   }, [form]);
 
   // ── 2. Countdown ──────────────────────────────────────────────────────
   useEffect(() => {
     if (countdown === null || countdown <= 0 || !form?.FormID) return;
-
-    const timer = setTimeout(() => {
-      setCountdown((prev) => (prev !== null ? prev - 1 : null));
-    }, 1000);
-
+    const timer = setTimeout(
+      () => setCountdown((prev) => (prev !== null ? prev - 1 : null)),
+      1000
+    );
     if (countdown === 1) {
       setTimeout(() => {
         const remainingPending = pendingForms.filter(
           (f) => f.Status === 'Pending'
         );
         if (remainingPending.length === 0) return;
-
         const currentIndex = remainingPending.findIndex(
           (f) => f.FormID === form.FormID
         );
@@ -368,12 +720,10 @@ const ConsentFormViewer = ({
           currentIndex !== -1 && currentIndex + 1 < remainingPending.length
             ? remainingPending[currentIndex + 1]
             : remainingPending[0];
-
         setCountdown(null);
         if (nextForm) onSelectForm(nextForm);
       }, 300);
     }
-
     return () => clearTimeout(timer);
   }, [countdown, pendingForms, form?.FormID]);
 
@@ -383,20 +733,21 @@ const ConsentFormViewer = ({
       (f) => f.Status === 'Pending'
     ).length;
     const allSigned = currentPendingCount === 0 && prevPendingCount.current > 0;
-
     if (allSigned && !hasShownCompletionMessage.current) {
       setShowAllSignedMessage(true);
       hasShownCompletionMessage.current = true;
       applyPendingConsentFormCount(0, setPendingCount);
       notifyConsentCountUpdated();
     }
-
     const timer = setTimeout(() => setShowAllSignedMessage(false), 3000);
     prevPendingCount.current = currentPendingCount;
     return () => clearTimeout(timer);
   }, [pendingForms]);
 
   // ── 4. Print ──────────────────────────────────────────────────────────
+  // Renders form body AS-IS — no duplicate acknowledgement block appended.
+  // The signature image, Signed By, and all patient details are already
+  // embedded in renderedContent by the useEffect signature replacement.
   const handlePrint = () => {
     if (typeof window === 'undefined' || !form) return;
 
@@ -409,37 +760,8 @@ const ConsentFormViewer = ({
       hour12: true
     });
 
-    const signedDate = form.SignedDate
-      ? new Date(form.SignedDate).toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: '2-digit'
-        })
-      : new Date().toLocaleDateString('en-US', {
-          year: 'numeric',
-          month: 'short',
-          day: '2-digit'
-        });
-
-    const cleanBodyContent = renderedContent
-      .replace(/<style[\s\S]*?<\/style>/gi, '')
-      .replace(/_{10,}/g, '')
-      .replace(/<(h[1-3])[^>]*>([\s\S]*?)<\/\1>/gi, (match, tag, inner) => {
-        const text = inner.replace(/<[^>]*>/g, '').trim();
-        return text.toLowerCase() === form.Title.trim().toLowerCase()
-          ? ''
-          : match;
-      });
-
-    const signatureHTML = form.Signature
-      ? `<img src="${form.Signature}" alt="Signature"
-          style="display:block; max-width:180px; height:auto;
-            margin-top:8px; margin-bottom:4px;" />`
-      : `<div class="sig-blank-line"></div>`;
-
-    const signedByValue = form.SignedByName
-      ? `<span>${form.SignedByName}</span>`
-      : `<span class="blank-field">&nbsp;</span>`;
+    // Use shared cleaner — preserves all body content, removes only style/script/title dups
+    const cleanBodyContent = cleanHTMLForExport(renderedContent, form.Title);
 
     const statusColor = form.Status === 'Signed' ? '#1a7a1a' : '#b45000';
 
@@ -451,113 +773,44 @@ const ConsentFormViewer = ({
         <title>${form.Title}</title>
         <style>
           *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
           @page { size: A4 portrait; margin: 0; }
-
-          html, body {
-            font-family: Arial, sans-serif;
-            font-size: 10pt;
-            color: #111;
-            background: #fff;
-            line-height: 1.65;
-          }
-
+          html, body { font-family: Arial, sans-serif; font-size: 10pt; color: #111; background: #fff; line-height: 1.65; }
           .page-wrapper { width: 100%; max-width: 178mm; margin: 0 auto; padding-top: 22mm; padding-bottom: 22mm; }
 
-          .print-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 8pt;
-            color: #666;
-            padding-bottom: 5px;
-            border-bottom: 0.5px solid #bbb;
-            margin-bottom: 14px;
-          }
-          .print-header .doc-name    { font-weight: bold; color: #444; }
+          .print-header { display: flex; justify-content: space-between; align-items: center; font-size: 8pt; color: #666; padding-bottom: 5px; border-bottom: 0.5px solid #bbb; margin-bottom: 14px; }
+          .print-header .doc-name { font-weight: bold; color: #444; }
           .print-header .confidential-badge { font-size: 7.5pt; color: #888; }
 
-          .doc-title {
-            text-align: center;
-            font-size: 15pt;
-            font-weight: bold;
-            color: #1a3c5e;
-            margin-bottom: 18px;
-            padding-bottom: 10px;
-            border-bottom: 1.5px solid #1a3c5e;
-          }
+          .doc-title { text-align: center; font-size: 15pt; font-weight: bold; color: #1a3c5e; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 1.5px solid #1a3c5e; }
 
           .body-content { font-size: 10pt; line-height: 1.7; color: #111; }
-
-          .body-content p        { margin-top: 0; margin-bottom: 8px; }
+          .body-content p { margin-top: 0; margin-bottom: 8px; }
           .body-content p:last-child { margin-bottom: 0; }
-
           .body-content h1 { font-size: 15pt; font-weight: bold; margin: 14px 0 8px; }
           .body-content h2 { font-size: 13pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; margin: 14px 0 8px; }
-          .body-content h3, .body-content h4,
-          .body-content h5, .body-content h6 { font-weight: bold; margin: 12px 0 6px; }
-
+          .body-content h3, .body-content h4, .body-content h5, .body-content h6 { font-weight: bold; margin: 12px 0 6px; }
           .body-content strong, .body-content b { font-weight: 700 !important; }
-          .body-content em,     .body-content i { font-style: italic; }
-          .body-content u                        { text-decoration: underline; }
-
-          .body-content .center-align,
-          .body-content [style*="text-align:center"],
-          .body-content [style*="text-align: center"] { text-align: center; }
-          .body-content .right-align,
-          .body-content [style*="text-align:right"],
-          .body-content [style*="text-align: right"]  { text-align: right; }
-
-          .body-content ul, .body-content ol {
-            margin-left: 20px !important; padding-left: 8px !important;
-            margin-top: 4px !important; margin-bottom: 8px !important;
-          }
-          .body-content ul { list-style-type: disc !important; list-style-position: outside !important; }
+          .body-content em, .body-content i { font-style: italic; }
+          .body-content u { text-decoration: underline; }
+          .body-content .center-align, .body-content [style*="text-align:center"], .body-content [style*="text-align: center"] { text-align: center; }
+          .body-content .right-align,  .body-content [style*="text-align:right"],  .body-content [style*="text-align: right"]  { text-align: right; }
+          .body-content ul, .body-content ol { margin-left: 20px !important; padding-left: 8px !important; margin-top: 4px !important; margin-bottom: 8px !important; }
+          .body-content ul { list-style-type: disc    !important; list-style-position: outside !important; }
           .body-content ol { list-style-type: decimal !important; list-style-position: outside !important; }
           .body-content li { display: list-item !important; margin-bottom: 4px !important; line-height: 1.65 !important; }
           .body-content li p, .body-content li > p { display: inline !important; margin: 0 !important; padding: 0 !important; }
-          .body-content ul ul, .body-content ol ol,
-          .body-content ul ol, .body-content ol ul {
-            margin-left: 16px !important; padding-left: 8px !important;
-            margin-top: 2px !important; margin-bottom: 2px !important;
-          }
-
+          .body-content ul ul, .body-content ol ol, .body-content ul ol, .body-content ol ul { margin-left: 16px !important; padding-left: 8px !important; margin-top: 2px !important; margin-bottom: 2px !important; }
           .body-content * { background: transparent !important; }
 
-          .section-divider { border: none; border-top: 1px solid #ccc; margin: 20px 0 16px 0; }
+          /* Signature image within body content */
+          .body-content img { max-width: 250px; height: auto; display: block; margin: 4px 0; }
 
-          .signature-block { page-break-inside: avoid; break-inside: avoid; }
-          .sig-section-heading {
-            font-size: 9.5pt; font-weight: bold; text-transform: uppercase;
-            letter-spacing: 0.6px; color: #333; margin-bottom: 10px;
-          }
-          .sig-label    { font-size: 10pt; font-weight: bold; color: #111; margin-bottom: 6px; }
-          .sig-image-wrap { min-height: 44px; margin-bottom: 12px; }
-          .sig-blank-line { width: 220px; border-bottom: 1px solid #333; height: 36px; margin-bottom: 8px; }
-          .blank-field    { display: inline-block; width: 160px; border-bottom: 1px solid #555; vertical-align: bottom; }
-
-          .sig-meta-row {
-            display: flex; gap: 48px; align-items: flex-start;
-            margin-top: 4px; margin-bottom: 10px; flex-wrap: wrap;
-          }
-          .sig-meta-row .meta-col { font-size: 10pt; }
-          .sig-meta-row .meta-col strong { font-weight: bold; margin-right: 4px; }
-
-          .doc-status { font-size: 9pt; font-weight: bold; color: ${statusColor}; margin-top: 6px; margin-bottom: 4px; }
-
-          .audit-footer {
-            margin-top: 24px; padding-top: 6px;
-            border-top: 0.5px solid #ddd;
-            display: flex; justify-content: space-between;
-            font-size: 7.5pt; color: #888;
-            page-break-inside: avoid; break-inside: avoid;
-          }
+          .audit-footer { margin-top: 24px; padding-top: 6px; border-top: 0.5px solid #ddd; display: flex; justify-content: space-between; font-size: 7.5pt; color: #888; page-break-inside: avoid; break-inside: avoid; }
 
           @media print {
             html, body { width: 210mm; print-color-adjust: exact; -webkit-print-color-adjust: exact; height: auto !important; overflow: hidden !important; }
-            .page-wrapper { max-width: 100%; page-break-after: avoid; }
-            .signature-block { page-break-inside: avoid !important; break-inside: avoid !important; }
-            .audit-footer    { page-break-inside: avoid !important; break-inside: avoid !important; page-break-before: avoid !important; }
+            .page-wrapper { max-width: 100%; }
+            .audit-footer { page-break-inside: avoid !important; break-inside: avoid !important; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             .no-print { display: none !important; }
           }
@@ -572,6 +825,8 @@ const ConsentFormViewer = ({
 
           <h1 class="doc-title">${form.Title}</h1>
 
+          <!-- Form body contains complete content: signature image, Signed By,
+               patient details — exactly matching the Patient Portal view -->
           <div class="body-content">${cleanBodyContent}</div>
 
           <div class="audit-footer">
@@ -595,510 +850,24 @@ const ConsentFormViewer = ({
   };
 
   // ── 5. Download PDF ───────────────────────────────────────────────────
+  // Uses shared generateFormattedPDF — identical output to Document Viewer.
+  // No separate acknowledgement block — form body is the source of truth.
   const handleDownloadPDF = async () => {
     if (!form) return;
-
     try {
-      const jsPDFModule = await import('jspdf');
-      const jsPDF = (jsPDFModule as any).jsPDF ?? jsPDFModule.default;
-
-      const pdf = new jsPDF({
-        unit: 'mm',
-        format: 'a4',
-        orientation: 'portrait'
-      });
-
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const margin = 15;
-      const usableW = pageW - margin * 2;
-      const headerH = 12;
-      const footerH = 12;
-      const contentTop = margin + headerH;
-      const contentBottom = pageH - margin - footerH;
-
-      const generatedAt = new Date().toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
-
-      const signedDate = form.SignedDate
-        ? new Date(form.SignedDate).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: '2-digit'
-          })
-        : new Date().toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: '2-digit'
-          });
-
-      const drawHeader = (pageNum: number, totalPages: number) => {
-        pdf.setDrawColor(180, 180, 180);
-        pdf.setLineWidth(0.3);
-        pdf.line(
-          margin,
-          margin + headerH - 1,
-          pageW - margin,
-          margin + headerH - 1
-        );
-        pdf.setFontSize(8);
-        pdf.setFont('helvetica', 'bold');
-        pdf.setTextColor(80, 80, 80);
-        pdf.text(sanitizeForPDF(form.Title), margin, margin + 7);
-        pdf.setFont('helvetica', 'normal');
-        pdf.text(
-          `Page ${pageNum} of ${totalPages}`,
-          pageW - margin,
-          margin + 7,
-          { align: 'right' }
-        );
-        pdf.setTextColor(0, 0, 0);
-      };
-
-      const drawFooter = () => {
-        pdf.setDrawColor(180, 180, 180);
-        pdf.setLineWidth(0.3);
-        pdf.line(
-          margin,
-          pageH - margin - footerH + 1,
-          pageW - margin,
-          pageH - margin - footerH + 1
-        );
-        pdf.setFontSize(7.5);
-        pdf.setFont('helvetica', 'normal');
-        pdf.setTextColor(120, 120, 120);
-        pdf.text(`Generated: ${generatedAt}`, margin, pageH - margin - 3);
-        pdf.text(
-          'CONFIDENTIAL - Patient Medical Record',
-          pageW - margin,
-          pageH - margin - 3,
-          { align: 'right' }
-        );
-        pdf.setTextColor(0, 0, 0);
-      };
-
-      const cleanedHTML = renderedContent
-        .replace(/<style[\s\S]*?<\/style>/gi, '')
-        .replace(/<script[\s\S]*?<\/script>/gi, '')
-        .replace(/_{10,}/g, '')
-        .replace(
-          /<span\s[^>]*style="[^"]*font-weight\s*:\s*bold[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
-          '<strong>$1</strong>'
-        )
-        .replace(
-          /<span\s[^>]*style="[^"]*font-weight\s*:\s*700[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
-          '<strong>$1</strong>'
-        )
-        .replace(/\s*style="[^"]*"/gi, '')
-        .replace(/\s*class="[^"]*"/gi, '');
-
-      // ── Paragraph model ───────────────────────────────────────────────
-      interface PdfChunk {
-        text: string;
-        bold: boolean;
-        italic: boolean;
-      }
-      interface PdfParagraph {
-        chunks: PdfChunk[];
-        fontSize: number;
-        align: 'left' | 'center' | 'right';
-        isHeading: boolean;
-        isImage?: boolean;
-        imageDataUrl?: string;
-      }
-
-      const paragraphs: PdfParagraph[] = [];
-      const BLOCK_TAGS = new Set([
-        'p',
-        'h1',
-        'h2',
-        'h3',
-        'h4',
-        'h5',
-        'h6',
-        'li',
-        'div',
-        'blockquote'
-      ]);
-
-      const parseNode = (
-        node: Node,
-        bold: boolean,
-        italic: boolean,
-        fontSize: number,
-        align: 'left' | 'center' | 'right',
-        para: PdfParagraph | null
-      ): PdfParagraph | null => {
-        if (node.nodeType === Node.ELEMENT_NODE) {
-          const tag = (node as Element).tagName.toLowerCase();
-          if (tag === 'style' || tag === 'script') return para;
-        }
-
-        if (node.nodeType === Node.TEXT_NODE) {
-          const text = node.textContent ?? '';
-          if (text.trim() && para) {
-            para.chunks.push({ text, bold, italic });
-          }
-          return para;
-        }
-
-        if (node.nodeType !== Node.ELEMENT_NODE) return para;
-
-        const el = node as Element;
-        const tag = el.tagName.toLowerCase();
-
-        let isBold = bold;
-        let isItalic = italic;
-        let fSize = fontSize;
-        let elAlign = align;
-        let isHeading = false;
-
-        if (tag === 'strong' || tag === 'b') isBold = true;
-        if (tag === 'em' || tag === 'i') isItalic = true;
-
-        const styleAttr = el.getAttribute('style') ?? '';
-        if (
-          styleAttr.includes('font-weight:bold') ||
-          styleAttr.includes('font-weight: bold') ||
-          styleAttr.includes('font-weight:700') ||
-          styleAttr.includes('font-weight: 700')
-        ) {
-          isBold = true;
-        }
-        if (
-          styleAttr.includes('font-style:italic') ||
-          styleAttr.includes('font-style: italic')
-        ) {
-          isItalic = true;
-        }
-
-        if (tag === 'h1') {
-          fSize = 16;
-          isBold = true;
-          isHeading = true;
-        }
-        if (tag === 'h2') {
-          fSize = 13;
-          isBold = true;
-          isHeading = true;
-        }
-        if (tag === 'h3') {
-          fSize = 12;
-          isBold = true;
-          isHeading = true;
-        }
-        if (tag === 'h4') {
-          fSize = 11;
-          isBold = true;
-          isHeading = true;
-        }
-
-        if (tag === 'br') {
-          if (para && para.chunks.length > 0) paragraphs.push(para);
-          return {
-            chunks: [],
-            fontSize: fSize,
-            align: elAlign,
-            isHeading: false
-          };
-        }
-
-        if (tag === 'img') {
-          const src = el.getAttribute('src') ?? '';
-          if (src) {
-            if (para && para.chunks.length > 0) paragraphs.push(para);
-            paragraphs.push({
-              chunks: [],
-              fontSize: fSize,
-              align: elAlign,
-              isHeading: false,
-              isImage: true,
-              imageDataUrl: src
-            });
-          }
-          return {
-            chunks: [],
-            fontSize: fSize,
-            align: elAlign,
-            isHeading: false
-          };
-        }
-
-        const isBlock = BLOCK_TAGS.has(tag);
-
-        let currentPara = para;
-        if (isBlock) {
-          if (currentPara && currentPara.chunks.length > 0)
-            paragraphs.push(currentPara);
-          currentPara = {
-            chunks: [],
-            fontSize: fSize,
-            align: elAlign,
-            isHeading
-          };
-        }
-
-        el.childNodes.forEach((child) => {
-          currentPara = parseNode(
-            child,
-            isBold,
-            isItalic,
-            fSize,
-            elAlign,
-            currentPara
-          );
-        });
-
-        if (isBlock) {
-          if (currentPara && currentPara.chunks.length > 0)
-            paragraphs.push(currentPara);
-          return null;
-        }
-
-        return currentPara;
-      };
-
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(cleanedHTML, 'text/html');
-      let activePara: PdfParagraph | null = null;
-
-      doc.body.childNodes.forEach((node) => {
-        activePara = parseNode(node, false, false, 10, 'left', activePara);
-      });
-      if (activePara && (activePara as PdfParagraph).chunks.length > 0) {
-        paragraphs.push(activePara as PdfParagraph);
-      }
-
-      // ── Render title ──────────────────────────────────────────────────
-      let y = contentTop + 6;
-      pdf.setFontSize(16);
-      pdf.setFont('helvetica', 'bold');
-      pdf.text(sanitizeForPDF(form.Title), pageW / 2, y, { align: 'center' });
-      pdf.setFont('helvetica', 'normal');
-      pdf.setFontSize(10);
-      y += 14;
-
-      // ── Render paragraphs ─────────────────────────────────────────────
-      const getWordWidth = (
-        word: string,
-        bold: boolean,
-        italic: boolean
-      ): number => {
-        const style =
-          bold && italic
-            ? 'bolditalic'
-            : bold
-            ? 'bold'
-            : italic
-            ? 'italic'
-            : 'normal';
-        pdf.setFont('helvetica', style);
-        return pdf.getTextWidth(sanitizeForPDF(word));
-      };
-
-      for (const p of paragraphs) {
-        if (p.isImage && p.imageDataUrl) {
-          if (y + 22 > contentBottom) {
-            pdf.addPage();
-            y = contentTop + 4;
-          }
-          try {
-            pdf.addImage(p.imageDataUrl, 'PNG', margin, y, 60, 18);
-            y += 22;
-          } catch {
-            y += 4;
-          }
-          continue;
-        }
-
-        const fullText = p.chunks
-          .map((c) => c.text)
-          .join('')
-          .trim();
-        if (!fullText) {
-          y += 2;
-          continue;
-        }
-
-        // ── Skip duplicate title ───────────────────────────────────────
-        // Handles any heading whose text matches the form title exactly
-        // Works dynamically for ALL consent forms
-        if (fullText.toLowerCase() === form.Title.trim().toLowerCase())
-          continue;
-
-        const fSize = p.fontSize ?? 10;
-
-        // Heading: render full line as bold
-        if (p.isHeading) {
-          y += 3;
-          pdf.setFontSize(fSize);
-          pdf.setFont('helvetica', 'bold');
-          const xPos =
-            p.align === 'center'
-              ? pageW / 2
-              : p.align === 'right'
-              ? pageW - margin
-              : margin;
-          const align =
-            p.align === 'center'
-              ? 'center'
-              : p.align === 'right'
-              ? 'right'
-              : 'left';
-          const lines = pdf.splitTextToSize(sanitizeForPDF(fullText), usableW);
-          for (const line of lines) {
-            if (y + fSize * 0.45 > contentBottom) {
-              pdf.addPage();
-              y = contentTop + 4;
-            }
-            pdf.text(sanitizeForPDF(line), xPos, y, { align: align as any });
-            y += fSize * 0.5;
-          }
-          y += 2;
-          continue;
-        }
-
-        // Normal paragraph: word-level tokens for mixed bold/normal inline
-        pdf.setFontSize(fSize);
-
-        interface WordToken {
-          word: string;
-          bold: boolean;
-          italic: boolean;
-        }
-        const tokens: WordToken[] = [];
-
-        for (const chunk of p.chunks) {
-          const parts = sanitizeForPDF(chunk.text).split(/(\s+)/);
-          for (const part of parts) {
-            if (part)
-              tokens.push({
-                word: part,
-                bold: chunk.bold,
-                italic: chunk.italic
-              });
-          }
-        }
-
-        // Word-wrap into visual lines
-        interface RenderedWord {
-          word: string;
-          bold: boolean;
-          italic: boolean;
-        }
-        const lines: RenderedWord[][] = [];
-        let currentLine: RenderedWord[] = [];
-        let currentLineWidth = 0;
-
-        for (const token of tokens) {
-          if (/^\s+$/.test(token.word)) {
-            if (currentLine.length > 0) {
-              currentLine.push(token);
-              currentLineWidth += getWordWidth(' ', token.bold, token.italic);
-            }
-            continue;
-          }
-
-          const ww = getWordWidth(token.word, token.bold, token.italic);
-          if (currentLineWidth + ww > usableW && currentLine.length > 0) {
-            // Trim trailing spaces from line before pushing
-            while (
-              currentLine.length > 0 &&
-              /^\s+$/.test(currentLine[currentLine.length - 1].word)
-            ) {
-              currentLine.pop();
-            }
-            lines.push(currentLine);
-            currentLine = [];
-            currentLineWidth = 0;
-          }
-
-          currentLine.push(token);
-          currentLineWidth += ww;
-        }
-
-        if (currentLine.length > 0) {
-          while (
-            currentLine.length > 0 &&
-            /^\s+$/.test(currentLine[currentLine.length - 1].word)
-          ) {
-            currentLine.pop();
-          }
-          lines.push(currentLine);
-        }
-
-        const lineH = fSize * 0.5;
-
-        for (const rLine of lines) {
-          if (y + lineH > contentBottom) {
-            pdf.addPage();
-            y = contentTop + 4;
-          }
-
-          if (p.align !== 'left') {
-            const lineText = sanitizeForPDF(rLine.map((w) => w.word).join(''));
-            const hasBold = rLine.some((w) => w.bold);
-            const hasItalic = rLine.some((w) => w.italic);
-            const fontStyle =
-              hasBold && hasItalic
-                ? 'bolditalic'
-                : hasBold
-                ? 'bold'
-                : hasItalic
-                ? 'italic'
-                : 'normal';
-            pdf.setFont('helvetica', fontStyle);
-            pdf.text(
-              lineText,
-              p.align === 'center' ? pageW / 2 : pageW - margin,
-              y,
-              { align: p.align as any }
-            );
-          } else {
-            let xCursor = margin;
-            for (const w of rLine) {
-              if (/^\s+$/.test(w.word)) {
-                xCursor += getWordWidth(' ', w.bold, w.italic);
-                continue;
-              }
-              const style =
-                w.bold && w.italic
-                  ? 'bolditalic'
-                  : w.bold
-                  ? 'bold'
-                  : w.italic
-                  ? 'italic'
-                  : 'normal';
-              pdf.setFont('helvetica', style);
-              pdf.text(sanitizeForPDF(w.word), xCursor, y);
-              xCursor += getWordWidth(w.word, w.bold, w.italic);
-            }
-          }
-
-          y += lineH;
-        }
-
-        y += 1;
-      }
-
-      // Reset font
-      pdf.setFontSize(10);
-      pdf.setFont('helvetica', 'normal');
-
-      const totalPages = (pdf.internal as any).getNumberOfPages();
-      for (let i = 1; i <= totalPages; i++) {
-        pdf.setPage(i);
-        drawHeader(i, totalPages);
-        drawFooter();
-      }
-
-      pdf.save(`${form.Title.replace(/\s+/g, '_')}.pdf`);
+      const pdfBlob = await generateFormattedPDF(
+        form,
+        renderedContent,
+        form.Signature ?? ''
+      );
+      const url = URL.createObjectURL(pdfBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${form.Title.replace(/\s+/g, '_')}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
     } catch (err) {
       console.error('PDF download failed:', err);
       setSnackbarMessage('Failed to download PDF. Please try again.');
@@ -1114,8 +883,7 @@ const ConsentFormViewer = ({
   const handleSaveSignature = async (Signature: string) => {
     if (!form) return;
 
-    // Capture dynamic input field values and build updated rendered HTML in one pass
-    // (must happen before any await so the DOM inputs still exist with their typed values)
+    // Capture dynamic input values BEFORE any await (DOM inputs still exist)
     let finalContent = form.Content;
     let updatedRendered = renderedContent;
     if (contentRef.current) {
@@ -1127,9 +895,7 @@ const ConsentFormViewer = ({
         finalContent = finalContent.replace('InputTextField', value);
         updatedRendered = updatedRendered.replace(
           /<input[^>]*data-field="dynamic"[^>]*\/?>(<\/input>)?/i,
-          `<span style="border-bottom:1.5px solid #555; padding:0 4px;
-          font-size:inherit; font-family:inherit; display:inline-block;
-          min-width:80px;">${value}</span>`
+          `<span style="border-bottom:1.5px solid #555; padding:0 4px; font-size:inherit; font-family:inherit; display:inline-block; min-width:80px;">${value}</span>`
         );
       });
       setRenderedContent(updatedRendered);
@@ -1154,108 +920,26 @@ const ConsentFormViewer = ({
         setSnackbarMessage('Consent form signed successfully.');
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
-
         onFormSigned(form.FormID, Signature, updatedRendered);
         setCountdown(5);
 
-        // ── Upload PDF — existing plain text logic preserved ────────────
+        // ── Upload PDF — uses shared generateFormattedPDF ─────────────
+        // Produces identical output to Download PDF so Document Viewer
+        // shows the same formatted content (no þÿ, correct bold, header/footer,
+        // and no duplicate acknowledgement block)
         let documentFile: File | null = null;
         try {
-          const jsPDFModule = await import('jspdf');
-          const jsPDF = (jsPDFModule as any).jsPDF ?? jsPDFModule.default;
-          const pdf = new jsPDF({
-            unit: 'mm',
-            format: 'a4',
-            orientation: 'portrait'
-          });
-
-          const pageW = pdf.internal.pageSize.getWidth();
-          const pageH = pdf.internal.pageSize.getHeight();
-          const margin = 15;
-          const usableWidth = pageW - margin * 2;
-          const lineH = 6;
-          let y = 20;
-
-          pdf.setFontSize(18);
-          pdf.setFont('helvetica', 'bold');
-          pdf.text(sanitizeForPDF(form.Title), pageW / 2, y, {
-            align: 'center'
-          });
-          pdf.setFont('helvetica', 'normal');
-          y += 16;
-
-          const bodyText = extractBodyText(updatedRendered, form.Title);
-          pdf.setFontSize(10);
-          const lines: string[] = pdf.splitTextToSize(bodyText, usableWidth);
-
-          let prevEmpty = false;
-          for (const line of lines) {
-            const isEmpty = line.trim() === '';
-            if (isEmpty) {
-              if (!prevEmpty) y += 3;
-              prevEmpty = true;
-              continue;
-            }
-            if (y + lineH > pageH - margin) {
-              pdf.addPage();
-              y = margin + 4;
-            }
-            pdf.text(line, margin, y);
-            y += lineH;
-            prevEmpty = false;
-          }
-
-          if (y + 60 > pageH - margin) {
-            pdf.addPage();
-            y = margin + 4;
-          }
-          y += 8;
-
-          pdf.setFont('helvetica', 'bold');
-          pdf.text(
-            'Signature of Patient, Parent, or Legal Guardian:',
-            margin,
-            y
+          const pdfBlob = await generateFormattedPDF(
+            {
+              ...form,
+              Signature,
+              Status: 'Signed',
+              SignedDate: new Date().toISOString(),
+              SignedByName: form.SignedByName
+            },
+            updatedRendered,
+            Signature
           );
-          pdf.setFont('helvetica', 'normal');
-          y += 6;
-
-          try {
-            pdf.addImage(Signature, 'PNG', margin, y, 60, 20);
-            y += 26;
-          } catch {
-            y += 4;
-          }
-
-          if (form.SignedByName) {
-            pdf.setFont('helvetica', 'bold');
-            pdf.text('Signed By: ', margin, y);
-            const uploadLabelW = pdf.getTextWidth('Signed By: ');
-            pdf.setFont('helvetica', 'normal');
-            const uploadNameLines: string[] = pdf.splitTextToSize(
-              form.SignedByName,
-              usableWidth - uploadLabelW
-            );
-            uploadNameLines.forEach((line: string, idx: number) => {
-              pdf.text(line, margin + uploadLabelW, y + idx * lineH);
-            });
-            y += lineH * uploadNameLines.length;
-          }
-
-          pdf.setFont('helvetica', 'bold');
-          pdf.text('Date: ', margin, y);
-          pdf.setFont('helvetica', 'normal');
-          pdf.text(
-            new Date().toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'short',
-              day: '2-digit'
-            }),
-            margin + pdf.getTextWidth('Date: '),
-            y
-          );
-
-          const pdfBlob = pdf.output('blob');
           documentFile = new File(
             [pdfBlob],
             `${form.Title.replace(/\s+/g, '_')}.pdf`,
@@ -1368,7 +1052,6 @@ const ConsentFormViewer = ({
             background: 'linear-gradient(to right, #fefefe, #f5f7fa)',
             borderRadius: 2,
             position: 'relative',
-
             '& p, & h1, & h2, & h3, & h4, & h5, & h6': { textAlign: 'unset' },
             '& [style*="text-align: center"]': {
               textAlign: 'center !important'
@@ -1389,12 +1072,11 @@ const ConsentFormViewer = ({
               textAlign: 'right  !important'
             },
             '& .left-align,   & .text-left': { textAlign: 'left   !important' },
-
             '& ul, & ol': {
               marginLeft: '20px !important',
-              paddingLeft: '8px  !important',
-              marginTop: '4px  !important',
-              marginBottom: '8px  !important'
+              paddingLeft: '8px !important',
+              marginTop: '4px !important',
+              marginBottom: '8px !important'
             },
             '& ul': {
               listStyleType: 'disc    !important',
@@ -1417,7 +1099,7 @@ const ConsentFormViewer = ({
             '& ul ul, & ol ol, & ul ol, & ol ul': {
               marginLeft: '16px !important',
               paddingLeft: '8px !important',
-              marginTop: '2px  !important',
+              marginTop: '2px !important',
               marginBottom: '2px !important'
             }
           }}

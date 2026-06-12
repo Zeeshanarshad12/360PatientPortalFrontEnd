@@ -27,6 +27,7 @@ const PatientHistoryPage: React.FC<PatientHistoryPageProps> = ({
   const {
     sections,
     sectionsLoading,
+    isSectionLoading,
     activeSection,
     data,
     saving,
@@ -141,7 +142,7 @@ const PatientHistoryPage: React.FC<PatientHistoryPageProps> = ({
           activeSection={activeSection}
           onSelect={handleTabChange}
           sectionStatus={sectionStatus}
-          loading={sectionsLoading}
+          loading={sectionsLoading || isSectionLoading}
           totalCount={enabledSections.length}
         />
 
@@ -160,9 +161,7 @@ const PatientHistoryPage: React.FC<PatientHistoryPageProps> = ({
 
       <div className="ph-main">
         <div className="ph-content">
-          {activeSectionData?.status === 'loading' && (
-            <div className="ph-loading">Loading…</div>
-          )}
+          {activeSectionData?.status === 'loading' && <HeartProgressLoader />}
           {activeSectionData?.status === 'error' && (
             <div className="ph-error">Failed to load. Please refresh.</div>
           )}
