@@ -66,8 +66,6 @@ const cleanHTMLForExport = (html: string, formTitle: string): string =>
     .replace(/<style[\s\S]*?<\/style>/gi, '')
     .replace(/<script[\s\S]*?<\/script>/gi, '')
     .replace(/_{10,}/g, '')
-    .replace(/<img[^>]*alt="Signature"[^>]*\/?>/gi, '')
-    .replace(/<br\s*\/?><span[^>]*>Signed By:[^<]*<\/span>/gi, '')
     .replace(
       /<span\s[^>]*style="[^"]*font-weight\s*:\s*bold[^"]*"[^>]*>([\s\S]*?)<\/span>/gi,
       '<strong>$1</strong>'
@@ -99,20 +97,14 @@ interface PdfParagraph {
 }
 
 // ── generateFormattedPDF ──────────────────────────────────────────────────
-// ── generateFormattedPDF ──────────────────────────────────────────────────
 // Shared PDF generation pipeline — used by BOTH handleDownloadPDF AND
 // the upload-on-sign flow so Document Viewer shows identical output.
-//
-// KEY DESIGN DECISION:
-// cleanHTMLForExport strips the embedded signature image + "Signed By" span
-// (injected by useEffect for web display only). The signature block is ALWAYS
-// appended here using signatureDataUrl. This ensures consistent output whether
-// called at sign-time (renderedContent has no sig yet) or at download-time
-// (renderedContent has embedded sig from useEffect).
+// The signature image and Signed By span remain embedded in the form body
+// at the location of the original underscore placeholder.
 export const generateFormattedPDF = async (
   formData: ConsentForm & { Signature?: string; SignedByName?: string },
   htmlContent: string,
-  signatureDataUrl: string
+  _signatureDataUrl?: string
 ): Promise<Blob> => {
   const jsPDFModule = await import('jspdf');
   const jsPDF = (jsPDFModule as any).jsPDF ?? jsPDFModule.default;
@@ -136,17 +128,6 @@ export const generateFormattedPDF = async (
     hour12: true
   });
 
-  const signedDate = formData.SignedDate
-    ? new Date(formData.SignedDate).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: '2-digit'
-      })
-    : new Date().toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: '2-digit'
-      });
 
   // ── Header / Footer ───────────────────────────────────────────────────
   const drawHeader = (pageNum: number, totalPages: number) => {
@@ -276,7 +257,6 @@ export const generateFormattedPDF = async (
       return { chunks: [], fontSize: fSize, align: elAlign, isHeading: false };
     }
     if (tag === 'img') {
-      // Signature images stripped by cleanHTMLForExport — only non-sig images reach here
       const src = el.getAttribute('src') ?? '';
       if (src) {
         if (para && para.chunks.length > 0) paragraphs.push(para);
@@ -522,77 +502,6 @@ export const generateFormattedPDF = async (
     y += 1;
   }
 
-  pdf.setFontSize(10);
-  pdf.setFont('helvetica', 'normal');
-  if (y + 62 > contentBottom) {
-    pdf.addPage();
-    y = contentTop + 4;
-  }
-
-  y += 6;
-  pdf.setDrawColor(200, 200, 200);
-  pdf.setLineWidth(0.3);
-  pdf.line(margin, y, pageW - margin, y);
-  y += 6;
-
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('ACKNOWLEDGEMENT & SIGNATURE', margin, y);
-  pdf.setFont('helvetica', 'normal');
-  y += 7;
-
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Signature of Patient, Parent, or Legal Guardian:', margin, y);
-  pdf.setFont('helvetica', 'normal');
-  y += 5;
-
-  if (signatureDataUrl) {
-    try {
-      pdf.addImage(signatureDataUrl, 'PNG', margin, y, 60, 18);
-      y += 22;
-    } catch {
-      pdf.text('___________________________', margin, y);
-      y += 8;
-    }
-  } else {
-    pdf.text('___________________________', margin, y);
-    y += 10;
-  }
-
-  // Signed By + Date on the same line
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Signed By: ', margin, y);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(
-    sanitizeForPDF(formData.SignedByName ?? '___________________________'),
-    margin + pdf.getTextWidth('Signed By: '),
-    y
-  );
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Date: ', pageW / 2, y);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(
-    sanitizeForPDF(signedDate),
-    pageW / 2 + pdf.getTextWidth('Date: '),
-    y
-  );
-  y += 8;
-
-  // Document status
-  pdf.setFontSize(9);
-  pdf.setFont('helvetica', 'bold');
-  pdf.setTextColor(
-    formData.Status === 'Signed' ? 0 : 180,
-    formData.Status === 'Signed' ? 128 : 80,
-    0
-  );
-  pdf.text(
-    `Document Status: ${formData.Status?.toUpperCase() ?? 'SIGNED'}`,
-    margin,
-    y
-  );
-  pdf.setTextColor(0, 0, 0);
-  pdf.setFont('helvetica', 'normal');
-
   // ── Header + footer on every page ────────────────────────────────────
   const totalPages = (pdf.internal as any).getNumberOfPages();
   for (let i = 1; i <= totalPages; i++) {
@@ -628,9 +537,10 @@ const ConsentFormViewer = ({
 
   const prevPendingCount = useRef<number>(0);
   const hasShownCompletionMessage = useRef<boolean>(false);
+  const isSubmittingRef = useRef<boolean>(false);
 
   const { decrementPendingCount, setPendingCount } = useConsentFormContext();
-  const { patientId, practiceId } = useCurrentPatient();
+  const { patientId, practiceId, firstName, lastName } = useCurrentPatient();
 
   // ── 1. Render content ─────────────────────────────────────────────────
   useEffect(() => {
@@ -881,7 +791,8 @@ const ConsentFormViewer = ({
   const handleCloseSignature = () => setSignatureOpen(false);
 
   const handleSaveSignature = async (Signature: string) => {
-    if (!form) return;
+    if (!form || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
 
     // Capture dynamic input values BEFORE any await (DOM inputs still exist)
     let finalContent = form.Content;
@@ -912,7 +823,6 @@ const ConsentFormViewer = ({
 
     try {
       const response = await dispatch(saveConsentForm(updatedForm));
-      triggerRefresh();
 
       if (response.payload.result === 'success') {
         setSignatureOpen(false);
@@ -921,6 +831,7 @@ const ConsentFormViewer = ({
         setSnackbarSeverity('success');
         setSnackbarOpen(true);
         onFormSigned(form.FormID, Signature, updatedRendered);
+        triggerRefresh();
         setCountdown(5);
 
         // ── Upload PDF — uses shared generateFormattedPDF ─────────────
@@ -929,15 +840,36 @@ const ConsentFormViewer = ({
         // and no duplicate acknowledgement block)
         let documentFile: File | null = null;
         try {
+          const patientFullName =
+            firstName && lastName
+              ? `${firstName} ${lastName}`
+              : firstName ?? lastName ?? null;
+          const signedByName = form.SignedByName ?? patientFullName;
+          const signatureImg = `<img src="${Signature}" alt="Signature"
+      style="max-width:250px; height:auto; display:block; margin:4px 0;" />${
+        signedByName
+          ? `<br/><span style="font-size:13px;font-weight:bold">Signed By: ${signedByName}</span>`
+          : ''
+      }`;
+          let htmlForPDF = updatedRendered;
+          htmlForPDF = htmlForPDF.replace(
+            /(\s|<br\s*\/?>|<p[^>]*>)\s*_{10,}\s*(<\/p>|<br\s*\/?>|$)/gi,
+            (match, before, after) => `${before}${signatureImg}${after}`
+          );
+          htmlForPDF = htmlForPDF.replace(
+            /((?:<\/strong>|<\/b>|<\/em>|<\/i>|\s))\s*_{10,}\s*(?=<\/p>|<br|$)/gi,
+            (match, before) => `${before}${signatureImg}`
+          );
+          htmlForPDF = htmlForPDF.replace(/_{10,}/g, signatureImg);
           const pdfBlob = await generateFormattedPDF(
             {
               ...form,
               Signature,
               Status: 'Signed',
               SignedDate: new Date().toISOString(),
-              SignedByName: form.SignedByName
+              SignedByName: signedByName
             },
-            updatedRendered,
+            htmlForPDF,
             Signature
           );
           documentFile = new File(
@@ -972,6 +904,8 @@ const ConsentFormViewer = ({
       setSnackbarMessage('Something went wrong while saving.');
       setSnackbarSeverity('error');
       setSnackbarOpen(true);
+    } finally {
+      isSubmittingRef.current = false;
     }
   };
 
