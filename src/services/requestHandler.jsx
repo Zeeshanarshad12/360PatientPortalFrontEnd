@@ -143,10 +143,11 @@ const AddExistingUser = (data) =>
   postWithoutToken(SERVICE_URLSV2.AddExistingUser, data, {
     feature: featureConstants.static
   });
-
 const GetToken = (data) =>
   getWithoutToken(
-    `${SERVICE_URLSV2.GetToken}?&username=${data?.username}&password=${data?.password}`,
+    `${SERVICE_URLSV2.GetToken}?&username=${encodeURIComponent(
+      data?.username
+    )}&password=${encodeURIComponent(data?.password)}`,
     {},
     {
       feature: featureConstants.static
