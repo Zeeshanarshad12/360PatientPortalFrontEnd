@@ -826,19 +826,24 @@ export const getDownloadPatientDocument: any = createAsyncThunk(
 export const generateResetPasswordOtp: any = createAsyncThunk(
   'generateResetPasswordOtp',
   async (data, thunkAPI) => {
-    const res = await apiServicesV2.generateResetPasswordOtp(
-      data,
-      'ApiVersion2Req'
-    );
     try {
+      const res = await apiServicesV2.generateResetPasswordOtp(
+        data,
+        'ApiVersion2Req'
+      );
       if (res?.status === 200 || res?.status === 201) {
         return res?.data;
+      } else {
+        return res.data;
       }
-    } catch (error) {
-      const err: any = thunkAPI.rejectWithValue(error);
-      if (err?.payload?.status !== 200) {
-        SnackbarUtils.error(err?.payload?.data?.message, false);
-      }
+    } catch (error: any) {
+      const errorData = error?.response?.data || error?.data;
+      const errorMessage =
+        errorData?.responseException?.exceptionMessage ||
+        errorData?.message ||
+        'Something went wrong';
+
+      return thunkAPI.rejectWithValue(errorMessage);
     }
   }
 );

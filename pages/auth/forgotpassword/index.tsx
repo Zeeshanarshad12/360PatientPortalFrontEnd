@@ -161,19 +161,28 @@ function ForgotPassword() {
 
     setOtp(['', '', '', '', '', '']);
     setError(false);
-
     setLoading(true);
 
-    const resetOtpResponse = await dispatch(
-      generateResetPasswordOtp(email)
-    ).unwrap();
+    try {
+      const resetOtpResponse = await dispatch(
+        generateResetPasswordOtp(email)
+      ).unwrap();
 
-    if (resetOtpResponse?.result != null && resetOtpResponse?.result !== '') {
-      setCode(resetOtpResponse?.result);
-      setLoading(false);
-      setStep(2);
-      startOtpTimer();
-    } else {
+      if (resetOtpResponse?.result != null && resetOtpResponse?.result !== '') {
+        setCode(resetOtpResponse?.result);
+        setStep(2);
+        startOtpTimer();
+      }
+    } catch (error: any) {
+      const message =
+        typeof error === 'string'
+          ? error
+          : error?.message || 'Something went wrong';
+      setMessageSnackbar(message);
+      setSeverity('error');
+      setOpenSnackbar(true);
+      return;
+    } finally {
       setLoading(false);
     }
   };
