@@ -245,7 +245,17 @@ export const fetchSectionData = createAsyncThunk<
 
         if (sectionId === 3) {
           const fh = result.familyHistories ?? {};
-          const lookups: FamilyHistoryLookup[] = fh.lookups ?? [];
+          const hashId = (name: string): number => {
+            let hash = 900000;
+            for (let i = 0; i < name.length; i++) {
+              hash = (hash * 31 + name.charCodeAt(i)) % 1000000000;
+            }
+            return hash;
+          };
+          const lookups: FamilyHistoryLookup[] = (fh.lookups ?? []).map(
+            (l: FamilyHistoryLookup) =>
+              l.id === 0 ? { ...l, id: hashId(l.conditionName) } : l
+          );
           const dtos: FamilyHistoryDTO[] = fh.familyHistoryDTO ?? [];
           // Get family relations from Redux state (loaded by fetchFamilyRelations on mount)
           const stateNow: any = thunkAPI.getState();
