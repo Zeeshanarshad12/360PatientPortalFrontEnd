@@ -30,6 +30,10 @@ interface Props {
 const buildPanelKey = (orderId: number | string, testId: number | string) =>
   `${orderId}-${testId}`;
 
+const isAbnormal = (obs: any) => {
+  return Boolean(obs?.abnormalFlag?.trim()) || Boolean(obs?.abnormalityStatus);
+};
+
 const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
   const [openPanels, setOpenPanels] = useState<Set<string>>(new Set());
   const dispatch = useDispatch();
@@ -153,7 +157,6 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
                   </Typography>
                   {/* Lab Order Header */}
                   <Typography variant="body2" color="textPrimary">
-                    {/* {new Date(group.orderDate).toLocaleDateString()} |{' '} */}
                     {moment(group?.orderDate).format('MM/DD/YYYY')} |{' '}
                     {group.labName}
                   </Typography>
@@ -189,41 +192,57 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
                             <Table size="small" sx={{ mt: 1 }} role="none">
                               <TableBody>
                                 {test.labObservations &&
-                                  test.labObservations.map((obs: any) => (
-                                    <TableRow key={obs.id} sx={{ height: 40 }}>
-                                      <TableCell
-                                        sx={{
-                                          maxWidth: 200,
-                                          whiteSpace: 'nowrap',
-                                          overflow: 'hidden',
-                                          textOverflow: 'ellipsis'
-                                        }}
+                                  test.labObservations.map((obs: any) => {
+                                    const abnormal = isAbnormal(obs);
+
+                                    return (
+                                      <TableRow
+                                        key={obs.id}
+                                        sx={{ height: 40 }}
                                       >
-                                        <Typography
-                                          noWrap
-                                          title={obs.alternateText}
+                                        <TableCell
+                                          sx={{
+                                            maxWidth: 200,
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis'
+                                          }}
                                         >
-                                          {obs.alternateText}
-                                        </Typography>
-                                      </TableCell>
-                                      <TableCell sx={{ width: 100 }}>
-                                        <Typography>
-                                          {obs.observationValue}
-                                        </Typography>
-                                      </TableCell>
-                                      <TableCell
-                                        align="right"
-                                        sx={{
-                                          width: 150,
-                                          whiteSpace: 'nowrap'
-                                        }}
-                                      >
-                                        <Typography>
-                                          {obs.referranceRange} {obs.units}
-                                        </Typography>
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
+                                          <Typography
+                                            noWrap
+                                            title={obs.alternateText}
+                                          >
+                                            {obs.alternateText}
+                                          </Typography>
+                                        </TableCell>
+                                        <TableCell sx={{ width: 100 }}>
+                                          <Typography
+                                            sx={{
+                                              color: abnormal
+                                                ? 'error.main'
+                                                : 'inherit',
+                                              fontWeight: abnormal
+                                                ? 'bold'
+                                                : 'normal'
+                                            }}
+                                          >
+                                            {obs.observationValue}
+                                          </Typography>
+                                        </TableCell>
+                                        <TableCell
+                                          align="right"
+                                          sx={{
+                                            width: 150,
+                                            whiteSpace: 'nowrap'
+                                          }}
+                                        >
+                                          <Typography>
+                                            {obs.referranceRange} {obs.units}
+                                          </Typography>
+                                        </TableCell>
+                                      </TableRow>
+                                    );
+                                  })}
                               </TableBody>
                             </Table>
                           </Collapse>
