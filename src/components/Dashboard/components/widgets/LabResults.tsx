@@ -21,23 +21,38 @@ import { useDispatch } from '@/store/index';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { isNull } from '@/utils/functions';
+import moment from 'moment';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
 }
 
+const buildPanelKey = (orderId: number | string, testId: number | string) =>
+  `${orderId}-${testId}`;
+
 const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
-  const [openIndexes, setOpenIndexes] = useState<number[]>([0]);
+  const [openPanels, setOpenPanels] = useState<Set<string>>(new Set());
   const dispatch = useDispatch();
   const [loading, setLoading] = useState(true);
   const [labGroups, setLabGroups] = useState<any[]>([]);
   const { patientId, practiceId } = useCurrentPatient();
 
-  const togglePanel = (event: React.MouseEvent, index: number) => {
+  const togglePanel = (
+    event: React.MouseEvent,
+    orderId: number | string,
+    testId: number | string
+  ) => {
     event.stopPropagation();
-    setOpenIndexes((prev) =>
-      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index]
-    );
+    const key = buildPanelKey(orderId, testId);
+    setOpenPanels((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
   };
 
   useEffect(() => {
@@ -51,12 +66,13 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
           const response = await dispatch(
             getunsignedlabordertestbypatientid(Obj)
           ).unwrap();
-          const data = response.result;
-          // ✅ wrap inside array
-          setLabGroups([data]);
+
+          const data = response?.result ?? [];
+          setLabGroups(Array.isArray(data) ? data : []);
         }
       } catch (error) {
         console.error('Error fetching labs:', error);
+        setLabGroups([]);
       } finally {
         setLoading(false);
       }
@@ -120,8 +136,14 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
             </Box>
 
             <Box sx={{ maxHeight: 400, overflowY: 'auto', pr: 1 }}>
-              {labGroups.map((group, index) => (
-                <Box key={index} mb={2}>
+              {labGroups.length === 0 && (
+                <Typography variant="body2" color="textSecondary">
+                  No unsigned lab results.
+                </Typography>
+              )}
+
+              {labGroups.map((group) => (
+                <Box key={group.id} mb={2}>
                   <Typography
                     variant="body2"
                     fontWeight="bold"
@@ -131,84 +153,83 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
                   </Typography>
                   {/* Lab Order Header */}
                   <Typography variant="body2" color="textPrimary">
-                    {new Date(group.orderDate).toLocaleDateString()} |{' '}
+                    {/* {new Date(group.orderDate).toLocaleDateString()} |{' '} */}
+                    {moment(group?.orderDate).format('MM/DD/YYYY')}
                     {group.labName}
                   </Typography>
 
-                  {/* Loop over labTests */}
+                  {/* Loop over labTests belonging to THIS order */}
                   {group.labTests &&
-                    group.labTests.map((test, tIndex) => (
-                      <Box key={tIndex} mt={1}>
-                        <Box
-                          display="flex"
-                          justifyContent="space-between"
-                          alignItems="center"
-                          sx={{ cursor: 'pointer' }}
-                          onClick={(e) => togglePanel(e, tIndex)}
-                        >
-                          <Typography
-                            variant="subtitle1"
-                            fontWeight="bold"
-                            color="textPrimary"
-                          >
-                            {test.testCodeDescription}
-                          </Typography>
-                          <IconButton size="small">
-                            {openIndexes.includes(tIndex) ? (
-                              <ExpandLessIcon />
-                            ) : (
-                              <ExpandMoreIcon />
-                            )}
-                          </IconButton>
-                        </Box>
+                    group.labTests.map((test: any) => {
+                      const panelKey = buildPanelKey(group.id, test.id);
+                      const isOpen = openPanels.has(panelKey);
 
-                        <Collapse
-                          in={openIndexes.includes(tIndex)}
-                          timeout="auto"
-                          unmountOnExit
-                        >
-                          <Table size="small" sx={{ mt: 1 }} role="none">
-                            <TableBody>
-                              {test.labObservations &&
-                                test.labObservations.map((obs, oIndex) => (
-                                  <TableRow key={oIndex} sx={{ height: 40 }}>
-                                    {' '}
-                                    {/* ✅ Fixed row height */}
-                                    <TableCell
-                                      sx={{
-                                        maxWidth: 200,
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis'
-                                      }}
-                                    >
-                                      <Typography
-                                        noWrap
-                                        title={obs.alternateText}
+                      return (
+                        <Box key={test.id} mt={1}>
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            alignItems="center"
+                            sx={{ cursor: 'pointer' }}
+                            onClick={(e) => togglePanel(e, group.id, test.id)}
+                          >
+                            <Typography
+                              variant="subtitle1"
+                              fontWeight="bold"
+                              color="textPrimary"
+                            >
+                              {test.testCodeDescription}
+                            </Typography>
+                            <IconButton size="small">
+                              {isOpen ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                            </IconButton>
+                          </Box>
+
+                          <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                            <Table size="small" sx={{ mt: 1 }} role="none">
+                              <TableBody>
+                                {test.labObservations &&
+                                  test.labObservations.map((obs: any) => (
+                                    <TableRow key={obs.id} sx={{ height: 40 }}>
+                                      <TableCell
+                                        sx={{
+                                          maxWidth: 200,
+                                          whiteSpace: 'nowrap',
+                                          overflow: 'hidden',
+                                          textOverflow: 'ellipsis'
+                                        }}
                                       >
-                                        {obs.alternateText}
-                                      </Typography>
-                                    </TableCell>
-                                    <TableCell sx={{ width: 100 }}>
-                                      <Typography>
-                                        {obs.observationValue}
-                                      </Typography>
-                                    </TableCell>
-                                    <TableCell
-                                      align="right"
-                                      sx={{ width: 150, whiteSpace: 'nowrap' }}
-                                    >
-                                      <Typography>
-                                        {obs.referranceRange} {obs.units}
-                                      </Typography>
-                                    </TableCell>
-                                  </TableRow>
-                                ))}
-                            </TableBody>
-                          </Table>
-                        </Collapse>
-                      </Box>
-                    ))}
+                                        <Typography
+                                          noWrap
+                                          title={obs.alternateText}
+                                        >
+                                          {obs.alternateText}
+                                        </Typography>
+                                      </TableCell>
+                                      <TableCell sx={{ width: 100 }}>
+                                        <Typography>
+                                          {obs.observationValue}
+                                        </Typography>
+                                      </TableCell>
+                                      <TableCell
+                                        align="right"
+                                        sx={{
+                                          width: 150,
+                                          whiteSpace: 'nowrap'
+                                        }}
+                                      >
+                                        <Typography>
+                                          {obs.referranceRange} {obs.units}
+                                        </Typography>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                              </TableBody>
+                            </Table>
+                          </Collapse>
+                        </Box>
+                      );
+                    })}
                 </Box>
               ))}
             </Box>
