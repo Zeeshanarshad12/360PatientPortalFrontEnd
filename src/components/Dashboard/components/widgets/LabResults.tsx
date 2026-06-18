@@ -138,7 +138,7 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
             <Box sx={{ maxHeight: 400, overflowY: 'auto', pr: 1 }}>
               {labGroups.length === 0 && (
                 <Typography variant="body2" color="textSecondary">
-                  No unsigned lab results.
+                  No signed lab results.
                 </Typography>
               )}
 
@@ -154,7 +154,7 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
                   {/* Lab Order Header */}
                   <Typography variant="body2" color="textPrimary">
                     {/* {new Date(group.orderDate).toLocaleDateString()} |{' '} */}
-                    {moment(group?.orderDate).format('MM/DD/YYYY')}
+                    {moment(group?.orderDate).format('MM/DD/YYYY')} |{' '}
                     {group.labName}
                   </Typography>
 
