@@ -217,14 +217,14 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
                                         </TableCell>
                                         <TableCell sx={{ width: 100 }}>
                                           <Typography
-                                            sx={{
-                                              color: abnormal
-                                                ? 'error.main'
-                                                : 'inherit',
-                                              fontWeight: abnormal
-                                                ? 'bold'
-                                                : 'normal'
-                                            }}
+                                          // sx={{
+                                          //   color: abnormal
+                                          //     ? 'error.main'
+                                          //     : 'inherit',
+                                          //   fontWeight: abnormal
+                                          //     ? 'bold'
+                                          //     : 'normal'
+                                          // }}
                                           >
                                             {obs.observationValue}
                                           </Typography>
