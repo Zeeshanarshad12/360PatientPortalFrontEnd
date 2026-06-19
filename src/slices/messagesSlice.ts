@@ -642,19 +642,46 @@ const messagesSlice = createSlice({
       state.loading = true;
       state.error = null;
     },
-    [fetchThreads.fulfilled.type]: (state: MessagesState, { payload }: any) => {
+    // [fetchThreads.fulfilled.type]: (state: MessagesState, { payload }: any) => {
+    //   state.loading = false;
+    //   if (payload) {
+    //     const sorted = [...payload.threads].sort(
+    //       (a, b) =>
+    //         moment(b.lastActivity ?? 0).valueOf() -
+    //         moment(a.lastActivity ?? 0).valueOf()
+    //     );
+    //     state.threads = sorted;
+    //     if (state.providers.length === 0) {
+    //       state.providers = payload.providers;
+    //     }
+    //   }
+    // },
+    [fetchThreads.fulfilled.type]: (
+      state: MessagesState,
+      { payload }: PayloadAction<any>
+    ) => {
       state.loading = false;
-      if (payload) {
-        const sorted = [...payload.threads].sort(
-          (a, b) =>
-            moment(b.lastActivity ?? 0).valueOf() -
-            moment(a.lastActivity ?? 0).valueOf()
-        );
-        state.threads = sorted;
-        if (state.providers.length === 0) {
-          state.providers = payload.providers;
+
+      const newThreads: Thread[] = Array.isArray(payload)
+        ? payload
+        : payload?.threads ?? payload?.result ?? [];
+
+      const activeId = state.activeThreadId;
+      const existingMessages = activeId
+        ? state.threads.find((t) => t.id === activeId)?.messages
+        : undefined;
+
+      state.threads = newThreads.map((t) => {
+        if (t.id === activeId && existingMessages?.length) {
+          return { ...t, messages: existingMessages };
         }
-      }
+        return t;
+      });
+
+      state.threads.sort(
+        (a, b) =>
+          moment(b.lastActivity).valueOf() - moment(a.lastActivity).valueOf()
+      );
     },
     [fetchThreads.rejected.type]: (state: MessagesState) => {
       state.loading = false;
@@ -745,6 +772,26 @@ const messagesSlice = createSlice({
     [GetAllComments.pending.type]: (state: MessagesState) => {
       state.commentsLoading = true;
     },
+
+    // [GetAllComments.fulfilled.type]: (
+    //   state: MessagesState,
+    //   { payload }: PayloadAction<{ threadId: string; messages: Message[] }>
+    // ) => {
+    //   state.commentsLoading = false;
+    //   if (payload) {
+    //     const thread = state.threads.find((t) => t.id === payload.threadId);
+    //     if (thread && payload.messages.length > 0) {
+    //       thread.messages = payload.messages;
+    //       thread.lastMessage =
+    //         payload.messages[payload.messages.length - 1]?.content ??
+    //         thread.lastMessage;
+    //       thread.lastActivity =
+    //         payload.messages[payload.messages.length - 1]?.timestamp ??
+    //         thread.lastActivity;
+    //     }
+    //   }
+    // },
+
     [GetAllComments.fulfilled.type]: (
       state: MessagesState,
       { payload }: PayloadAction<{ threadId: string; messages: Message[] }>
@@ -753,16 +800,22 @@ const messagesSlice = createSlice({
       if (payload) {
         const thread = state.threads.find((t) => t.id === payload.threadId);
         if (thread && payload.messages.length > 0) {
-          thread.messages = payload.messages;
+          const dedupedMap = new Map<string, Message>();
+          payload.messages.forEach((m) => dedupedMap.set(m.id, m));
+          const deduped = Array.from(dedupedMap.values()).sort(
+            (a, b) =>
+              moment(a.timestamp).valueOf() - moment(b.timestamp).valueOf()
+          );
+
+          thread.messages = deduped;
           thread.lastMessage =
-            payload.messages[payload.messages.length - 1]?.content ??
-            thread.lastMessage;
+            deduped[deduped.length - 1]?.content ?? thread.lastMessage;
           thread.lastActivity =
-            payload.messages[payload.messages.length - 1]?.timestamp ??
-            thread.lastActivity;
+            deduped[deduped.length - 1]?.timestamp ?? thread.lastActivity;
         }
       }
     },
+
     [GetAllComments.rejected.type]: (state: MessagesState) => {
       state.commentsLoading = false;
     }

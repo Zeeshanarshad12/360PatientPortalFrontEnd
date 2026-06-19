@@ -101,6 +101,13 @@ export const CommunicationSidebar: React.FC = () => {
         status: group
       })
     );
+    const activeThread = groups
+      .flatMap((g: any) => g.items)
+      .find((t: any) => t.id === activeId);
+
+    if (activeThread?.patientCommunicationId) {
+      dispatch(GetAllComments(activeThread.patientCommunicationId));
+    }
   };
 
   return (

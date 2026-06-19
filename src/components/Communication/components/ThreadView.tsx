@@ -254,7 +254,23 @@ export const ThreadView: React.FC = () => {
 
       {/* ── Subject bar ── */}
       <div className="comm-thread-view__subject-bar">
-        <span className="comm-thread-view__subject">{thread.subject}</span>
+        <div
+          className="comm-tooltip-target"
+          data-tooltip={thread.subject}
+          style={{
+            position: 'relative',
+            flex: 1,
+            minWidth: 0,
+            overflow: 'visible'
+          }}
+        >
+          <span
+            className="comm-thread-view__subject"
+            style={{ display: 'block' }}
+          >
+            {thread.subject}
+          </span>
+        </div>
 
         {/* Status dropdown */}
         <div className="comm-status-dropdown" ref={menuRef}>
