@@ -33,8 +33,10 @@ const Login = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const handleLogin = async () => {
+    const trimmedEmail = email.trim();
+
     // Check if both fields are filled
-    if (!email || !password) {
+    if (!trimmedEmail || !password) {
       setError('Both fields are required!');
       return;
     }
@@ -42,7 +44,7 @@ const Login = () => {
     // Clear error message and perform login logic
     setError('');
     const loginobj = {
-      username: email,
+      username: trimmedEmail,
       password: password
     };
 
@@ -58,7 +60,7 @@ const Login = () => {
       ) {
         router.push(
           `/auth/forgotpassword?forceChange=true&email=${encodeURIComponent(
-            email
+            trimmedEmail
           )}`
         );
         setLoading(false);
@@ -73,6 +75,10 @@ const Login = () => {
     setEmail(e.target.value);
     // Clear the error when the user starts typing in the email field
     if (error) setError('');
+  };
+
+  const handleEmailBlur = () => {
+    setEmail((prev) => prev.trim());
   };
 
   const handlePasswordChange = (e) => {
@@ -270,6 +276,7 @@ const Login = () => {
                 autoComplete="email"
                 value={email}
                 onChange={handleEmailChange}
+                onBlur={handleEmailBlur}
                 error={!!error} // Show error if email or password is empty
               />
 

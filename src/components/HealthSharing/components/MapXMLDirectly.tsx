@@ -14,12 +14,15 @@ import {
 } from '@mui/material';
 import { useSelector } from 'react-redux';
 import DocumentDetails from './DocumentDetails';
-import { formatDateCCDADate, isNull } from '@/utils/functions';
+import {
+  formatDateCCDADate,
+  isNull,
+  getObservationUnit
+} from '@/utils/functions';
 import moment from 'moment';
 
 const extractNodeText = (node: any): string => {
   let value = '';
-
   if (typeof node === 'string') {
     value = node;
   } else if (typeof node._ === 'string') {
@@ -32,6 +35,11 @@ const extractNodeText = (node: any): string => {
   if (/^\d{8}$/.test(value)) {
     return formatDateCCDADate(value);
   }
+
+  // Normalize temperature unit text, e.g. "37 degree celsius" -> "37°C"
+  value = value
+    .replace(/(-?\d+(?:\.\d+)?)\s*degrees?\s*celsius/gi, '$1°C')
+    .replace(/(-?\d+(?:\.\d+)?)\s*degrees?\s*fahrenheit/gi, '$1°F');
 
   return value;
 };
@@ -527,6 +535,14 @@ const MapXMLDirectly = ({ XmlToJson }) => {
                             return cell;
                           });
 
+                          const rowLabel = rowHeader
+                            ? extractNodeText(rowHeader).trim()
+                            : '';
+                          const observationUnit = getObservationUnit(
+                            section,
+                            rowLabel
+                          );
+
                           return (
                             <TableRow key={rIdx}>
                               {rowHeader && (
@@ -536,11 +552,19 @@ const MapXMLDirectly = ({ XmlToJson }) => {
                                   align={rowHeader.$?.align || 'left'}
                                   sx={{ fontWeight: '400' }}
                                 >
-                                  {extractNodeText(rowHeader).trim()}
+                                  {rowLabel}
                                 </TableCell>
                               )}
                               {cells.map((cell: any, cIdx: number) => {
                                 const align = cell?.$?.align || 'left';
+                                const cellText = cell._renderAsList
+                                  ? ''
+                                  : extractNodeText(cell).trim();
+                                const displayText =
+                                  observationUnit &&
+                                  /^-?\d+(\.\d+)?$/.test(cellText)
+                                    ? `${cellText} ${observationUnit}`
+                                    : cellText;
 
                                 return (
                                   <TableCell
@@ -570,7 +594,7 @@ const MapXMLDirectly = ({ XmlToJson }) => {
                                           )}
                                         </ul>
                                       ) : (
-                                        extractNodeText(cell).trim()
+                                        displayText
                                       )}
                                     </Typography>
                                   </TableCell>

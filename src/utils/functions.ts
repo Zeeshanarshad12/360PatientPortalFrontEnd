@@ -302,6 +302,83 @@ export const formatAddresswithCCDA = (addr) => {
   return parts.join('\n');
 };
 
+export const formatTelecomWithCCDA = (telecom: any): string => {
+  if (!telecom) return '';
+
+  const entries = Array.isArray(telecom) ? telecom : [telecom];
+
+  const formatted = entries
+    .map((t) => {
+      const raw = (t?.value || '').toString().trim();
+      if (!raw) return '';
+
+      const digits = raw.replace(/^tel:|^mailto:/i, '').replace(/\D/g, '');
+      if (!digits) return '';
+
+      const label = mapTelecomUse(t?.use);
+      const phone =
+        digits.length === 10
+          ? `(${digits.slice(0, 3)}) ${digits.slice(3, 6)}-${digits.slice(6)}`
+          : digits;
+
+      return `${label}: ${phone}`;
+    })
+    .filter(Boolean);
+
+  return formatted.join(', ');
+};
+
+const mapTelecomUse = (use?: string): string => {
+  switch (use) {
+    case 'MC':
+      return 'Mob';
+    case 'HP':
+      return 'Home';
+    case 'WP':
+      return 'Work';
+    default:
+      return 'Phone';
+  }
+};
+
+// Looks up the structured entry (e.g. <entry><organizer><component><observation>)
+// matching a narrative table row label, to recover units the narrative text omits
+// (e.g. Pain Level's value/unit only exist in the coded entry, not the <td> text).
+export const getObservationUnit = (section: any, label: string): string => {
+  if (!section?.entry || !label) return '';
+
+  const entries = Array.isArray(section.entry)
+    ? section.entry
+    : [section.entry];
+  const normalizedLabel = label.trim().toLowerCase();
+
+  for (const entry of entries) {
+    const organizerComponents = entry?.organizer?.component;
+    const components = Array.isArray(organizerComponents)
+      ? organizerComponents
+      : organizerComponents
+      ? [organizerComponents]
+      : [];
+
+    const observations = [
+      entry?.observation,
+      ...components.map((c: any) => c?.observation)
+    ].filter(Boolean);
+
+    for (const observation of observations) {
+      const displayName = observation?.code?.displayName;
+      if (
+        typeof displayName === 'string' &&
+        displayName.trim().toLowerCase() === normalizedLabel
+      ) {
+        return observation?.value?.unit || '';
+      }
+    }
+  }
+
+  return '';
+};
+
 export const clearPatientSession = () => {
   const keysToClear = [
     'patientID',
