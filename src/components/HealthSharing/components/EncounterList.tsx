@@ -46,6 +46,7 @@ function EncounterListData() {
 
     dispatch(setEncounterId(encounterID));
   };
+
   return (
     <>
       <Typography variant="body1" fontWeight="bold" sx={{ marginBottom: 2 }}>

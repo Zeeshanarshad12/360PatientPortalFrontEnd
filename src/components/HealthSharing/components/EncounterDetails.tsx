@@ -68,6 +68,8 @@ function EncounterDetailsReport() {
     includeCCD: includeCCD
   };
 
+  console.log('Json', parseJson);
+
   const handleClickOpen = () => {
     setOpen(true);
     setMessage('');
@@ -835,6 +837,7 @@ function EncounterDetailsReport() {
   };
 
   const handleDownloadxml = () => {
+    debugger;
     const blob = new Blob([PatientCCDADetailXMLF], {
       type: 'application/xml'
     });

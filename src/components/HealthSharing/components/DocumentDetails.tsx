@@ -13,6 +13,7 @@ import {
 import { useSelector } from 'react-redux';
 import {
   formatAddresswithCCDA,
+  formatTelecomWithCCDA,
   formatDateCCDADate,
   isNull
 } from '@/utils/functions';
@@ -374,16 +375,24 @@ const DocumentDetails = ({ XmlToJson }) => {
 
               {renderRowDiv(
                 'Author Contact',
-                <>
-                  {formatAddresswithCCDA(
+                (() => {
+                  const address = formatAddresswithCCDA(
                     XmlToJson?.ClinicalDocument?.author?.assignedAuthor?.addr
-                  )}
-                  <br />
-                  {
+                  );
+                  let telecomText: any = formatTelecomWithCCDA(
                     XmlToJson?.ClinicalDocument?.author?.assignedAuthor?.telecom
-                      ?.value
-                  }
-                </>
+                  );
+
+                  if (!address && !telecomText) return null;
+
+                  return (
+                    <>
+                      {address}
+                      {address && telecomText && <br />}
+                      {telecomText}
+                    </>
+                  );
+                })()
               )}
 
               {renderRowDiv(
@@ -517,7 +526,8 @@ const DocumentDetails = ({ XmlToJson }) => {
                   {
                     XmlToJson?.ClinicalDocument?.authenticator?.assignedEntity
                       ?.assignedPerson?.name?.family
-                  }{' '}
+                  }
+                  {', '}
                   {
                     XmlToJson?.ClinicalDocument?.authenticator?.assignedEntity
                       ?.assignedPerson?.name?.prefix
@@ -605,7 +615,8 @@ const DocumentDetails = ({ XmlToJson }) => {
                   {
                     XmlToJson?.ClinicalDocument?.informationRecipient
                       ?.intendedRecipient?.informationRecipient?.name?.family
-                  }{' '}
+                  }
+                  {', '}
                   {
                     XmlToJson?.ClinicalDocument?.informationRecipient
                       ?.intendedRecipient?.informationRecipient?.name?.prefix
@@ -623,7 +634,8 @@ const DocumentDetails = ({ XmlToJson }) => {
                   {
                     XmlToJson?.ClinicalDocument?.legalAuthenticator
                       ?.assignedEntity?.assignedPerson?.name.family
-                  }{' '}
+                  }
+                  {', '}
                   {
                     XmlToJson?.ClinicalDocument?.legalAuthenticator
                       ?.assignedEntity?.assignedPerson?.name.prefix
