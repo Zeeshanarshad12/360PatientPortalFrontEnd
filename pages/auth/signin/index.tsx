@@ -40,6 +40,10 @@ const Login = () => {
       setError('Both fields are required!');
       return;
     }
+    if (/\s/.test(trimmedEmail)) {
+      setError('Email address cannot contain spaces');
+      return;
+    }
     setLoading(true);
     // Clear error message and perform login logic
     setError('');

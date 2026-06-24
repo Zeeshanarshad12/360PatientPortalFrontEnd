@@ -99,7 +99,9 @@ function ForgotPassword() {
     setEmail(value);
     setEmailError('');
   };
-
+  const handleEmailBlur = () => {
+    setEmail((prev) => prev.trim());
+  };
   const startOtpTimer = () => {
     // Clear any existing timer
     if (timerRef.current) clearInterval(timerRef.current);
@@ -149,12 +151,18 @@ function ForgotPassword() {
 
   // Handle Send OTP (Step 1 → Step 2)
   const handleSendOtp = async () => {
-    if (!email) {
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) {
       setEmailError('Email is required');
       return;
     }
 
-    if (!validateEmail(email)) {
+    if (/\s/.test(trimmedEmail)) {
+      setEmailError('Email address cannot contain spaces');
+      return;
+    }
+
+    if (!validateEmail(trimmedEmail)) {
       setEmailError('Please enter a valid email address');
       return;
     }
@@ -165,7 +173,7 @@ function ForgotPassword() {
 
     try {
       const resetOtpResponse = await dispatch(
-        generateResetPasswordOtp(email)
+        generateResetPasswordOtp(trimmedEmail)
       ).unwrap();
 
       if (resetOtpResponse?.result != null && resetOtpResponse?.result !== '') {
@@ -577,6 +585,7 @@ function ForgotPassword() {
                     type="email"
                     value={email}
                     onChange={handleEmailChange}
+                    onBlur={handleEmailBlur}
                     error={!!emailError}
                     helperText={emailError}
                     inputProps={{ 'aria-label': 'Email' }}
