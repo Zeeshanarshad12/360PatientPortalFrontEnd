@@ -19,11 +19,13 @@ import {
   CircularProgress
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
 import { useDispatch, useSelector } from '@/store/index';
 import { InsertActivityLog, ShareDocument } from '@/slices/patientprofileslice';
 import { useEffect } from 'react';
 import { useAriaHiddenFixOnDialog } from '@/hooks/useAriaHiddenFixOnDialog';
+import { useEncounterLoadState } from '@/components/HealthSharing/contexts/encounterLoadStates';
 import { parseString } from 'xml2js';
 import MapXMLDirectly from './MapXMLDirectly';
 import {
@@ -39,6 +41,7 @@ function EncounterDetailsReport() {
     (state) => state.patientprofileslice
   );
   const dispatch = useDispatch();
+  const { setIsEncounterLoad } = useEncounterLoadState();
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
@@ -878,6 +881,27 @@ function EncounterDetailsReport() {
         flexGrow: 1
       }}
     >
+      <Button
+        startIcon={<ArrowBackIcon />}
+        variant="outlined"
+        color="primary"
+        sx={{
+          borderRadius: '5px',
+          marginBottom: 2,
+          '&:focus': {
+            outline: '2px solid #1976d2',
+            outlineOffset: '2px'
+          },
+          '&:focus-visible': {
+            outline: '2px solid #1976d2',
+            outlineOffset: '2px'
+          }
+        }}
+        onClick={() => setIsEncounterLoad(false)}
+      >
+        Back to Visit List
+      </Button>
+
       {isNull(parseJson) ? (
         <Box
           sx={{
