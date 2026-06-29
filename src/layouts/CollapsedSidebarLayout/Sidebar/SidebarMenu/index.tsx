@@ -21,6 +21,7 @@ import Image from 'next/image';
 import { useAriaHiddenFixOnDialog } from '@/hooks/useAriaHiddenFixOnDialog';
 import { useConsentFormContext } from '@/contexts/ConsentFormContext';
 import { CONSENT_COUNT_UPDATED_EVENT } from '@/utils/consentFormCountUtils';
+import { SIDEBAR_ACTIVE_ITEM_RECLICK_EVENT } from '@/utils/navigationEvents';
 
 const MenuWrapper = styled(Box)(``);
 const SubMenuWrapper = styled(Box)(``);
@@ -71,7 +72,13 @@ function SidebarMenu({ onItemClick }: SidebarMenuProps) {
       e.preventDefault(); // Block navigation
       setShowAccessDenied(true); // Show popup
     } else {
-      router.push(link);
+      if (pathname === link) {
+        // Already on this page - router.push to the same route is a no-op,
+        // so notify the page to reset itself back to its initial view.
+        window.dispatchEvent(new Event(SIDEBAR_ACTIVE_ITEM_RECLICK_EVENT));
+      } else {
+        router.push(link);
+      }
       // Close mobile menu after navigation
       if (onItemClick) {
         onItemClick();

@@ -54,7 +54,7 @@ function ForgotPassword() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const [otpTimer, setOtpTimer] = useState(120); // 2 minutes in seconds
+  const [otpTimer, setOtpTimer] = useState(120); // 2 minutes in seconds (fallback only)
   const [isResendDisabled, setIsResendDisabled] = useState(true);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -75,7 +75,7 @@ function ForgotPassword() {
       const { forceChange, email: queryEmail } = router.query;
       if (forceChange === 'true' && queryEmail) {
         setEmail(queryEmail as string);
-        setForceChange(true); // Add this
+        setForceChange(true);
         setStep(3);
       }
     }
@@ -102,12 +102,13 @@ function ForgotPassword() {
   const handleEmailBlur = () => {
     setEmail((prev) => prev.trim());
   };
-  const startOtpTimer = () => {
-    // Clear any existing timer
+
+  const startOtpTimer = (durationSeconds = 120) => {
     if (timerRef.current) clearInterval(timerRef.current);
 
-    setOtpTimer(120);
-    setIsResendDisabled(true);
+    const safeDuration = Math.max(durationSeconds, 0);
+    setOtpTimer(safeDuration);
+    setIsResendDisabled(safeDuration > 0);
 
     timerRef.current = setInterval(() => {
       setOtpTimer((prev) => {
@@ -137,6 +138,23 @@ function ForgotPassword() {
       if (newOtp.every((digit) => digit !== '')) {
         handleVerifyOtp();
       }
+    }
+  };
+
+  // Handle Backspace cascading back through boxes (mirrors SignUp behavior):
+  // - box has a digit: let onChange handle clearing it, focus stays put
+  // - box is already empty: onChange never fires on Backspace here, so we
+  //   manually step focus back one box and clear it too
+  const handleOtpKeyDown = (index, e) => {
+    if (e.key !== 'Backspace') return;
+    if (otp[index]) return;
+
+    if (index > 0) {
+      e.preventDefault();
+      const newOtp = [...otp];
+      newOtp[index - 1] = '';
+      setOtp(newOtp);
+      document.getElementById(`otp-${index - 1}`)?.focus();
     }
   };
 
@@ -177,9 +195,24 @@ function ForgotPassword() {
       ).unwrap();
 
       if (resetOtpResponse?.result != null && resetOtpResponse?.result !== '') {
-        setCode(resetOtpResponse?.result);
+        const newCode = resetOtpResponse.result;
+        setCode(newCode);
+
+        // Re-fetch so we get the freshly-set OtpExpirationDate from the BE,
+        // keeping the FE countdown in sync with the actual server-side window
+        // instead of assuming a fixed 120s.
+        const refreshed = await dispatch(
+          GetPatientUserRequestByCode(newCode)
+        ).unwrap();
+        const expiration = refreshed?.result?.otpExpirationDate
+          ? new Date(refreshed.result.otpExpirationDate)
+          : null;
+        const remainingSeconds = expiration
+          ? Math.max(Math.floor((expiration.getTime() - Date.now()) / 1000), 0)
+          : 120; // fallback only if BE didn't return one
+
         setStep(2);
-        startOtpTimer();
+        startOtpTimer(remainingSeconds);
       }
     } catch (error: any) {
       const message =
@@ -206,26 +239,43 @@ function ForgotPassword() {
       GetPatientUserRequestByCode(code)
     ).unwrap();
 
-    if (patientUserResponse?.result != null) {
-      const joinotp = otp.join('');
-      if (joinotp == patientUserResponse?.result.otp) {
-      } else {
-        setMessageSnackbar('Invalid OTP!');
-        setSeverity('error');
-        setOpenSnackbar(true);
-        return;
-      }
-      setLoading(true); // Show loading indicator
-      setTimeout(() => {
-        setLoading(false);
-        setStep(3);
-      }, 1000); // delay before proceeding
-    } else {
+    const result = patientUserResponse?.result;
+
+    if (!result) {
       setMessageSnackbar('User not Authenticated. Please retry!');
       setSeverity('error');
       setOpenSnackbar(true);
       return;
     }
+
+    const expiration = result.otpExpirationDate
+      ? new Date(result.otpExpirationDate)
+      : null;
+    const isExpired = !expiration || expiration.getTime() <= Date.now();
+
+    if (isExpired) {
+      setMessageSnackbar('Your code has expired. Please request a new code.');
+      setSeverity('error');
+      setOpenSnackbar(true);
+      setOtp(['', '', '', '', '', '']); // clear stale digits, stay on step 2
+      return;
+    }
+
+    const joinotp = otp.join('');
+
+    if (joinotp !== result.otp) {
+      setMessageSnackbar('Invalid OTP!');
+      setSeverity('error');
+      setOpenSnackbar(true);
+      return;
+    }
+
+    // OTP matched — proceed to password creation
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setStep(3);
+    }, 1000);
   };
 
   // Handle Resend OTP
@@ -249,7 +299,6 @@ function ForgotPassword() {
     // Check if the password matches the regex
     if (!passwordRegex.test(password)) {
       setPasswordError(
-        // 'Password must be between 10 to 20 characters, contain at least one lowercase letter, one uppercase letter, one digit, one special character, and no three consecutive identical characters.'
         'Your password must be 10–20 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character. It cannot contain three identical characters in a row, cannot include your personal information (such as your name or email), cannot be a commonly used or easily guessed password, and cannot be the same as any of your recent passwords.'
       );
       return;
@@ -690,6 +739,7 @@ function ForgotPassword() {
                           onChange={(e) =>
                             handleOtpChange(index, e.target.value)
                           }
+                          onKeyDown={(e) => handleOtpKeyDown(index, e)}
                           onPaste={handlePaste}
                           inputProps={{
                             maxLength: 1,
