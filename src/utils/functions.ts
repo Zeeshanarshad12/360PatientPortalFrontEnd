@@ -197,6 +197,39 @@ export const getPatientId = () => {
       : null;
   }
 };
+export const decodeJwtPayload = (token?: string | null): any | null => {
+  if (!token) return null;
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + c.charCodeAt(0).toString(16).padStart(2, '0'))
+        .join('')
+    );
+    return JSON.parse(jsonPayload);
+  } catch {
+    return null;
+  }
+};
+
+// Decodes the JWT's own `exp` claim so session timing is driven by the real
+// server-issued expiry instead of a guessed/hardcoded duration.
+export const getTokenExpiryMs = (token?: string | null): number | null => {
+  const decoded = decodeJwtPayload(token);
+  return typeof decoded?.exp === 'number' ? decoded.exp * 1000 : null;
+};
+
+// Auth0 custom domains must be redeemed at the SAME custom domain that issued the token -
+// hitting the underlying tenant domain instead (e.g. from a static env var) gets rejected.
+// Reading it straight from the token's own `iss` claim keeps this correct automatically.
+export const getTokenIssuer = (token?: string | null): string | null => {
+  const decoded = decodeJwtPayload(token);
+  if (typeof decoded?.iss !== 'string') return null;
+  return decoded.iss.replace(/\/$/, '');
+};
+
 export const getisAuthenticated = () => {
   if (typeof window !== 'undefined') {
     return localStorage.getItem('isAuthenticated')
