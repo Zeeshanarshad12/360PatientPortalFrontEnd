@@ -342,6 +342,10 @@ export const GetToken: any = createAsyncThunk(
           result.vdtAccess
         );
 
+        if (result?.refresh_token) {
+          localStorage.setItem('refresh_token', result.refresh_token);
+        }
+
         if (result?.access_token) {
           Router.push('/patientportal/dashboard');
           return result;

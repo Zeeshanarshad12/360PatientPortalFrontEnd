@@ -29,6 +29,7 @@ import { ConsentFormProvider } from '@/contexts/ConsentFormContext';
 import { CurrentPatientProvider } from '@/contexts/CurrentPatientContext';
 import PracticeChangeRefresher from './_PracticeChangeRefresher';
 import ConsentFormCountLoader from '@/components/ConsentForms/components/ConsentFormCountLoader';
+import SessionTokenRefresher from '@/components/SessionTokenRefresher';
 const clientSideEmotionCache = createEmotionCache();
 
 type NextPageWithLayout = NextPage & {
@@ -104,6 +105,7 @@ function MyApp(props: MyAppProps) {
                       {/* <CustomScript /> */}
                       <ConsentFormProvider>
                         <CurrentPatientProvider>
+                          <SessionTokenRefresher />
                           <ConsentFormCountLoader />
                           <PracticeChangeRefresher />
                           <SharedLayout>

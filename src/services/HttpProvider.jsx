@@ -1,6 +1,10 @@
 /* eslint-disable */
 import axios from 'axios';
-import { Check_Authentication } from '../utils/functions';
+import {
+  Check_Authentication,
+  getTokenIssuer,
+  getTokenExpiryMs
+} from '../utils/functions';
 export const BASEURL = process.env.NEXT_PUBLIC_APP_API_PATH;
 export const BASEURLV2 = process.env.NEXT_PUBLIC_APP_API_PATH_V2;
 export const PPSERVICE = process.env.NEXT_PUBLIC_APP_API_PATH_PPSERVICE;
@@ -8,7 +12,8 @@ export const ELIGIBILTYSERVICE = process.env.NEXT_PUBLIC_RCM_ELIGIBILITY;
 export const EMRBASEURL = process.env.NEXT_PUBLIC_APP_EMR_API_PATH;
 import SnackbarUtils from '@/content/snackbar';
 let token;
-let exptoken = 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IktfbDhKWWxOQXFyZlVEWksxWFZpWSJ9.eyJpc3MiOiJodHRwczovL3dpc2VtYW5pbm5vdmF0aW9ucy51cy5hdXRoMC5jb20vIiwic3ViIjoiYXV0aDB8NjdkMjk3MGFmMDBhY2IwZWFlZTg3NjgwIiwiYXVkIjpbImh0dHBzOi8vZWhyLXBhdGllbnQtcG9ydGFsLmRhdGFxaGVhbHRoLmNvbSIsImh0dHBzOi8vd2lzZW1hbmlubm92YXRpb25zLnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE3NDI3OTk3NzAsImV4cCI6MTc0MjgwMDM3MCwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCBhZGRyZXNzIHBob25lIiwiZ3R5IjoicGFzc3dvcmQiLCJhenAiOiJxYUQ5WjdGNEs5UU0yWDU0UU5BYkxCYlQ4ZHYwalFPaSIsInBlcm1pc3Npb25zIjpbXX0.hafqytFA8wO8hbPV1Go7ZRIiXq8lYzuT1rjJ9mdh34BgMjZsyAz9bH251rHAMd0sq0vuYiQIdwX-KiqKy5Ztn4FnW4M8XoD4VXHDDypQ_w3FUmRXqmF5yw-Q9CIigrqeBOiPI9_42qjtXhtRmjk94BujnbvGTmHq_OHxSe9BKuVEDnAbuC1R2HR7LHXNBGZzGNYXMNg9ZsU4N5hXuOIP-QzDOx-sFPDGj1BCX7oluWLETMrUkQQabyD7DSb2Zm2TXssQEqUf9dIbl-IdBp38W0qsNhmadKWFFyIAZXMtMXSVnRrG8JQW1Z6csm2Yn0diwX65l03VZrulwFHnojqN8w';
+let exptoken =
+  'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IktfbDhKWWxOQXFyZlVEWksxWFZpWSJ9.eyJpc3MiOiJodHRwczovL3dpc2VtYW5pbm5vdmF0aW9ucy51cy5hdXRoMC5jb20vIiwic3ViIjoiYXV0aDB8NjdkMjk3MGFmMDBhY2IwZWFlZTg3NjgwIiwiYXVkIjpbImh0dHBzOi8vZWhyLXBhdGllbnQtcG9ydGFsLmRhdGFxaGVhbHRoLmNvbSIsImh0dHBzOi8vd2lzZW1hbmlubm92YXRpb25zLnVzLmF1dGgwLmNvbS91c2VyaW5mbyJdLCJpYXQiOjE3NDI3OTk3NzAsImV4cCI6MTc0MjgwMDM3MCwic2NvcGUiOiJvcGVuaWQgcHJvZmlsZSBlbWFpbCBhZGRyZXNzIHBob25lIiwiZ3R5IjoicGFzc3dvcmQiLCJhenAiOiJxYUQ5WjdGNEs5UU0yWDU0UU5BYkxCYlQ4ZHYwalFPaSIsInBlcm1pc3Npb25zIjpbXX0.hafqytFA8wO8hbPV1Go7ZRIiXq8lYzuT1rjJ9mdh34BgMjZsyAz9bH251rHAMd0sq0vuYiQIdwX-KiqKy5Ztn4FnW4M8XoD4VXHDDypQ_w3FUmRXqmF5yw-Q9CIigrqeBOiPI9_42qjtXhtRmjk94BujnbvGTmHq_OHxSe9BKuVEDnAbuC1R2HR7LHXNBGZzGNYXMNg9ZsU4N5hXuOIP-QzDOx-sFPDGj1BCX7oluWLETMrUkQQabyD7DSb2Zm2TXssQEqUf9dIbl-IdBp38W0qsNhmadKWFFyIAZXMtMXSVnRrG8JQW1Z6csm2Yn0diwX65l03VZrulwFHnojqN8w';
 if (typeof window !== 'undefined') {
   token = localStorage.getItem('token');
 }
@@ -65,6 +70,80 @@ export async function updateHeaders() {
   instanceEMR.defaults.headers = header;
   // axios.defaults.withCredentials = true;
   // For HTTP ONly Cookies Set Credential To True
+}
+
+let refreshPromise = null;
+const REFRESH_LOCK_NAME = 'dqehr-patientportal-auth0-refresh-token';
+const TOKEN_FRESH_ENOUGH_MS = 30 * 1000;
+
+async function exchangeRefreshToken() {
+  // Another browser tab may have already refreshed the token while we were waiting for the
+  // cross-tab lock below - re-check before spending the one-time-use refresh_token on a
+  // redundant exchange (Auth0 rotation would reject it and look like the session ended).
+  const currentExpiry = getTokenExpiryMs(getToken());
+  if (currentExpiry && currentExpiry - Date.now() > TOKEN_FRESH_ENOUGH_MS) {
+    return getToken();
+  }
+
+  const storedRefreshToken = localStorage.getItem('refresh_token');
+  if (!storedRefreshToken) return null;
+
+  // Custom Auth0 domains must be redeemed at the same custom domain that issued the
+  // token, not the underlying tenant domain - read it from the current token's own
+  // `iss` claim instead of a static env var so this can never drift out of sync.
+  const issuer = getTokenIssuer(getToken());
+  const tokenUrl = issuer
+    ? `${issuer}/oauth/token`
+    : `https://${process.env.NEXT_PUBLIC_DOMAIN}/oauth/token`;
+
+  try {
+    const response = await axios.post(tokenUrl, {
+      grant_type: 'refresh_token',
+      client_id: process.env.NEXT_PUBLIC_CLIENTID,
+      refresh_token: storedRefreshToken
+    });
+
+    const { access_token, refresh_token: newRefreshToken } =
+      response.data || {};
+    if (!access_token) return null;
+
+    localStorage.setItem('token', access_token);
+    if (newRefreshToken) {
+      localStorage.setItem('refresh_token', newRefreshToken);
+    }
+    await updateHeaders();
+    return access_token;
+  } catch (err) {
+    console.error(
+      '[refreshAccessToken] Failed to refresh access token via',
+      tokenUrl,
+      '-',
+      err?.response?.data || err?.message || err
+    );
+    return null;
+  }
+}
+
+// Exchanges the stored Auth0 refresh_token for a new access_token. Dedupes concurrent
+// callers within this tab (a proactive refresh and a reactive 401 retry firing close
+// together) via refreshPromise, AND across browser tabs via the Web Locks API - the
+// refresh_token is single-use (rotation), so two tabs racing to exchange it at once would
+// make one of them fail and wrongly look like the session ended.
+export async function refreshAccessToken() {
+  if (refreshPromise) {
+    return refreshPromise;
+  }
+
+  refreshPromise =
+    typeof navigator !== 'undefined' && navigator.locks
+      ? navigator.locks.request(REFRESH_LOCK_NAME, exchangeRefreshToken)
+      : exchangeRefreshToken();
+
+  try {
+    return await refreshPromise;
+  } finally {
+    refreshPromise = null;
+  }
 }
 
 export async function updateHeadersWithoutToken() {
@@ -152,7 +231,13 @@ export async function newRequest({ method, url, data, headers }) {
   }
 }
 
-export async function requestWithoutToken({ method, url, data, headers, flag }) {
+export async function requestWithoutToken({
+  method,
+  url,
+  data,
+  headers,
+  flag
+}) {
   if (headers === undefined) {
     await updateHeadersWithoutToken();
   }
@@ -200,7 +285,13 @@ export async function get(url, params, flag, featureAndAction, config) {
   });
 }
 
-export async function getWithoutToken(url, params, flag, featureAndAction, config) {
+export async function getWithoutToken(
+  url,
+  params,
+  flag,
+  featureAndAction,
+  config
+) {
   for (var key in params) {
     url = url + '' + params[key];
   }
@@ -223,7 +314,13 @@ export async function delbody(url, config) {
 export async function post(url, data, flag, featureAndAction, config) {
   return request({ method: 'post', url, data, ...config, flag });
 }
-export async function postWithoutToken(url, data, flag, featureAndAction, config) {
+export async function postWithoutToken(
+  url,
+  data,
+  flag,
+  featureAndAction,
+  config
+) {
   return requestWithoutToken({ method: 'post', url, data, ...config, flag });
 }
 
