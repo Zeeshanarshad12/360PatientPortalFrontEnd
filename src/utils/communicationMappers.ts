@@ -7,6 +7,7 @@ import {
   CommunicationCommentDetail
 } from '@/slices/messagesSlice';
 import moment from 'moment';
+import { decodeHtmlEntities } from '@/utils/helpers';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // mapApiThreadToThread
@@ -33,9 +34,10 @@ export function mapApiThreadToThread(item: ApiThread): Thread {
     ? 'patient'
     : 'provider';
 
-  const providerId = isPatientInitiated
-    ? String(item.recipientId || 0)
-    : String(item.providerID || 0);
+  // recipientId is always the provider/staff being messaged, regardless of
+  // who initiated the thread — the list endpoint no longer returns a
+  // separate providerID field.
+  const providerId = String(item.recipientId || 0);
 
   // ── Root message ────────────────────────────────────────────────────────────
   const rootMessage: Message = {
@@ -80,26 +82,23 @@ export function mapApiThreadToThread(item: ApiThread): Thread {
 
   function stripHtmlForPreview(text: string): string {
     if (!text) return '';
-    return text
-      .replace(/&#x27;/g, "'")
-      .replace(/&#39;/g, "'")
-      .replace(/&apos;/g, "'")
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&nbsp;/g, ' ')
+    return decodeHtmlEntities(text)
       .replace(/\\\\n/g, ' ')
       .replace(/\\n/g, ' ')
-      .replace(/<br\s*\/?>/gi, ' ')
-      .replace(/<[^>]*>/g, ' ')
+      .replace(/&lt;br\s*\/?&gt;/gi, ' ')
+      .replace(/&lt;[^&gt;]*&gt;/g, ' ')
+      .replace(/<[^>]+>/g, ' ')
       .replace(/\s+/g, ' ')
       .trim();
   }
+
   return {
     id: String(item.id),
     patientCommunicationId: item.id,
     recipientId: item.recipientId,
-    subject: item.communicationSubject?.trim() || 'No Subject',
+    subject: decodeHtmlEntities(
+      item.communicationSubject?.trim() || 'No Subject'
+    ),
     providerId: String(providerId),
     providerName: item.recipient?.trim() || 'Unknown Provider',
     providerAvatar: '',
@@ -127,7 +126,7 @@ export function mapApiThreadToThread(item: ApiThread): Thread {
 
 // ─────────────────────────────────────────────────────────────────────────────
 // mapCommentToMessage
-// Uses comment.initiator field from API
+// Uses comment.isProvider field from API
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function mapCommentToMessage(
@@ -135,7 +134,7 @@ export function mapCommentToMessage(
   patientNameFallback?: string,
   providerNameFallback?: string
 ): Message {
-  const isProviderComment = comment.initiator === 'provider';
+  const isProviderComment = comment.isProvider === true;
 
   // Sender name — use createdBy first, then fallback
   const senderName = (() => {
@@ -146,10 +145,10 @@ export function mapCommentToMessage(
 
   return {
     id: `comment-${comment.id}`,
-    senderId: String(comment.providerID ?? comment.recipientId ?? 0),
+    senderId: String(comment.recipientId ?? 0),
     senderName,
     senderAvatar: '',
-    senderRole: isProviderComment ? 'provider' : 'patient', //  from API initiator
+    senderRole: isProviderComment ? 'provider' : 'patient', // from API isProvider
     content: comment.communicationText,
     timestamp: toLocalISO(comment.createdAt ?? comment.communicatedOn)
   };

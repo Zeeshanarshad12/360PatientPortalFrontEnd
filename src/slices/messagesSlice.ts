@@ -92,6 +92,10 @@ export interface MessagesState {
   error: string | null;
   successMessage: string | null;
   commentsLoading: boolean;
+  pageNum: number;
+  pageSize: number;
+  totalPages: number;
+  totalCount: number;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -108,9 +112,8 @@ export interface CommunicationComment {
   createdBy: string;
   communicatedOn: string;
   isPrivate: boolean;
-  providerID: number;
-  initiator: 'patient' | 'provider';
-  createdAt: string;
+  isProvider: boolean;
+  createdAt?: string;
 }
 
 export interface CommunicationCommentDetail {
@@ -134,7 +137,6 @@ export interface ApiThread {
   recipient: string;
   patientName: string;
   recipientId: number;
-  providerID: number;
   priority: string;
   patientCommunicationMediumId: number;
   communicationSubject: string;
@@ -145,9 +147,24 @@ export interface ApiThread {
   communicationComments: CommunicationComment[];
   initiator: 'patient' | 'provider';
   createdAt: string;
+  ccAssigned?: CcAssigned[];
+  // Not returned per-item by the list endpoint — stamped on from the request
+  // params (patientportal is always scoped to a single patient/practice).
   practiceId: number;
   patientId: number;
-  ccAssigned?: CcAssigned[];
+}
+
+export interface GetCommunicationsResult {
+  status: string | null;
+  practiceId: number | null;
+  patientId: number | null;
+  pageNum: number;
+  pageSize: number;
+  totalPages: number;
+  totalCount: number;
+  orderColumn: string;
+  orderDirection: string;
+  responseList: ApiThread[];
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -158,6 +175,10 @@ export interface FetchThreadsParams {
   patientId: number;
   practiceId: number;
   status?: string;
+  pageNum?: number;
+  pageSize?: number;
+  orderColumn?: string;
+  orderDirection?: string;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -211,22 +232,42 @@ export interface UpdateThreadStatusPayload {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const fetchThreads = createAsyncThunk<
-  { threads: Thread[]; providers: Provider[] },
+  {
+    threads: Thread[];
+    providers: Provider[];
+    pageNum: number;
+    pageSize: number;
+    totalPages: number;
+    totalCount: number;
+  },
   FetchThreadsParams
 >('messages/fetchThreads', async (data, thunkAPI) => {
   try {
     const params: Record<string, any> = {
       patientId: data.patientId,
       practiceId: data.practiceId,
-      status: data?.status
+      status: data?.status,
+      pageNum: data.pageNum ?? 1,
+      pageSize: data.pageSize ?? 50,
+      orderColumn: data.orderColumn ?? '',
+      orderDirection: data.orderDirection ?? 'desc'
     };
     const res = await apiServicesV2.GetCommunications(params, 'ApiVersion2Req');
 
     if (res?.status === 200 || res?.status === 201) {
-      const apiThreads: ApiThread[] = res.data?.result ?? res.data ?? [];
+      const result: GetCommunicationsResult = res.data?.result ?? res.data;
+      const apiThreads: ApiThread[] = result?.responseList ?? [];
+
+      // The list endpoint no longer echoes patientId/practiceId per item —
+      // stamp the values from the request onto each item before mapping.
+      const stampedThreads = apiThreads.map((t) => ({
+        ...t,
+        patientId: data.patientId,
+        practiceId: data.practiceId
+      }));
 
       const uniqueApiThreads = Array.from(
-        new Map(apiThreads.map((t) => [t.id, t])).values()
+        new Map(stampedThreads.map((t) => [t.id, t])).values()
       );
 
       const mapped = uniqueApiThreads.map(mapApiThreadToThread);
@@ -238,7 +279,11 @@ export const fetchThreads = createAsyncThunk<
 
       return {
         threads: sorted,
-        providers: extractProviders(uniqueApiThreads)
+        providers: extractProviders(uniqueApiThreads),
+        pageNum: result?.pageNum ?? params.pageNum,
+        pageSize: result?.pageSize ?? params.pageSize,
+        totalPages: result?.totalPages ?? 1,
+        totalCount: result?.totalCount ?? sorted.length
       };
     }
 
@@ -586,13 +631,17 @@ const initialState: MessagesState = {
   providersLoading: false,
   activeThreadId: null,
   sortOption: 'all',
-  groupOption: 'open',
+  groupOption: 'all',
   isNewMessageOpen: false,
   loading: false,
   sending: false,
   error: null,
   successMessage: null,
-  commentsLoading: false
+  commentsLoading: false,
+  pageNum: 1,
+  pageSize: 50,
+  totalPages: 0,
+  totalCount: 0
 };
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -620,6 +669,14 @@ const messagesSlice = createSlice({
     },
     setGroupOption(state, action: PayloadAction<GroupOption>) {
       state.groupOption = action.payload;
+      state.pageNum = 1;
+    },
+    setPageNum(state, action: PayloadAction<number>) {
+      state.pageNum = action.payload;
+    },
+    setPageSize(state, action: PayloadAction<number>) {
+      state.pageSize = action.payload;
+      state.pageNum = 1;
     },
     openNewMessage(state) {
       state.isNewMessageOpen = true;
@@ -673,7 +730,13 @@ const messagesSlice = createSlice({
 
       state.threads = newThreads.map((t) => {
         if (t.id === activeId && existingMessages?.length) {
-          return { ...t, messages: existingMessages };
+          const lastMsg = existingMessages[existingMessages.length - 1];
+          return {
+            ...t,
+            messages: existingMessages,
+            lastActivity: lastMsg?.timestamp ?? t.lastActivity,
+            lastMessage: lastMsg?.content ?? t.lastMessage
+          };
         }
         return t;
       });
@@ -682,6 +745,13 @@ const messagesSlice = createSlice({
         (a, b) =>
           moment(b.lastActivity).valueOf() - moment(a.lastActivity).valueOf()
       );
+
+      if (!Array.isArray(payload)) {
+        state.pageNum = payload?.pageNum ?? state.pageNum;
+        state.pageSize = payload?.pageSize ?? state.pageSize;
+        state.totalPages = payload?.totalPages ?? state.totalPages;
+        state.totalCount = payload?.totalCount ?? state.totalCount;
+      }
     },
     [fetchThreads.rejected.type]: (state: MessagesState) => {
       state.loading = false;
@@ -826,6 +896,8 @@ export const {
   setActiveThread,
   setSortOption,
   setGroupOption,
+  setPageNum,
+  setPageSize,
   openNewMessage,
   closeNewMessage,
   clearSuccess,

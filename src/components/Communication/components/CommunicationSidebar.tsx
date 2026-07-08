@@ -7,6 +7,8 @@ import {
   openNewMessage,
   setActiveThread,
   setGroupOption,
+  setPageNum,
+  setPageSize,
   GetAllComments,
   GroupOption
 } from '@/slices/messagesSlice';
@@ -14,8 +16,14 @@ import {
   selectGroupedThreads,
   selectGroupOption,
   selectActiveThreadId,
-  selectLoading
+  selectLoading,
+  selectPageNum,
+  selectPageSize,
+  selectTotalPages,
+  selectTotalCount
 } from '@/store/selectors';
+
+const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
 import { Avatar } from './shared/Avatar';
 import { formatTimestamp, truncate } from '@/utils/helpers';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
@@ -38,6 +46,10 @@ export const CommunicationSidebar: React.FC = () => {
   const group = useSelector(selectGroupOption);
   const activeId = useSelector(selectActiveThreadId);
   const loading = useSelector(selectLoading);
+  const pageNum = useSelector(selectPageNum);
+  const pageSize = useSelector(selectPageSize);
+  const totalPages = useSelector(selectTotalPages);
+  const totalCount = useSelector(selectTotalCount);
 
   const [search, setSearch] = React.useState('');
   const [showGroupMenu, setShowGroupMenu] = React.useState(false);
@@ -46,15 +58,21 @@ export const CommunicationSidebar: React.FC = () => {
   const { patientId, practiceId } = useCurrentPatient();
 
   useEffect(() => {
+    dispatch(setPageNum(1));
+  }, [dispatch, patientId, practiceId]);
+
+  useEffect(() => {
     if (!patientId || !practiceId) return;
     dispatch(
       fetchThreads({
         patientId: Number(patientId),
         practiceId: Number(practiceId),
-        status: group
+        status: group,
+        pageNum,
+        pageSize
       })
     );
-  }, [dispatch, patientId, practiceId, group]);
+  }, [dispatch, patientId, practiceId, group, pageNum, pageSize]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -98,7 +116,9 @@ export const CommunicationSidebar: React.FC = () => {
       fetchThreads({
         patientId: Number(patientId),
         practiceId: Number(practiceId),
-        status: group
+        status: group,
+        pageNum,
+        pageSize
       })
     );
     const activeThread = groups
@@ -109,6 +129,19 @@ export const CommunicationSidebar: React.FC = () => {
       dispatch(GetAllComments(activeThread.patientCommunicationId));
     }
   };
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages || page === pageNum) return;
+    dispatch(setPageNum(page));
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    if (size === pageSize) return;
+    dispatch(setPageSize(size));
+  };
+
+  const rangeStart = totalCount === 0 ? 0 : (pageNum - 1) * pageSize + 1;
+  const rangeEnd = Math.min(pageNum * pageSize, totalCount);
 
   return (
     <div className="comm-thread-list">
@@ -406,6 +439,68 @@ export const CommunicationSidebar: React.FC = () => {
           ))
         )}
       </div>
+
+      {/* ── Pagination ── */}
+      {!loading && totalCount > 0 && (
+        <div className="comm-thread-list__pagination">
+          <span className="comm-page-size">
+            Rows Per Page:
+            <select
+              className="comm-page-size__select"
+              value={pageSize}
+              onChange={(e) => handlePageSizeChange(Number(e.target.value))}
+              aria-label="Rows per page"
+            >
+              {PAGE_SIZE_OPTIONS.map((size) => (
+                <option key={size} value={size}>
+                  {size}
+                </option>
+              ))}
+            </select>
+          </span>
+
+          <span className="comm-page-range">
+            {rangeStart}-{rangeEnd} of {totalCount}
+          </span>
+
+          <span className="comm-page-nav">
+            <button
+              className="comm-page-nav__btn"
+              onClick={() => handlePageChange(pageNum - 1)}
+              disabled={pageNum <= 1}
+              aria-label="Previous page"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+            </button>
+            <button
+              className="comm-page-nav__btn"
+              onClick={() => handlePageChange(pageNum + 1)}
+              disabled={pageNum >= totalPages}
+              aria-label="Next page"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+            </button>
+          </span>
+        </div>
+      )}
     </div>
   );
 };
