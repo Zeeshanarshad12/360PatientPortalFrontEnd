@@ -4,6 +4,7 @@ import React from 'react';
 import { Message } from '@/slices/messagesSlice';
 import { Avatar } from './shared/Avatar';
 import { formatMessageTime } from '@/utils/helpers';
+import { decodeHtmlEntities } from '@/utils/helpers';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Icons
@@ -46,47 +47,54 @@ interface MessageBubbleProps {
   isClosed: boolean; //  ADD — controls avatar gray color
 }
 
+const BLANK_CLASS =
+  ' \\t\\u00A0\\u1680\\u2000-\\u200B\\u202F\\u205F\\u3000\\uFEFF';
+const LEADING_BLANK_RE = new RegExp(`^[${BLANK_CLASS}]+`);
+const BLANK_RUN_RE = new RegExp(`[${BLANK_CLASS}]{2,}`, 'g');
+
+// Convert any HTML the mail client produced into normalized plain text with
+// real newlines, so we control alignment ourselves instead of inheriting
+// Outlook/Gmail block structure and leading whitespace inside <div>/<p> tags.
+function htmlToText(html: string): string {
+  return html
+
+    .replace(/<script[\s\S]*?<\/script>/gi, '')
+    .replace(/<style[\s\S]*?<\/style>/gi, '')
+
+    .replace(/<\/(div|p|tr|li|h[1-6]|blockquote)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+
+    .replace(/<[^>]+>/g, '');
+}
+
 function renderMessageContent(content: string): React.ReactNode {
   if (!content) return null;
 
-  const decoded = content
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#x27;/g, "'")
-    .replace(/&#39;/g, "'")
-    .replace(/&apos;/g, "'")
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&#x2F;/g, '/')
-    .replace(/&#x60;/g, '`')
-    .replace(/&#x3D;/g, '=');
+  const decoded = decodeHtmlEntities(content);
 
-  const withBreaks = decoded
-    .replace(/\\\\n/g, '<br/>')
-    .replace(/\\n/g, '<br/>');
+  const hadHtml = /<[a-z][^>]*>/i.test(decoded);
+  const text = hadHtml ? htmlToText(decoded) : decoded;
 
-  const hasHtml = /<[a-z][\s\S]*>/i.test(withBreaks);
+  const normalized = text
+    .replace(/\r\n/g, '\n')
+    .replace(/\r/g, '\n')
+    .replace(/\\\\n/g, '\n')
+    .replace(/\\n/g, '\n')
+    .split('\n')
 
-  if (hasHtml) {
-    const sanitized = withBreaks
-      .replace(/<script[\s\S]*?<\/script>/gi, '')
-      .replace(/javascript:/gi, '');
-
-    return (
-      <span
-        className="comm-bubble__text"
-        dangerouslySetInnerHTML={{ __html: sanitized }}
-      />
-    );
-  }
+    .map((line) =>
+      line.replace(LEADING_BLANK_RE, '').replace(BLANK_RUN_RE, ' ').trimEnd()
+    )
+    .join('\n')
+    .replace(/\n{2,}/g, '\n')
+    .trim();
 
   return (
     <span
       className="comm-bubble__text"
       style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
     >
-      {withBreaks}
+      {normalized}
     </span>
   );
 }

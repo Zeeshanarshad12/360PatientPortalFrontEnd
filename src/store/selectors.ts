@@ -22,6 +22,12 @@ export const selectSuccessMessage = (state: RootState) =>
   state.messages.successMessage;
 export const selectProvidersLoading = (state: RootState) =>
   state.messages.providersLoading;
+export const selectPageNum = (state: RootState) => state.messages.pageNum;
+export const selectPageSize = (state: RootState) => state.messages.pageSize;
+export const selectTotalPages = (state: RootState) =>
+  state.messages.totalPages;
+export const selectTotalCount = (state: RootState) =>
+  state.messages.totalCount;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // selectActiveThread

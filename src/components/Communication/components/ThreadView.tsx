@@ -14,7 +14,9 @@ import {
   selectSending,
   selectError,
   selectSuccessMessage,
-  selectGroupOption
+  selectGroupOption,
+  selectAllThreads,
+  selectLoading
 } from '@/store/selectors';
 import { Avatar } from './shared/Avatar';
 import { MessageBubble } from './MessageBubble';
@@ -51,6 +53,8 @@ export const ThreadView: React.FC = () => {
   const sending = useSelector(selectSending);
   const error = useSelector(selectError);
   const successMsg = useSelector(selectSuccessMessage);
+  const allThreads = useSelector(selectAllThreads);
+  const threadsLoading = useSelector(selectLoading);
 
   const [reply, setReply] = useState('');
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
@@ -108,7 +112,14 @@ export const ThreadView: React.FC = () => {
   }, []);
 
   // ── Empty state ────────────────────────────────────────────────────────────
+  // Only prompt the user to pick a thread when the roster actually has
+  // threads to pick from — otherwise the sidebar's own "No messages found"
+  // state already communicates that there's nothing here.
   if (!thread) {
+    if (threadsLoading || allThreads.length === 0) {
+      return <div className="comm-thread-view comm-thread-view--empty" />;
+    }
+
     return (
       <div className="comm-thread-view comm-thread-view--empty">
         <div className="comm-thread-view__placeholder">

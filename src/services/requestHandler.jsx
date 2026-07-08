@@ -370,15 +370,20 @@ const GetPatientProviders = (data, flag) =>
   );
 
 const GetCommunications = (data, flag) => {
-  const url = `${SERVICE_URLSV2.GetCommunications}?Status=${data.status}&PracticeId=${data.practiceId}&PatientId=${data.patientId}`;
-  return get(
-    url,
-    {},
-    {
-      feature: featureConstants.static,
-      ApiVersion2Req: flag
-    }
-  );
+  const body = {
+    status: data.status,
+    practiceId: data.practiceId,
+    patientId: data.patientId,
+    pageNum: data.pageNum,
+    pageSize: data.pageSize,
+    orderColumn: data.orderColumn,
+    orderDirection: data.orderDirection,
+    isExport: data.isExport ?? false
+  };
+  return post(SERVICE_URLSV2.GetCommunications, body, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
 };
 
 const GetAllComments = (data, flag) => {

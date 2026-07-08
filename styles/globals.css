@@ -1156,6 +1156,84 @@ html {
   opacity: 1;
 }
 
+/*   Pagination            */
+
+.comm-thread-list__pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 6px 10px;
+  margin: auto;
+  border-top: 1px solid var(--comm-border);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.comm-page-size {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--comm-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.comm-page-size__select {
+  border: 1px solid var(--comm-border);
+  background: var(--comm-surface);
+  color: var(--comm-text-primary);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+
+.comm-page-range {
+  font-size: 11px;
+  color: var(--comm-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.comm-page-nav {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  flex-shrink: 0;
+}
+
+.comm-page-nav__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--comm-text-secondary);
+  padding: 3px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.comm-page-nav__btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.comm-page-nav__btn:hover:not(:disabled) {
+  background: var(--comm-thread-bg-hover);
+  color: var(--comm-text-primary);
+}
+
+.comm-page-nav__btn:disabled {
+  color: var(--comm-text-muted);
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 /* ── Dropdown ────────────────────────────────────────────── */
 .comm-dropdown {
   position: relative;
