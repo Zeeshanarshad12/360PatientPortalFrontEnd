@@ -164,19 +164,21 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
                       {allergy.description}
 
                       {/* Severity Badge */}
-                      <Chip
-                        label={allergy.severity}
-                        size="small"
-                        sx={{
-                          position: 'absolute',
-                          right: 15,
-                          fontSize: '0.75rem',
-                          borderRadius: '15px',
-                          bgcolor: colors.chipColor,
-                          color: 'white',
-                          fontWeight: 'bold'
-                        }}
-                      />
+                      {allergy.severity && (
+                        <Chip
+                          label={allergy.severity}
+                          size="small"
+                          sx={{
+                            position: 'absolute',
+                            right: 15,
+                            fontSize: '0.75rem',
+                            borderRadius: '15px',
+                            bgcolor: colors.chipColor,
+                            color: 'white',
+                            fontWeight: 'bold'
+                          }}
+                        />
+                      )}
                     </Typography>
                     <Typography
                       variant="body2"

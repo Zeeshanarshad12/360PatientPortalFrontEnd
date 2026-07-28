@@ -57,12 +57,30 @@ export const CommunicationSidebar: React.FC = () => {
 
   const { patientId, practiceId } = useCurrentPatient();
 
+  // Reset to page 1 only when the patient/practice actually changes. Guarding
+  // on a ref (instead of a bare effect that always dispatches on mount) avoids
+  // a redundant setPageNum → extra fetch cycle. If pageNum is already 1 this is
+  // a no-op, so it never double-fetches the first page.
+  const prevScopeRef = useRef<string | null>(null);
   useEffect(() => {
-    dispatch(setPageNum(1));
+    const scopeKey = `${patientId}|${practiceId}`;
+    if (prevScopeRef.current !== null && prevScopeRef.current !== scopeKey) {
+      dispatch(setPageNum(1));
+    }
+    prevScopeRef.current = scopeKey;
   }, [dispatch, patientId, practiceId]);
 
+  // Single source of fetches. An in-flight guard keyed on the exact request
+  // params dedupes StrictMode's double-invoke (dev) and any redundant re-render
+  // so we never fire two identical getcommunications calls for one page.
+  const lastRequestKey = useRef<string>('');
   useEffect(() => {
     if (!patientId || !practiceId) return;
+
+    const requestKey = `${patientId}|${practiceId}|${group}|${pageNum}|${pageSize}`;
+    if (lastRequestKey.current === requestKey) return;
+    lastRequestKey.current = requestKey;
+
     dispatch(
       fetchThreads({
         patientId: Number(patientId),
@@ -112,6 +130,9 @@ export const CommunicationSidebar: React.FC = () => {
 
   const handleRefresh = () => {
     if (!patientId || !practiceId) return;
+    // Manual refresh must always hit the API even though params are unchanged,
+    // so sync the guard key to the current params (this call satisfies it).
+    lastRequestKey.current = `${patientId}|${practiceId}|${group}|${pageNum}|${pageSize}`;
     dispatch(
       fetchThreads({
         patientId: Number(patientId),
@@ -140,8 +161,29 @@ export const CommunicationSidebar: React.FC = () => {
     dispatch(setPageSize(size));
   };
 
-  const rangeStart = totalCount === 0 ? 0 : (pageNum - 1) * pageSize + 1;
-  const rangeEnd = Math.min(pageNum * pageSize, totalCount);
+  // Search filters the already-loaded page in-memory, so while a search is
+  // active the pagination counter must reflect the FILTERED result count, not
+  // the server's total. Without this it wrongly shows e.g. "1-50 of 158" even
+  // when the search narrows the list to a handful of rows.
+  const isSearching = search.trim().length > 0;
+  const filteredCount = filteredGroups.reduce(
+    (sum: number, g: any) => sum + g.items.length,
+    0
+  );
+
+  const rangeStart = isSearching
+    ? filteredCount === 0
+      ? 0
+      : 1
+    : totalCount === 0
+    ? 0
+    : (pageNum - 1) * pageSize + 1;
+
+  const rangeEnd = isSearching
+    ? filteredCount
+    : Math.min(pageNum * pageSize, totalCount);
+
+  const displayCount = isSearching ? filteredCount : totalCount;
 
   return (
     <div className="comm-thread-list">
@@ -460,14 +502,14 @@ export const CommunicationSidebar: React.FC = () => {
           </span>
 
           <span className="comm-page-range">
-            {rangeStart}-{rangeEnd} of {totalCount}
+            {rangeStart}-{rangeEnd} of {displayCount}
           </span>
 
           <span className="comm-page-nav">
             <button
               className="comm-page-nav__btn"
               onClick={() => handlePageChange(pageNum - 1)}
-              disabled={pageNum <= 1}
+              disabled={isSearching || pageNum <= 1}
               aria-label="Previous page"
             >
               <svg
@@ -484,7 +526,7 @@ export const CommunicationSidebar: React.FC = () => {
             <button
               className="comm-page-nav__btn"
               onClick={() => handlePageChange(pageNum + 1)}
-              disabled={pageNum >= totalPages}
+              disabled={isSearching || pageNum >= totalPages}
               aria-label="Next page"
             >
               <svg

@@ -65,7 +65,6 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
           // Define which vitals you want to show
           const allowedVitals = [
             'Blood Pressure',
-            //"BMI Percentile",
             'BMI Percentile',
             'Body Weight',
             'Body Height',
@@ -74,7 +73,6 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
             'Temperature'
           ];
 
-          // Define mapping for abbreviations
           const vitalNameMapping = {
             'Blood Pressure': 'BP',
             'BMI Percentile': 'BMI',
@@ -85,55 +83,61 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
             Temperature: 'Temp (°F)'
           };
 
-          const vitalsMap = {};
+          const findByVstName = (list, vstName) =>
+            list?.find(
+              (item) => item.vstName?.toLowerCase() === vstName.toLowerCase()
+            );
 
-          data.forEach((day) => {
-            day.patientVitalViewModels.forEach((vital) => {
-              let originalName = vital.vitalName;
+          // Helper: compute the display value for a given vital model
+          const computeValue = (originalName, vitalModel) => {
+            if (!vitalModel) return '-';
+            const list = vitalModel.listOfPatientVitals;
 
-              // Show only allowed vitals
-              if (!allowedVitals.includes(originalName)) return;
+            if (originalName.toLowerCase() === 'blood pressure') {
+              const systolic = findByVstName(list, 'Systolic')?.value ?? '-';
+              const diastolic = findByVstName(list, 'Diastolic')?.value ?? '-';
+              return `${systolic}/${diastolic}`;
+            }
 
-              // Replace with short form if in mapping
+            if (originalName.toLowerCase() === 'body height') {
+              const feet = findByVstName(list, 'Feet')?.value ?? '-';
+              const inches = findByVstName(list, 'Inches')?.value ?? '-';
+              return `${feet}'${inches}"`;
+            }
+
+            if (originalName.toLowerCase() === 'pain level') {
+              const painScale = list?.[0]?.value ?? '0';
+              const painUnit = list?.[0]?.painScale;
+              return painUnit ? `${painScale} - ${painUnit}` : `${painScale}`;
+            }
+
+            return list?.[0]?.value !== undefined ? `${list[0].value}` : '-';
+          };
+
+          const vitalsMap: Record<string, string[]> = {};
+          allowedVitals.forEach((originalName) => {
+            const displayName = vitalNameMapping[originalName] || originalName;
+            vitalsMap[displayName] = new Array(data.length).fill('-');
+          });
+
+          data.forEach((day, dayIndex) => {
+            allowedVitals.forEach((originalName) => {
               const displayName =
                 vitalNameMapping[originalName] || originalName;
-
-              let value;
-
-              if (
-                originalName.toLowerCase() === 'bp' ||
-                originalName.toLowerCase() === 'blood pressure'
-              ) {
-                const systolic = vital.listOfPatientVitals[0]?.value || '-';
-                const diastolic = vital.listOfPatientVitals[1]?.value || '-';
-                value = `${systolic}/${diastolic}`;
-              } else if (
-                originalName.toLowerCase() === 'body height' ||
-                originalName.toLowerCase() === 'height'
-              ) {
-                const feet = vital.listOfPatientVitals[0]?.value || '-';
-                const inches = vital.listOfPatientVitals[1]?.value || '-';
-                value = `${feet}'${inches}"`; // Example: 5'4"
-              } else if (
-                originalName.toLowerCase() === 'pain level' ||
-                originalName.toLowerCase() === 'pain level'
-              ) {
-                const PainScale = vital.listOfPatientVitals[0]?.value || '0';
-                const PainUnit = vital.listOfPatientVitals[0]?.painScale;
-                value = `${PainScale} - ${PainUnit}`;
-              } else {
-                value = vital.listOfPatientVitals[0]?.value || '-';
-              }
-
-              if (!vitalsMap[displayName]) vitalsMap[displayName] = [];
-              vitalsMap[displayName].push(value);
+              const vitalModel = day.patientVitalViewModels.find(
+                (v) => v.vitalName === originalName
+              );
+              vitalsMap[displayName][dayIndex] = computeValue(
+                originalName,
+                vitalModel
+              );
             });
           });
 
-          // Convert vitalsMap to array and sort according to allowedVitals order
+          // Convert vitalsMap to array, preserving allowedVitals order
           const vitalsArray = allowedVitals
-            .map((name) => vitalNameMapping[name] || name) // Map to display names
-            .filter((name) => vitalsMap[name]) // Only include existing
+            .map((name) => vitalNameMapping[name] || name)
+            .filter((name) => vitalsMap[name])
             .map((name) => ({
               name,
               values: vitalsMap[name]
@@ -154,9 +158,14 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
   const renderTableView = () => (
     <TableContainer
       component={Paper}
-      sx={{ boxShadow: 'none', bgcolor: 'transparent' }}
+      sx={{
+        boxShadow: 'none',
+        bgcolor: 'transparent',
+        maxHeight: 350,
+        overflowY: 'auto'
+      }}
     >
-      <Table size="small">
+      <Table size="small" stickyHeader>
         <TableHead>
           <TableRow>
             <TableCell
@@ -164,7 +173,8 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
                 borderBottom: '1px solid #e0e0e0',
                 color: 'text.secondary',
                 fontWeight: 'bold',
-                pb: 1
+                pb: 1,
+                bgcolor: 'background.paper'
               }}
             >
               Vitals
@@ -177,7 +187,8 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
                   borderBottom: '1px solid #e0e0e0',
                   color: 'text.secondary',
                   fontWeight: 'bold',
-                  pb: 1
+                  pb: 1,
+                  bgcolor: 'background.paper'
                 }}
               >
                 {date}
@@ -218,12 +229,14 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
     </TableContainer>
   );
 
-  // Chart data ab direct vitals state & dates state se
+  // Chart data comes directly from vitals state & dates state
   const getChartData = () => {
     const vital = vitals.find((v) => v.name === selectedVital);
     if (!vital) return { series: [], categories: [] };
 
     const numericValues = vital.values.map((value) => {
+      if (value === '-') return null;
+
       if (selectedVital.includes('Height (ft-in)')) {
         // Example value: 5'4"
         const match = value.match(/(\d+)'(\d+)?/); // feet and inches
@@ -233,10 +246,11 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
           const decimalFeet = feet + inches / 12;
           return Math.round(decimalFeet * 10) / 10;
         }
-        return 0;
+        return null;
       }
 
-      return parseFloat(value) || 0;
+      const parsed = parseFloat(value);
+      return Number.isNaN(parsed) ? null : parsed;
     });
 
     const originalValues = vital.values;
@@ -286,7 +300,7 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
         }
       },
       colors: [colorMap[selectedVital] || '#2196F3'],
-      stroke: { curve: 'smooth', width: 3 },
+      stroke: { curve: 'smooth', width: 3, connectNulls: true },
       markers: {
         size: 6,
         colors: [colorMap[selectedVital] || '#2196F3'],
@@ -304,6 +318,7 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
         theme: 'light',
         y: {
           formatter: (value, { dataPointIndex }) => {
+            if (value === null || value === undefined) return 'No data';
             if (selectedVital.toLowerCase().includes('bp')) {
               const fullValue =
                 chartData.originalValues[dataPointIndex] || '0/0';
@@ -494,8 +509,8 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
             {/* Content Area */}
             <Box
               sx={{
-                maxHeight: 350,
-                overflowY: 'auto',
+                maxHeight: viewMode === 'table' ? 'none' : 350,
+                overflowY: viewMode === 'table' ? 'visible' : 'auto',
                 pr: 1,
                 minHeight: viewMode === 'chart' ? 200 : 'auto'
               }}
