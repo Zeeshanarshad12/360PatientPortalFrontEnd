@@ -117,7 +117,9 @@ export interface CommunicationComment {
 }
 
 export interface CommunicationCommentDetail {
-  id: number;
+  // The API omits this on some responses (e.g. a single root-communication
+  // record) — mapCommentDetailToMessage() falls back to a composite key.
+  id?: number;
   recipient: string;
   patientName: string;
   recipientId: string;
@@ -360,7 +362,7 @@ export const fetchPatientProviders = createAsyncThunk<Provider[], number>(
 
 //  New thunk — call on every thread click
 export const GetAllComments = createAsyncThunk<
-  { threadId: string; messages: Message[] },
+  { threadId: string; messages: Message[]; toName?: string },
   number
 >('messages/GetAllComments', async (patientCommunicationId, thunkAPI) => {
   try {
@@ -370,19 +372,25 @@ export const GetAllComments = createAsyncThunk<
     );
 
     if (res?.status === 200 || res?.status === 201) {
-      const comments: CommunicationCommentDetail[] =
+      const comments: CommunicationCommentDetail[] | CommunicationCommentDetail =
         res.data?.result ?? res.data ?? [];
 
       const state = thunkAPI.getState() as any;
       const threadId = state.messages.activeThreadId;
 
-      const sorted = [...comments].sort(
+      const commentsArray = Array.isArray(comments) ? comments : [comments];
+
+      const sorted = [...commentsArray].sort(
         (a, b) => moment(a.createdAt).valueOf() - moment(b.createdAt).valueOf()
       );
 
       const messages: Message[] = sorted.map(mapCommentDetailToMessage);
 
-      return { threadId, messages };
+      // The detail endpoint reliably returns recipient/patientName even when
+      // the list endpoint's response omitted them for this thread.
+      const toName = sorted.find((c) => c.recipient?.trim())?.recipient?.trim();
+
+      return { threadId, messages, toName };
     }
 
     return thunkAPI.rejectWithValue({
@@ -864,12 +872,19 @@ const messagesSlice = createSlice({
 
     [GetAllComments.fulfilled.type]: (
       state: MessagesState,
-      { payload }: PayloadAction<{ threadId: string; messages: Message[] }>
+      {
+        payload
+      }: PayloadAction<{ threadId: string; messages: Message[]; toName?: string }>
     ) => {
       state.commentsLoading = false;
       if (payload) {
         const thread = state.threads.find((t) => t.id === payload.threadId);
         if (thread && payload.messages.length > 0) {
+          // The comments endpoint returns the full thread history (root +
+          // replies), so it's authoritative — replace rather than merge.
+          // Merging would double-count the root message, since it's keyed
+          // differently here (comment-*) than in the list-endpoint mapping
+          // (comm-*).
           const dedupedMap = new Map<string, Message>();
           payload.messages.forEach((m) => dedupedMap.set(m.id, m));
           const deduped = Array.from(dedupedMap.values()).sort(
@@ -882,6 +897,15 @@ const messagesSlice = createSlice({
             deduped[deduped.length - 1]?.content ?? thread.lastMessage;
           thread.lastActivity =
             deduped[deduped.length - 1]?.timestamp ?? thread.lastActivity;
+        }
+
+        if (thread && (!thread.toName || thread.toName === 'Unknown')) {
+          if (payload.toName) {
+            thread.toName = payload.toName;
+            if (!thread.providerName || thread.providerName === 'Unknown Provider') {
+              thread.providerName = payload.toName;
+            }
+          }
         }
       }
     },

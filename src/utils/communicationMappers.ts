@@ -160,8 +160,13 @@ export function mapCommentDetailToMessage(
 ): Message {
   const isProvider = item.initiator === 'provider';
 
+  // Some responses from this endpoint omit `id`; fall back to a composite
+  // key so distinct comments don't collapse onto the same message id.
+  const messageId =
+    item.id ?? `${item.patientCommunicationId}-${item.createdAt ?? item.communicatedOn}`;
+
   return {
-    id: `comment-${item.id}`,
+    id: `comment-${messageId}`,
     senderId: String(item.providerId ?? item.recipientId ?? 0),
     senderName:
       item.createdBy?.trim() ||
