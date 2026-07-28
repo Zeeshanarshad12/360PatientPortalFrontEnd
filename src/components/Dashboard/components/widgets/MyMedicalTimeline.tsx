@@ -21,6 +21,7 @@ import moment from 'moment-timezone';
 import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { isNull } from '@/utils/functions';
+import { decodeHtmlEntities } from '@/utils/helpers';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -60,6 +61,15 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
 
     fetchData();
   }, [dispatch, practiceId, patientId]);
+
+  const stripHtml = (text: string): string => {
+    if (!text) return '';
+    return decodeHtmlEntities(text)
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/ /g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
@@ -161,7 +171,7 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
                   >
                     {/* Event Title and Provider */}
                     <Typography fontWeight="bold" sx={{ mb: 1, pr: 8 }}>
-                      {event.title}
+                      {stripHtml(event.title)}
 
                       {/* Status Badge */}
                       <Chip
@@ -183,7 +193,7 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
                       color="text.primary"
                       sx={{ mb: 1 }}
                     >
-                      {event.provider}
+                      {stripHtml(event.provider)}
                     </Typography>
 
                     {/* Date and Time */}
@@ -228,7 +238,7 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
                         sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }}
                       />
                       <Typography variant="body2" color="text.secondary">
-                        {event.locationName}
+                        {stripHtml(event.locationName)}
                       </Typography>
                     </Box>
 
@@ -239,7 +249,7 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
                       color="text.secondary"
                       sx={{ mb: 1 }}
                     >
-                      {event.reasonString}
+                      {stripHtml(event.reasonString)}
                     </Typography>
                     {/* )} */}
 
@@ -262,7 +272,7 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
                                 minWidth: 'auto'
                               }}
                             >
-                              {detail}
+                              {stripHtml(detail)}
                             </Button>
                           )
                         )}
