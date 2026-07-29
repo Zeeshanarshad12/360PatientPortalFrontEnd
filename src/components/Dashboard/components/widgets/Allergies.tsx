@@ -88,9 +88,15 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
               display="flex"
               alignItems="center"
               justifyContent="space-between"
+              flexWrap="wrap"
+              gap={1}
               mb={2}
             >
-              <Typography variant="h4" fontWeight="bold">
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ fontSize: '1.25rem' }}
+              >
                 {widgetContent.allergies.title}
               </Typography>
             </Box>
@@ -112,9 +118,15 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
               display="flex"
               alignItems="center"
               justifyContent="space-between"
+              flexWrap="wrap"
+              gap={1}
               mb={2}
             >
-              <Typography variant="h4" fontWeight="bold">
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ fontSize: '1.25rem' }}
+              >
                 {widgetContent.allergies.title}
                 <Chip
                   label={allergies.length}
@@ -158,6 +170,7 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
                       sx={{
                         color: colors.textColor,
                         mb: 1,
+                        pr: 8,
                         textTransform: 'capitalize'
                       }}
                     >

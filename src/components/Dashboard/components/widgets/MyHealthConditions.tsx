@@ -60,9 +60,15 @@ const MyHealthConditions: React.FC<Props> = ({ dragHandleProps }) => {
               display="flex"
               alignItems="center"
               justifyContent="space-between"
+              flexWrap="wrap"
+              gap={1}
               mb={2}
             >
-              <Typography variant="h4" fontWeight="bold">
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ fontSize: '1.25rem' }}
+              >
                 {widgetContent.myHealthConditions.title}
               </Typography>
             </Box>
@@ -84,9 +90,15 @@ const MyHealthConditions: React.FC<Props> = ({ dragHandleProps }) => {
               display="flex"
               justifyContent="space-between"
               alignItems="center"
+              flexWrap="wrap"
+              gap={1}
               mb={2}
             >
-              <Typography variant="h4" fontWeight="bold">
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ fontSize: '1.25rem' }}
+              >
                 {widgetContent.myHealthConditions.title}
                 <Chip
                   label={healthConditions.length}

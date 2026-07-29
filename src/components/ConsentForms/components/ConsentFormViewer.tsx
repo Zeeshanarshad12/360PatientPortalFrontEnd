@@ -572,9 +572,9 @@ const ConsentFormViewer = ({
         `<input type="text" data-field="dynamic" placeholder=""
         style="border:none; border-bottom:2px solid #000; outline:none;
           background:transparent; font-size:inherit; font-family:inherit;
-          min-width:120px; width:120px; padding:2px 4px; display:inline-block;
-          color:inherit; cursor:text;"
-        oninput="this.style.width='120px'; this.style.width=Math.max(120,this.scrollWidth)+'px'"
+          min-width:120px; width:120px; max-width:100%; padding:2px 4px; display:inline-block;
+          box-sizing:border-box; color:inherit; cursor:text;"
+        oninput="this.style.width='120px'; this.style.width=Math.min(Math.max(120,this.scrollWidth), this.parentElement.clientWidth)+'px'"
       />`
       );
     } else {
@@ -587,7 +587,7 @@ const ConsentFormViewer = ({
     // Signature replacement — embeds image + Signed By into body
     if (form.Signature) {
       const signatureImg = `<img src="${form.Signature}" alt="Signature"
-      style="max-width:250px; height:auto; display:block; margin:4px 0;" />${
+      style="max-width:min(250px, 100%); width:auto; height:auto; display:block; margin:4px 0;" />${
         form.SignedByName
           ? `<br/><span style="font-size:13px;font-weight:bold">Signed By: ${form.SignedByName}</span>`
           : ''
@@ -846,7 +846,7 @@ const ConsentFormViewer = ({
               : firstName ?? lastName ?? null;
           const signedByName = form.SignedByName ?? patientFullName;
           const signatureImg = `<img src="${Signature}" alt="Signature"
-      style="max-width:250px; height:auto; display:block; margin:4px 0;" />${
+      style="max-width:min(250px, 100%); width:auto; height:auto; display:block; margin:4px 0;" />${
         signedByName
           ? `<br/><span style="font-size:13px;font-weight:bold">Signed By: ${signedByName}</span>`
           : ''
@@ -939,21 +939,34 @@ const ConsentFormViewer = ({
         {/* Header */}
         <Box
           sx={{
-            px: 3,
+            px: { xs: 2, sm: 3 },
             py: 2,
             borderBottom: '1px solid #ddd',
             bgcolor: 'background.paper',
             display: 'flex',
+            flexWrap: 'wrap',
             justifyContent: 'space-between',
             alignItems: 'center',
+            gap: 1,
             zIndex: 2,
             flexShrink: 0
           }}
         >
-          <Typography variant="h6" fontWeight={600}>
+          <Typography
+            variant="h6"
+            fontWeight={600}
+            sx={{
+              minWidth: 0,
+              flex: '1 1 auto',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              fontSize: { xs: '1rem', sm: '1.25rem' }
+            }}
+          >
             {form.Title}
           </Typography>
-          <Box>
+          <Box sx={{ flexShrink: 0, whiteSpace: 'nowrap' }}>
             {form.Status === 'Signed' && (
               <Button
                 onClick={handleDownloadPDF}
@@ -1087,7 +1100,8 @@ const ConsentFormViewer = ({
               boxShadow: '0px 4px 20px rgba(0,0,0,0.15)',
               textAlign: 'center',
               zIndex: 1300,
-              minWidth: 300,
+              minWidth: { xs: 240, sm: 300 },
+              maxWidth: '90vw',
               pointerEvents: 'none'
             }}
           >
@@ -1119,7 +1133,8 @@ const ConsentFormViewer = ({
             boxShadow: '0px 4px 20px rgba(0,0,0,0.15)',
             textAlign: 'center',
             zIndex: 1300,
-            minWidth: 300,
+            minWidth: { xs: 240, sm: 300 },
+            maxWidth: '90vw',
             transition: 'opacity 0.5s ease-in-out',
             pointerEvents: 'none'
           }}

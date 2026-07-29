@@ -65,6 +65,14 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
 
   const { patientId, practiceId } = useCurrentPatient();
 
+  const [isNarrow, setIsNarrow] = useState(false);
+  useEffect(() => {
+    const check = () => setIsNarrow(window.innerWidth < 600);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
   const getDateRange = (range: string) => {
     const to = new Date();
     let from = new Date();
@@ -372,6 +380,15 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
         getRowId={(row) => row.id}
         autoPageSize
         pageSize={10}
+        columnVisibilityModel={
+          isNarrow
+            ? {
+                documentSubTypeName: false,
+                assignedUsers: false,
+                assignedByUserName: false
+              }
+            : undefined
+        }
         sx={{
           '.MuiDataGrid-columnSeparator': { display: 'none' },
           '& .MuiDataGrid-columnHeaders': {
@@ -400,31 +417,38 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
         onClose={handleDialogClose}
         maxWidth="md"
         fullWidth
+        fullScreen={typeof window !== 'undefined' && window.innerWidth < 600}
       >
         <Box
           sx={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            gap: 1,
             px: 2,
             py: 1,
             borderBottom: '1px solid #ddd'
           }}
         >
-          <Typography variant="h4" noWrap>
+          <Typography
+            variant="h4"
+            noWrap
+            sx={{ fontSize: { xs: '1rem', sm: '1.5rem', md: '2.125rem' } }}
+          >
             {'Document Viewer: ' + menuDoc?.documentName}
           </Typography>
-          <IconButton onClick={handleDialogClose}>
+          <IconButton onClick={handleDialogClose} sx={{ flexShrink: 0 }}>
             <CloseIcon />
           </IconButton>
         </Box>
 
         <DialogContent
           sx={{
-            height: '90vh',
+            height: { xs: 'calc(100vh - 120px)', sm: '90vh' },
             display: 'flex',
             justifyContent: 'center',
-            alignItems: 'center'
+            alignItems: 'center',
+            p: { xs: 1, sm: 2 }
           }}
         >
           {docLoading || !docUrl ? (
@@ -467,6 +491,7 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
         <Box
           sx={{
             display: 'flex',
+            flexWrap: 'wrap',
             justifyContent: 'flex-end',
             alignItems: 'center',
             px: 2,

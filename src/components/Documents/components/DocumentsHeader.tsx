@@ -33,16 +33,25 @@ const DocumentsHeader: React.FC<DocumentsHeaderProps> = ({
           justifyContent="space-between"
           spacing={2}
         >
-          <Grid item>
-            <Typography variant="h3" component="h1" fontWeight="bold">
+          <Grid item xs={12} sm="auto">
+            <Typography
+              variant="h3"
+              component="h1"
+              fontWeight="bold"
+              sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '3rem' } }}
+            >
               {'Documents'}
             </Typography>
           </Grid>
 
-          <Grid item>
+          <Grid item xs={12} sm="auto">
             <Grid container spacing={2}>
-              <Grid item>
-                <FormControl size="small" sx={{ minWidth: 160 }}>
+              <Grid item xs={12} sm="auto">
+                <FormControl
+                  size="small"
+                  fullWidth
+                  sx={{ minWidth: { xs: '100%', sm: 160 } }}
+                >
                   <InputLabel id="date-range-label">Date Range</InputLabel>
                   <Select
                     labelId="date-range-label"

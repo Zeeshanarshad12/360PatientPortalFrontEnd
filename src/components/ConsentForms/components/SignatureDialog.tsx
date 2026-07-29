@@ -22,14 +22,35 @@ interface Props {
   onSave: (Signature: string) => void;
 }
 
+const SIGNATURE_CANVAS_HEIGHT = 150;
+
 const SignatureDialog = ({ open, onClose, onSave }: Props) => {
   const sigRef = useRef<SignatureCanvas>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const canvasWrapperRef = useRef<HTMLDivElement>(null);
 
   const [mode, setMode] = useState<'signature' | 'photograph'>('signature');
   const [photoDataUrl, setPhotoDataUrl] = useState<string | null>(null);
   const [error, setError] = useState<string>('');
   const [fadeIn, setFadeIn] = useState(true);
+  const [canvasWidth, setCanvasWidth] = useState(500);
+
+  // The signature canvas's drawing surface must match its rendered CSS size —
+  // otherwise touch/mouse coordinates get scaled and the drawn line misaligns
+  // from the pointer. Recompute on open/resize instead of hardcoding 500px,
+  // since the dialog can render far narrower than that on mobile.
+  useEffect(() => {
+    if (!open || mode !== 'signature') return;
+
+    const updateWidth = () => {
+      const containerWidth = canvasWrapperRef.current?.clientWidth;
+      if (containerWidth) setCanvasWidth(Math.floor(containerWidth));
+    };
+
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
+  }, [open, mode]);
 
   const handleClear = () => {
     setError('');
@@ -138,6 +159,7 @@ const SignatureDialog = ({ open, onClose, onSave }: Props) => {
         {mode === 'signature' && (
           <>
             <Box
+              ref={canvasWrapperRef}
               sx={{
                 border: '1px dashed #ccc',
                 p: 2,
@@ -149,9 +171,10 @@ const SignatureDialog = ({ open, onClose, onSave }: Props) => {
               <ReactSignatureCanvas
                 ref={sigRef}
                 canvasProps={{
-                  width: 500,
-                  height: 150,
-                  className: 'sigCanvas'
+                  width: canvasWidth,
+                  height: SIGNATURE_CANVAS_HEIGHT,
+                  className: 'sigCanvas',
+                  style: { width: '100%', height: SIGNATURE_CANVAS_HEIGHT }
                 }}
               />
             </Box>
