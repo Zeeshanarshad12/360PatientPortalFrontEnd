@@ -245,7 +245,9 @@ function ConsentFormsLayout() {
           <Grid container spacing={2}>
             {/* Left Sidebar */}
             <Grid item xs={12} md={3}>
-              <Box sx={{ height: 'calc(100vh - 60px)' }}>
+              <Box
+                sx={{ height: { xs: '45vh', md: 'calc(100vh - 60px)' } }}
+              >
                 <Card
                   variant="outlined"
                   sx={{
@@ -268,7 +270,11 @@ function ConsentFormsLayout() {
                     <Typography
                       variant="h4"
                       component="h4"
-                      sx={{ fontWeight: 700, mb: 2 }}
+                      sx={{
+                        fontWeight: 700,
+                        mb: 2,
+                        fontSize: { xs: '1.1rem', sm: '1.5rem' }
+                      }}
                     >
                       Consent Forms{' '}
                       <Badge
@@ -291,7 +297,9 @@ function ConsentFormsLayout() {
 
             {/* Right Viewer Panel */}
             <Grid item xs={12} md={9}>
-              <Box sx={{ height: 'calc(100vh - 60px)' }}>
+              <Box
+                sx={{ height: { xs: '55vh', md: 'calc(100vh - 60px)' } }}
+              >
                 <Card
                   variant="outlined"
                   sx={{

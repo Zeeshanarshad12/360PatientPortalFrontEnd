@@ -104,11 +104,11 @@ const ConsentFormList = ({ forms, onSelect, selectedId, resetKey }: Props) => {
                 }}
               >
                 {/* Text Section */}
-                <Box sx={{ flexGrow: 0 }}>
+                <Box sx={{ flexGrow: 1, minWidth: 0 }}>
                   <ListItemText
                     primary={form.Title}
                     primaryTypographyProps={{
-                      fontSize: 12,
+                      fontSize: '0.75rem',
                       fontWeight: isActive ? 700 : 500,
                       color: isActive ? 'primary.main' : 'text.primary'
                     }}
@@ -118,7 +118,7 @@ const ConsentFormList = ({ forms, onSelect, selectedId, resetKey }: Props) => {
                         : form.Status
                     }
                     secondaryTypographyProps={{
-                      fontSize: 11,
+                      fontSize: '0.6875rem',
                       color: 'text.secondary',
                       // whiteSpace: 'nowrap', // Ensures one-line
                       overflow: 'hidden',
@@ -128,7 +128,7 @@ const ConsentFormList = ({ forms, onSelect, selectedId, resetKey }: Props) => {
                 </Box>
 
                 {/* Icon Section */}
-                <Box sx={{ ml: 1 }}>
+                <Box sx={{ ml: 1, flexShrink: 0 }}>
                   {form.Status === 'Signed' ? (
                     <CheckCircleIcon color="success" fontSize="small" />
                   ) : (

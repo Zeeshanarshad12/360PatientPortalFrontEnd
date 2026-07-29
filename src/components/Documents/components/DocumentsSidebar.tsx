@@ -166,11 +166,16 @@ const DocumentsSidebar: React.FC<DocumentsSidebarProps & { dateRange: string }> 
           mb: 2,
           mt: 0.5,
           borderRadius: 1,
-          height: 30
+          minHeight: 30,
+          py: 0.5
         }}
       >
         <FolderDocumentIcon fontSize="medium" color="primary" />
-        <Typography variant="h4" component="h4" sx={{ fontWeight: 700 }}>
+        <Typography
+          variant="h4"
+          component="h4"
+          sx={{ fontWeight: 700, fontSize: { xs: '1.1rem', sm: '1.5rem' } }}
+        >
           All Documents
         </Typography>
         <Box

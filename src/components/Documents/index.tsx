@@ -53,8 +53,12 @@ const PatientDocuments = () => {
             </Grid>
 
             {/* Left Sidebar */}
-            <Grid item xs={12} sm={6} md={3} lg={3}>
-              <Box sx={{ height: 'calc(90vh - 60px)' }}>
+            <Grid item xs={12} md={3} lg={3}>
+              <Box
+                sx={{
+                  height: { xs: '50vh', md: 'calc(90vh - 60px)' }
+                }}
+              >
                 <Card
                   sx={{
                     height: '98%',
@@ -87,8 +91,12 @@ const PatientDocuments = () => {
             </Grid>
 
             {/* Right Body */}
-            <Grid item xs={12} sm={6} md={9} lg={9}>
-              <Box sx={{ height: 'calc(90vh - 60px)' }}>
+            <Grid item xs={12} md={9} lg={9}>
+              <Box
+                sx={{
+                  height: { xs: '60vh', md: 'calc(90vh - 60px)' }
+                }}
+              >
                 <Card
                   sx={{
                     height: '98%',

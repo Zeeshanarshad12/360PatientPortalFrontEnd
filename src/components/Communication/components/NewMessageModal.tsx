@@ -381,7 +381,7 @@ export const NewMessageModal: React.FC = () => {
                       maxHeight: '220px',
                       minWidth: '100%',
                       width: 'max-content',
-                      maxWidth: '400px'
+                      maxWidth: 'min(400px, 90vw)'
                     }}
                   >
                     <div

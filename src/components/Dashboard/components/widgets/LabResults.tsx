@@ -94,9 +94,15 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
               display="flex"
               alignItems="center"
               justifyContent="space-between"
+              flexWrap="wrap"
+              gap={1}
               mb={2}
             >
-              <Typography variant="h4" fontWeight="bold">
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ fontSize: '1.25rem' }}
+              >
                 {widgetContent.labResults.title}
               </Typography>
             </Box>
@@ -117,9 +123,15 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
               display="flex"
               justifyContent="space-between"
               alignItems="center"
+              flexWrap="wrap"
+              gap={1}
               mb={2}
             >
-              <Typography variant="h4" fontWeight="bold">
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ fontSize: '1.25rem' }}
+              >
                 {widgetContent.labResults.title}
                 <Chip
                   label={labGroups.length}
@@ -189,62 +201,70 @@ const LabResults: React.FC<Props> = ({ dragHandleProps }) => {
                           </Box>
 
                           <Collapse in={isOpen} timeout="auto" unmountOnExit>
-                            <Table size="small" sx={{ mt: 1 }} role="none">
-                              <TableBody>
-                                {test.labObservations &&
-                                  test.labObservations.map((obs: any) => {
-                                    const abnormal = isAbnormal(obs);
+                            <Box sx={{ overflowX: 'auto', mt: 1 }}>
+                              <Table
+                                size="small"
+                                role="none"
+                                sx={{ minWidth: { xs: 320, sm: 'auto' } }}
+                              >
+                                <TableBody>
+                                  {test.labObservations &&
+                                    test.labObservations.map((obs: any) => {
+                                      const abnormal = isAbnormal(obs);
 
-                                    return (
-                                      <TableRow
-                                        key={obs.id}
-                                        sx={{ height: 40 }}
-                                      >
-                                        <TableCell
-                                          sx={{
-                                            maxWidth: 200,
-                                            whiteSpace: 'nowrap',
-                                            overflow: 'hidden',
-                                            textOverflow: 'ellipsis'
-                                          }}
+                                      return (
+                                        <TableRow
+                                          key={obs.id}
+                                          sx={{ height: 40 }}
                                         >
-                                          <Typography
-                                            noWrap
-                                            title={obs.alternateText}
+                                          <TableCell
+                                            sx={{
+                                              maxWidth: { xs: 120, sm: 200 },
+                                              whiteSpace: 'nowrap',
+                                              overflow: 'hidden',
+                                              textOverflow: 'ellipsis'
+                                            }}
                                           >
-                                            {obs.alternateText}
-                                          </Typography>
-                                        </TableCell>
-                                        <TableCell sx={{ width: 100 }}>
-                                          <Typography
-                                          // sx={{
-                                          //   color: abnormal
-                                          //     ? 'error.main'
-                                          //     : 'inherit',
-                                          //   fontWeight: abnormal
-                                          //     ? 'bold'
-                                          //     : 'normal'
-                                          // }}
+                                            <Typography
+                                              noWrap
+                                              title={obs.alternateText}
+                                            >
+                                              {obs.alternateText}
+                                            </Typography>
+                                          </TableCell>
+                                          <TableCell
+                                            sx={{ width: { xs: 70, sm: 100 } }}
                                           >
-                                            {obs.observationValue}
-                                          </Typography>
-                                        </TableCell>
-                                        <TableCell
-                                          align="right"
-                                          sx={{
-                                            width: 150,
-                                            whiteSpace: 'nowrap'
-                                          }}
-                                        >
-                                          <Typography>
-                                            {obs.referranceRange} {obs.units}
-                                          </Typography>
-                                        </TableCell>
-                                      </TableRow>
-                                    );
-                                  })}
-                              </TableBody>
-                            </Table>
+                                            <Typography
+                                            // sx={{
+                                            //   color: abnormal
+                                            //     ? 'error.main'
+                                            //     : 'inherit',
+                                            //   fontWeight: abnormal
+                                            //     ? 'bold'
+                                            //     : 'normal'
+                                            // }}
+                                            >
+                                              {obs.observationValue}
+                                            </Typography>
+                                          </TableCell>
+                                          <TableCell
+                                            align="right"
+                                            sx={{
+                                              width: { xs: 110, sm: 150 },
+                                              whiteSpace: 'nowrap'
+                                            }}
+                                          >
+                                            <Typography>
+                                              {obs.referranceRange} {obs.units}
+                                            </Typography>
+                                          </TableCell>
+                                        </TableRow>
+                                      );
+                                    })}
+                                </TableBody>
+                              </Table>
+                            </Box>
                           </Collapse>
                         </Box>
                       );

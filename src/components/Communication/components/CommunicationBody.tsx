@@ -12,9 +12,10 @@ export const CommunicationBody: React.FC = () => {
         flexGrow: 1,
         padding: 1, // ← same as ConsentFormsLayout
         overflowY: 'hidden',
-        height: 'calc(100vh - 60px)',
+        height: { xs: 'auto', md: 'calc(100vh - 60px)' },
+        maxHeight: { xs: 'calc(100vh - 60px)', md: 'none' },
         display: 'flex',
-        flexDirection: 'row',
+        flexDirection: { xs: 'column', md: 'row' },
         gap: 0
       }}
     >

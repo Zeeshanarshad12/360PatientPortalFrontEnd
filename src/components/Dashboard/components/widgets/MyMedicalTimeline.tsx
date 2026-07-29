@@ -106,9 +106,15 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
               display="flex"
               alignItems="center"
               justifyContent="space-between"
+              flexWrap="wrap"
+              gap={1}
               mb={2}
             >
-              <Typography variant="h4" fontWeight="bold">
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ fontSize: '1.25rem' }}
+              >
                 {widgetContent.myMedicalTimeline.title}
               </Typography>
             </Box>
@@ -130,9 +136,15 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
               display="flex"
               alignItems="center"
               justifyContent="space-between"
+              flexWrap="wrap"
+              gap={1}
               mb={2}
             >
-              <Typography variant="h4" fontWeight="bold">
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ fontSize: '1.25rem' }}
+              >
                 {widgetContent.myMedicalTimeline.title}
                 <Chip
                   label={timelineEvents.length}
@@ -255,7 +267,11 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
 
                     {/* Associated Details Buttons */}
                     {event.associatedDetails && (
-                      <Box display="flex" gap={1} sx={{ mb: 1 }}>
+                      <Box
+                        display="flex"
+                        gap={1}
+                        sx={{ mb: 1, flexWrap: 'wrap' }}
+                      >
                         {event.associatedDetails.map(
                           (detail: string, detailIndex: number) => (
                             <Button

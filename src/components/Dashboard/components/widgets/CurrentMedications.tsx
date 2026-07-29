@@ -62,9 +62,15 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
               display="flex"
               alignItems="center"
               justifyContent="space-between"
+              flexWrap="wrap"
+              gap={1}
               mb={2}
             >
-              <Typography variant="h4" fontWeight="bold">
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ fontSize: '1.25rem' }}
+              >
                 {widgetContent.currentMedications.title}
               </Typography>
             </Box>
@@ -86,9 +92,15 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
               display="flex"
               alignItems="center"
               justifyContent="space-between"
+              flexWrap="wrap"
+              gap={1}
               mb={2}
             >
-              <Typography variant="h4" fontWeight="bold">
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ fontSize: '1.25rem' }}
+              >
                 {widgetContent.currentMedications.title}
                 <Chip
                   label={medications.length}
@@ -142,7 +154,7 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
                   {/* Medication Details */}
                   <Typography
                     fontWeight="bold"
-                    sx={{ textTransform: 'capitalize' }}
+                    sx={{ pr: 8, textTransform: 'capitalize' }}
                   >
                     {med.drugInfo}
                   </Typography>
