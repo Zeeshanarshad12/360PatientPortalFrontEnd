@@ -36,7 +36,8 @@ export const NewMessageModal: React.FC = () => {
   const providersLoading = useSelector(selectProvidersLoading);
   const groupOption = useSelector(selectGroupOption);
 
-  const { patientId, practiceId } = useCurrentPatient();
+  const { patientId, practiceId, firstName, lastName } = useCurrentPatient();
+  const patientFullName = [firstName, lastName].filter(Boolean).join(' ');
 
   const [subject, setSubject] = useState('');
   const [providerId, setProviderId] = useState('');
@@ -181,7 +182,7 @@ export const NewMessageModal: React.FC = () => {
         isPrivate,
         providerId: selectedProvider.numericId,
         providerName: selectedProvider.name,
-        patientName: '',
+        patientName: patientFullName,
         messageType: String(mediumId),
         practiceId: Number(practiceId)
       })
