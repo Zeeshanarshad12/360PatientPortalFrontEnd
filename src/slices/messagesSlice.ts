@@ -71,12 +71,14 @@ export interface Provider {
   numericId: number;
   specialty: string;
   avatar?: string;
+  role?: string;
 }
 export interface PatientProvider {
   providerId: number;
   practiceId: number;
   providerName: string;
   specialty?: string;
+  role?: string;
 }
 
 export interface MessagesState {
@@ -332,6 +334,7 @@ export const fetchPatientProviders = createAsyncThunk<Provider[], number>(
           numericId: p.providerId,
           name: p.providerName,
           specialty: p.specialty ?? '',
+          role: p.role,
           avatar: ''
         }));
       }
@@ -372,8 +375,9 @@ export const GetAllComments = createAsyncThunk<
     );
 
     if (res?.status === 200 || res?.status === 201) {
-      const comments: CommunicationCommentDetail[] | CommunicationCommentDetail =
-        res.data?.result ?? res.data ?? [];
+      const comments:
+        | CommunicationCommentDetail[]
+        | CommunicationCommentDetail = res.data?.result ?? res.data ?? [];
 
       const state = thunkAPI.getState() as any;
       const threadId = state.messages.activeThreadId;
@@ -874,7 +878,11 @@ const messagesSlice = createSlice({
       state: MessagesState,
       {
         payload
-      }: PayloadAction<{ threadId: string; messages: Message[]; toName?: string }>
+      }: PayloadAction<{
+        threadId: string;
+        messages: Message[];
+        toName?: string;
+      }>
     ) => {
       state.commentsLoading = false;
       if (payload) {
@@ -902,7 +910,10 @@ const messagesSlice = createSlice({
         if (thread && (!thread.toName || thread.toName === 'Unknown')) {
           if (payload.toName) {
             thread.toName = payload.toName;
-            if (!thread.providerName || thread.providerName === 'Unknown Provider') {
+            if (
+              !thread.providerName ||
+              thread.providerName === 'Unknown Provider'
+            ) {
               thread.providerName = payload.toName;
             }
           }
