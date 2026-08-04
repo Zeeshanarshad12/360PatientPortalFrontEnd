@@ -564,7 +564,10 @@ export const NewMessageModal: React.FC = () => {
           {/* Priority */}
           <div className="comm-form-group">
             <label className="comm-label">Priority</label>
-            <div className="comm-priority-toggle">
+            <div
+              className="comm-priority-toggle"
+              style={{ width: 'fit-content', minWidth: '220px' }}
+            >
               {(['Normal', 'Urgent'] as Priority[]).map((p) => (
                 <button
                   key={p}
