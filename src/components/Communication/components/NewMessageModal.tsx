@@ -274,6 +274,249 @@ export const NewMessageModal: React.FC = () => {
 
         {/* ── Body ── */}
         <div className="comm-modal__body">
+          {/* Note */}
+          <div
+            style={{
+              display: 'flex',
+              gap: 10,
+              padding: '14px 16px',
+              borderRadius: 10,
+              background: '#eff6ff',
+              border: '1px solid #bfdbfe'
+            }}
+          >
+            <span
+              style={{
+                flexShrink: 0,
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                background: '#006ad4',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '13px',
+                fontWeight: 700,
+                fontStyle: 'italic',
+                fontFamily: 'Georgia, serif'
+              }}
+            >
+              i
+            </span>
+            <div
+              style={{ fontSize: '13.5px', color: '#1e293b', lineHeight: 1.6 }}
+            >
+              Please choose the recipient that best matches your needs so we can
+              assist you quickly.
+              <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>
+                <li>
+                  <strong>Front Desk</strong> – Appointments, scheduling,
+                  insurance, or billing questions.
+                </li>
+                <li>
+                  <strong>Medical Assistant / Nurse</strong> – Prescription
+                  refills, medical questions, test results, or other clinical
+                  concerns.
+                </li>
+                <li>
+                  <strong>Provider</strong> – Follow-up questions or concerns
+                  that require your provider&apos;s attention.
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Recipient */}
+          <div className="comm-form-group">
+            <label className="comm-label">
+              Recipient <span style={{ color: 'red' }}>*</span>
+            </label>
+
+            <div ref={providerDropdownRef} style={{ position: 'relative' }}>
+              <button
+                type="button"
+                className={`comm-input${
+                  errors.providerId ? ' comm-input--error' : ''
+                }`}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  width: '100%',
+                  background: providersLoading ? '#f8fafc' : '#ffffff'
+                }}
+                onClick={() => {
+                  if (!providersLoading) setShowProviderMenu((v) => !v);
+                }}
+                disabled={providersLoading}
+              >
+                <span
+                  style={{
+                    color: selectedProviderName ? '#1e293b' : '#94a3b8',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    flex: 1
+                  }}
+                >
+                  {providersLoading
+                    ? 'Loading providers...'
+                    : selectedProviderName || 'Please select a recipient'}
+                </span>
+                <svg
+                  width="14"
+                  height="14"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="#94a3b8"
+                  strokeWidth="2"
+                  style={{
+                    flexShrink: 0,
+                    marginLeft: 6,
+                    transform: showProviderMenu
+                      ? 'rotate(180deg)'
+                      : 'rotate(0deg)',
+                    transition: 'transform 0.2s'
+                  }}
+                >
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+
+              {/* Dropdown */}
+              {showProviderMenu && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    ...(openUpward
+                      ? { bottom: 'calc(100% + 4px)', top: 'auto' }
+                      : { top: 'calc(100% + 4px)', bottom: 'auto' }),
+                    left: 0,
+                    right: 0,
+                    background: '#ffffff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+                    zIndex: 1400,
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    maxHeight: '220px',
+                    minWidth: '100%',
+                    width: 'max-content',
+                    maxWidth: 'min(400px, 90vw)'
+                  }}
+                >
+                  <div
+                    style={{
+                      padding: '8px',
+                      borderBottom: '1px solid #f1f5f9',
+                      flexShrink: 0
+                    }}
+                  >
+                    <input
+                      className="comm-input"
+                      placeholder="Search provider..."
+                      value={providerSearch}
+                      onChange={(e) => setProviderSearch(e.target.value)}
+                      autoFocus
+                      style={{
+                        padding: '6px 10px',
+                        fontSize: '13px',
+                        marginBottom: 0
+                      }}
+                    />
+                  </div>
+
+                  {/* List */}
+                  <div style={{ overflowY: 'auto', flex: 1 }}>
+                    {filteredProviders.length === 0 ? (
+                      <div
+                        style={{
+                          padding: '12px 14px',
+                          color: '#94a3b8',
+                          fontSize: '13px',
+                          textAlign: 'center'
+                        }}
+                      >
+                        No providers found
+                      </div>
+                    ) : (
+                      providerGroups.map((group) => (
+                        <div key={group.key}>
+                          <div
+                            style={{
+                              padding: '8px 14px 4px',
+                              fontSize: '13.5px',
+                              fontWeight: 700,
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.06em',
+                              color: '#3F4E6D',
+                              fontFamily: 'Open Sans, sans-serif',
+                              background: '#f8fafc'
+                            }}
+                          >
+                            {group.label}
+                          </div>
+                          {group.providers.map((p) => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              className="comm-provider-item"
+                              data-tooltip={
+                                p.name.length > 30 ? p.name : undefined
+                              }
+                              style={{
+                                display: 'block',
+                                width: '100%',
+                                padding: '9px 14px',
+                                background:
+                                  providerId === p.id ? '#eff6ff' : 'none',
+                                border: 'none',
+                                borderBottom: '1px solid #f8fafc',
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                fontSize: '13.5px',
+                                color:
+                                  providerId === p.id ? '#006ad4' : '#1e293b',
+                                fontWeight: providerId === p.id ? 600 : 400,
+                                fontFamily: 'Open Sans, sans-serif',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }}
+                              onClick={() => {
+                                setProviderId(p.id);
+                                setCcProviderIds((prev) =>
+                                  prev.filter((id) => id !== p.numericId)
+                                );
+                                setErrors((e) => ({
+                                  ...e,
+                                  providerId: undefined
+                                }));
+                                setShowProviderMenu(false);
+                                setProviderSearch('');
+                              }}
+                            >
+                              {p.name}
+                            </button>
+                          ))}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {errors.providerId && (
+              <span className="comm-error-text">{errors.providerId}</span>
+            )}
+          </div>
+
           {/* Subject */}
           <div className="comm-form-group">
             <label className="comm-label">
@@ -318,213 +561,22 @@ export const NewMessageModal: React.FC = () => {
             )}
           </div>
 
-          <div className="comm-form-row">
-            <div className="comm-form-group comm-form-group--half">
-              <label className="comm-label">
-                Provider <span style={{ color: 'red' }}>*</span>
-              </label>
-
-              <div ref={providerDropdownRef} style={{ position: 'relative' }}>
+          {/* Priority */}
+          <div className="comm-form-group">
+            <label className="comm-label">Priority</label>
+            <div className="comm-priority-toggle">
+              {(['Normal', 'Urgent'] as Priority[]).map((p) => (
                 <button
+                  key={p}
                   type="button"
-                  className={`comm-input${
-                    errors.providerId ? ' comm-input--error' : ''
+                  className={`comm-priority-btn${
+                    priority === p ? ' comm-priority-btn--active' : ''
                   }`}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    width: '100%',
-                    background: providersLoading ? '#f8fafc' : '#ffffff'
-                  }}
-                  onClick={() => {
-                    if (!providersLoading) setShowProviderMenu((v) => !v);
-                  }}
-                  disabled={providersLoading}
+                  onClick={() => setPriority(p)}
                 >
-                  <span
-                    style={{
-                      color: selectedProviderName ? '#1e293b' : '#94a3b8',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      whiteSpace: 'nowrap',
-                      flex: 1
-                    }}
-                  >
-                    {providersLoading
-                      ? 'Loading providers...'
-                      : selectedProviderName || 'Please Select'}
-                  </span>
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="#94a3b8"
-                    strokeWidth="2"
-                    style={{
-                      flexShrink: 0,
-                      marginLeft: 6,
-                      transform: showProviderMenu
-                        ? 'rotate(180deg)'
-                        : 'rotate(0deg)',
-                      transition: 'transform 0.2s'
-                    }}
-                  >
-                    <polyline points="6 9 12 15 18 9" />
-                  </svg>
+                  {p}
                 </button>
-
-                {/* Dropdown */}
-                {showProviderMenu && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      ...(openUpward
-                        ? { bottom: 'calc(100% + 4px)', top: 'auto' }
-                        : { top: 'calc(100% + 4px)', bottom: 'auto' }),
-                      left: 0,
-                      right: 0,
-                      background: '#ffffff',
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '8px',
-                      boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                      zIndex: 1400,
-                      overflow: 'hidden',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      maxHeight: '220px',
-                      minWidth: '100%',
-                      width: 'max-content',
-                      maxWidth: 'min(400px, 90vw)'
-                    }}
-                  >
-                    <div
-                      style={{
-                        padding: '8px',
-                        borderBottom: '1px solid #f1f5f9',
-                        flexShrink: 0
-                      }}
-                    >
-                      <input
-                        className="comm-input"
-                        placeholder="Search provider..."
-                        value={providerSearch}
-                        onChange={(e) => setProviderSearch(e.target.value)}
-                        autoFocus
-                        style={{
-                          padding: '6px 10px',
-                          fontSize: '13px',
-                          marginBottom: 0
-                        }}
-                      />
-                    </div>
-
-                    {/* List */}
-                    <div style={{ overflowY: 'auto', flex: 1 }}>
-                      {filteredProviders.length === 0 ? (
-                        <div
-                          style={{
-                            padding: '12px 14px',
-                            color: '#94a3b8',
-                            fontSize: '13px',
-                            textAlign: 'center'
-                          }}
-                        >
-                          No providers found
-                        </div>
-                      ) : (
-                        providerGroups.map((group) => (
-                          <div key={group.key}>
-                            <div
-                              style={{
-                                padding: '8px 14px 4px',
-                                fontSize: '13.5px',
-                                fontWeight: 700,
-                                textTransform: 'uppercase',
-                                letterSpacing: '0.06em',
-                                color: '#3F4E6D',
-                                fontFamily: 'Open Sans, sans-serif',
-                                background: '#f8fafc'
-                              }}
-                            >
-                              {group.label}
-                            </div>
-                            {group.providers.map((p) => (
-                              <button
-                                key={p.id}
-                                type="button"
-                                className="comm-provider-item"
-                                data-tooltip={
-                                  p.name.length > 30 ? p.name : undefined
-                                }
-                                style={{
-                                  display: 'block',
-                                  width: '100%',
-                                  padding: '9px 14px',
-                                  background:
-                                    providerId === p.id ? '#eff6ff' : 'none',
-                                  border: 'none',
-                                  borderBottom: '1px solid #f8fafc',
-                                  textAlign: 'left',
-                                  cursor: 'pointer',
-                                  fontSize: '13.5px',
-                                  color:
-                                    providerId === p.id ? '#006ad4' : '#1e293b',
-                                  fontWeight: providerId === p.id ? 600 : 400,
-                                  fontFamily: 'Open Sans, sans-serif',
-                                  whiteSpace: 'nowrap',
-                                  overflow: 'hidden',
-                                  textOverflow: 'ellipsis'
-                                }}
-                                onClick={() => {
-                                  setProviderId(p.id);
-                                  setCcProviderIds((prev) =>
-                                    prev.filter((id) => id !== p.numericId)
-                                  );
-                                  setErrors((e) => ({
-                                    ...e,
-                                    providerId: undefined
-                                  }));
-                                  setShowProviderMenu(false);
-                                  setProviderSearch('');
-                                }}
-                              >
-                                {p.name}
-                              </button>
-                            ))}
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {errors.providerId && (
-                <span className="comm-error-text">{errors.providerId}</span>
-              )}
-            </div>
-
-            {/* Priority */}
-            <div className="comm-form-group comm-form-group--half">
-              <label className="comm-label">Priority</label>
-              <div className="comm-priority-toggle">
-                {(['Normal', 'Urgent'] as Priority[]).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    className={`comm-priority-btn${
-                      priority === p ? ' comm-priority-btn--active' : ''
-                    }`}
-                    onClick={() => setPriority(p)}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
+              ))}
             </div>
           </div>
 
