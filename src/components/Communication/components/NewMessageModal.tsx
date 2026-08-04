@@ -51,7 +51,7 @@ export const NewMessageModal: React.FC = () => {
   const [showProviderMenu, setShowProviderMenu] = useState(false);
   const [providerSearch, setProviderSearch] = useState('');
   const providerDropdownRef = useRef<HTMLDivElement>(null);
-  const firstInputRef = useRef<HTMLInputElement>(null);
+  const firstInputRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     if (isOpen) dispatch(clearError());
@@ -156,14 +156,10 @@ export const NewMessageModal: React.FC = () => {
   const frontDeskProviders = filteredProviders.filter(
     (p) => p.role?.trim().toLowerCase() === 'frontdesk'
   );
-  const otherProviders = filteredProviders.filter(
-    (p) => !clinicalProviders.includes(p) && !frontDeskProviders.includes(p)
-  );
 
   const providerGroups = [
     { key: 'clinical', label: 'Clinical Staff', providers: clinicalProviders },
-    { key: 'frontdesk', label: 'Front Desk', providers: frontDeskProviders },
-    { key: 'other', label: 'Other', providers: otherProviders }
+    { key: 'frontdesk', label: 'Front Desk', providers: frontDeskProviders }
   ].filter((group) => group.providers.length > 0);
 
   const selectedProviderName =
@@ -335,6 +331,7 @@ export const NewMessageModal: React.FC = () => {
 
             <div ref={providerDropdownRef} style={{ position: 'relative' }}>
               <button
+                ref={firstInputRef}
                 type="button"
                 className={`comm-input${
                   errors.providerId ? ' comm-input--error' : ''
@@ -523,7 +520,6 @@ export const NewMessageModal: React.FC = () => {
               Subject <span style={{ color: 'red' }}>*</span>
             </label>
             <input
-              ref={firstInputRef}
               className={`comm-input${
                 errors.subject ? ' comm-input--error' : ''
               }`}
