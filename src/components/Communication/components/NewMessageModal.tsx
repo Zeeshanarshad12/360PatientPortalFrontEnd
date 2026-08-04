@@ -150,6 +150,22 @@ export const NewMessageModal: React.FC = () => {
     p.name.toLowerCase().includes(providerSearch.toLowerCase())
   );
 
+  const clinicalProviders = filteredProviders.filter(
+    (p) => p.role?.trim().toLowerCase() === 'clinical'
+  );
+  const frontDeskProviders = filteredProviders.filter(
+    (p) => p.role?.trim().toLowerCase() === 'frontdesk'
+  );
+  const otherProviders = filteredProviders.filter(
+    (p) => !clinicalProviders.includes(p) && !frontDeskProviders.includes(p)
+  );
+
+  const providerGroups = [
+    { key: 'clinical', label: 'Clinical Staff', providers: clinicalProviders },
+    { key: 'frontdesk', label: 'Front Desk', providers: frontDeskProviders },
+    { key: 'other', label: 'Other', providers: otherProviders }
+  ].filter((group) => group.providers.length > 0);
+
   const selectedProviderName =
     providers.find((p) => p.id === providerId)?.name || '';
 
@@ -420,48 +436,66 @@ export const NewMessageModal: React.FC = () => {
                           No providers found
                         </div>
                       ) : (
-                        filteredProviders.map((p) => (
-                          <button
-                            key={p.id}
-                            type="button"
-                            className="comm-provider-item"
-                            data-tooltip={
-                              p.name.length > 30 ? p.name : undefined
-                            }
-                            style={{
-                              display: 'block',
-                              width: '100%',
-                              padding: '9px 14px',
-                              background:
-                                providerId === p.id ? '#eff6ff' : 'none',
-                              border: 'none',
-                              borderBottom: '1px solid #f8fafc',
-                              textAlign: 'left',
-                              cursor: 'pointer',
-                              fontSize: '13.5px',
-                              color:
-                                providerId === p.id ? '#006ad4' : '#1e293b',
-                              fontWeight: providerId === p.id ? 600 : 400,
-                              fontFamily: 'Open Sans, sans-serif',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
-                            }}
-                            onClick={() => {
-                              setProviderId(p.id);
-                              setCcProviderIds((prev) =>
-                                prev.filter((id) => id !== p.numericId)
-                              );
-                              setErrors((e) => ({
-                                ...e,
-                                providerId: undefined
-                              }));
-                              setShowProviderMenu(false);
-                              setProviderSearch('');
-                            }}
-                          >
-                            {p.name}
-                          </button>
+                        providerGroups.map((group) => (
+                          <div key={group.key}>
+                            <div
+                              style={{
+                                padding: '8px 14px 4px',
+                                fontSize: '13.5px',
+                                fontWeight: 700,
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.06em',
+                                color: '#3F4E6D',
+                                fontFamily: 'Open Sans, sans-serif',
+                                background: '#f8fafc'
+                              }}
+                            >
+                              {group.label}
+                            </div>
+                            {group.providers.map((p) => (
+                              <button
+                                key={p.id}
+                                type="button"
+                                className="comm-provider-item"
+                                data-tooltip={
+                                  p.name.length > 30 ? p.name : undefined
+                                }
+                                style={{
+                                  display: 'block',
+                                  width: '100%',
+                                  padding: '9px 14px',
+                                  background:
+                                    providerId === p.id ? '#eff6ff' : 'none',
+                                  border: 'none',
+                                  borderBottom: '1px solid #f8fafc',
+                                  textAlign: 'left',
+                                  cursor: 'pointer',
+                                  fontSize: '13.5px',
+                                  color:
+                                    providerId === p.id ? '#006ad4' : '#1e293b',
+                                  fontWeight: providerId === p.id ? 600 : 400,
+                                  fontFamily: 'Open Sans, sans-serif',
+                                  whiteSpace: 'nowrap',
+                                  overflow: 'hidden',
+                                  textOverflow: 'ellipsis'
+                                }}
+                                onClick={() => {
+                                  setProviderId(p.id);
+                                  setCcProviderIds((prev) =>
+                                    prev.filter((id) => id !== p.numericId)
+                                  );
+                                  setErrors((e) => ({
+                                    ...e,
+                                    providerId: undefined
+                                  }));
+                                  setShowProviderMenu(false);
+                                  setProviderSearch('');
+                                }}
+                              >
+                                {p.name}
+                              </button>
+                            ))}
+                          </div>
                         ))
                       )}
                     </div>
