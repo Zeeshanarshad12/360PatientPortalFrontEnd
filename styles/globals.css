@@ -1414,11 +1414,11 @@ html {
 .comm-modal__body {
   flex: 1;
   overflow-y: auto;
+  overflow-x: visible;
   padding: 20px 24px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  overflow: visible;
   padding-bottom: 16px;
 }
 
