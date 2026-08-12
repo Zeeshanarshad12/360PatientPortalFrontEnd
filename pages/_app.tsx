@@ -75,7 +75,11 @@ function MyApp(props: MyAppProps) {
           name="viewport"
           content="width=device-width, initial-scale=1, shrink-to-fit=no"
         />
-        <link rel="icon" href="/statics/Logo.svg" type="image/svg+xml" />
+        <link
+          rel="icon"
+          href="/statics/summitMyHealthLogo.png"
+          type="image/png"
+        />
       </Head>
       <ReduxProvider store={store}>
         {isAuthPage ? (

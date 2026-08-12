@@ -590,18 +590,11 @@ function ForgotPassword() {
                 }}
               >
                 <Image
-                  src="/statics/Logo.svg"
+                  src="/statics/Logo_PP.svg"
                   alt="Logo"
                   width={70}
                   height={70}
                 />
-                <Typography
-                  variant="h3"
-                  component="h3"
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  Patient Portal
-                </Typography>
               </Box>
 
               {/* Step 1: Email Input */}
