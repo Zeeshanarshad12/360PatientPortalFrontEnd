@@ -1,18 +1,25 @@
-import React, { useContext, useEffect } from "react";
-import { Box, IconButton, Tooltip, styled, useTheme, useMediaQuery } from "@mui/material";
-import MenuTwoToneIcon from "@mui/icons-material/MenuTwoTone";
-import { SidebarContext } from "src/contexts/SidebarContext";
-import CloseTwoToneIcon from "@mui/icons-material/CloseTwoTone";
+import React, { useContext, useEffect } from 'react';
+import {
+  Box,
+  IconButton,
+  Tooltip,
+  styled,
+  useTheme,
+  useMediaQuery
+} from '@mui/material';
+import MenuTwoToneIcon from '@mui/icons-material/MenuTwoTone';
+import { SidebarContext } from 'src/contexts/SidebarContext';
+import CloseTwoToneIcon from '@mui/icons-material/CloseTwoTone';
 
-import HeaderButtons from "./Buttons";
-import Link from "next/link";
-import Image from "next/image";
-import ThemeText from "@/components/ThemeComponent/ThemeHeading";
-import HeaderUserbox from "./Userbox";
-import PracticeBox from "./PracticeBox/PracticeBox";
-import ShareHealthInfo from "./ShareHealthInfo";
-import { GetGeneralLookup } from "@/slices/static";
-import { useDispatch, useSelector } from "@/store";
+import HeaderButtons from './Buttons';
+import Link from 'next/link';
+import Image from 'next/image';
+import ThemeText from '@/components/ThemeComponent/ThemeHeading';
+import HeaderUserbox from './Userbox';
+import PracticeBox from './PracticeBox/PracticeBox';
+import ShareHealthInfo from './ShareHealthInfo';
+import { GetGeneralLookup } from '@/slices/static';
+import { useDispatch, useSelector } from '@/store';
 
 const HeaderWrapper = styled(Box)(({ theme }) => ({
   height: '70px',
@@ -30,15 +37,15 @@ const HeaderWrapper = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'space-between',
-  
+
   [theme.breakpoints.up('md')]: {
     paddingLeft: theme.spacing(2),
-    paddingRight: theme.spacing(2),
+    paddingRight: theme.spacing(2)
   },
-  
+
   [theme.breakpoints.down('md')]: {
     paddingLeft: theme.spacing(1),
-    paddingRight: theme.spacing(1),
+    paddingRight: theme.spacing(1)
   }
 }));
 function Header() {
@@ -52,7 +59,7 @@ function Header() {
     try {
       window.location.reload();
     } catch (error) {
-      console.error("Error during logout:", error);
+      console.error('Error during logout:', error);
     }
   };
   React.useLayoutEffect(() => {
@@ -60,13 +67,13 @@ function Header() {
   }, [GeneralLookupData?.length, types]);
 
   useEffect(() => {
-    const channel: BroadcastChannel = new BroadcastChannel("localstorage");
-    channel.addEventListener("message", (event) => {
-      if (event.data === "refresh") {
+    const channel: BroadcastChannel = new BroadcastChannel('localstorage');
+    channel.addEventListener('message', (event) => {
+      if (event.data === 'refresh') {
         // On Tab Switch
         window.location.reload();
       }
-      if (event.data === "logout") {
+      if (event.data === 'logout') {
         handleLogoutApplication();
       }
     });
@@ -81,10 +88,10 @@ function Header() {
       {/* Mobile: Hamburger Menu + Logo */}
       {isMobile && (
         <Box sx={{ display: 'flex', alignItems: 'center', order: 1 }}>
-          <IconButton 
-            color="primary" 
+          <IconButton
+            color="primary"
             onClick={toggleSidebar}
-            sx={{ 
+            sx={{
               mr: 1,
               p: 1,
               '&:hover': {
@@ -97,12 +104,12 @@ function Header() {
           <Link href="/patientportal/dashboard" legacyBehavior>
             <a style={{ display: 'flex', alignItems: 'center' }}>
               <Image
-                src="/statics/Logo.svg"
+                src="/statics/Logo_PP.svg"
                 alt="Patient Portal Logo"
-                width={36}
-                height={36}
-                onClick={() => localStorage.removeItem("modules")}
-                style={{ cursor: 'pointer' }}
+                width={118}
+                height={45}
+                onClick={() => localStorage.removeItem('modules')}
+                style={{ cursor: 'pointer', height: '32px', width: 'auto' }}
               />
             </a>
           </Link>
@@ -115,33 +122,31 @@ function Header() {
           <Link href="/patientportal/dashboard" legacyBehavior>
             <a style={{ display: 'flex', alignItems: 'center' }}>
               <Image
-                src="/statics/Logo.svg"
+                src="/statics/Logo_PP.svg"
                 alt="Patient Portal Logo"
-                width={45}
+                width={118}
                 height={45}
-                onClick={() => localStorage.removeItem("modules")}
-                style={{ cursor: 'pointer', marginRight: '8px' }}
+                onClick={() => localStorage.removeItem('modules')}
+                style={{ cursor: 'pointer', marginRight: '8px', height: '48px', width: 'auto' }}
               />
             </a>
           </Link>
-          <ThemeText 
-            sx={{ 
+          <ThemeText
+            sx={{
               fontSize: { xs: '1.2rem', md: '1.7rem' },
               color: '#1976d2',
               fontWeight: 600,
               letterSpacing: '0.5px'
             }}
-          >
-            Patient Portal
-          </ThemeText>
+          ></ThemeText>
         </Box>
       )}
 
       {/* Right side content */}
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
           gap: { xs: 0.5, md: 1 },
           order: 2
         }}
