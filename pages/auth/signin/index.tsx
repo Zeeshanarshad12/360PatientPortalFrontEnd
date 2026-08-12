@@ -235,18 +235,12 @@ const Login = () => {
                 }}
               >
                 <Image
-                  src="/statics/Logo.svg"
+                  src="/statics/Logo_PP.svg"
                   alt="Logo"
-                  width={70}
-                  height={70}
+                  width={160}
+                  height={160}
+                  style={{ width: '100%', maxWidth: 220, height: 'auto' }}
                 />
-                <Typography
-                  variant="h3"
-                  component="h3"
-                  sx={{ fontWeight: 'bold' }}
-                >
-                  Patient Portal
-                </Typography>
               </Box>
 
               <Typography

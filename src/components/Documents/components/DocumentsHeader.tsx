@@ -34,12 +34,7 @@ const DocumentsHeader: React.FC<DocumentsHeaderProps> = ({
           spacing={2}
         >
           <Grid item xs={12} sm="auto">
-            <Typography
-              variant="h3"
-              component="h1"
-              fontWeight="bold"
-              sx={{ fontSize: { xs: '1.5rem', sm: '2rem', md: '3rem' } }}
-            >
+            <Typography variant="h3" component="h1" fontWeight="bold">
               {'Documents'}
             </Typography>
           </Grid>
