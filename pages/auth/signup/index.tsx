@@ -514,8 +514,9 @@ function SignUp() {
                 <Image
                   src="/statics/Logo_PP.svg"
                   alt="Logo"
-                  width={70}
-                  height={70}
+                  width={160}
+                  height={160}
+                  style={{ width: '100%', maxWidth: 220, height: 'auto' }}
                 />
               </Box>
 
