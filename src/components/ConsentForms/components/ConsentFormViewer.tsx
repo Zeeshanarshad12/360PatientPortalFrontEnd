@@ -61,6 +61,49 @@ const sanitizeForPDF = (text: string): string =>
     .replace(/\u00A0/g, ' ')
     .replace(/[^\x00-\xFF]/g, '');
 
+const escapeRegExp = (str: string): string =>
+  str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+const buildCheckInputTag = (
+  type: 'checkbox' | 'radio',
+  fieldId: string,
+  groupName: string,
+  checked: boolean,
+  disabled: boolean
+): string => {
+  const nameAttr = groupName ? `cf-group-${groupName}` : `cf-field-${fieldId}`;
+  return `<input type="${type}" data-field="${type}" data-field-id="${fieldId}" data-field-group="${groupName}" name="${nameAttr}"${
+    checked ? ' checked' : ''
+  }${disabled ? ' disabled' : ''} style="width:16px;height:16px;accent-color:#1976d2;cursor:${
+    disabled ? 'default' : 'pointer'
+  };" />`;
+};
+
+const buildCheckFieldHtml = (
+  type: 'checkbox' | 'radio',
+  fieldId: string,
+  groupName: string,
+  label: string,
+  checked: boolean,
+  disabled: boolean
+): string =>
+  `<label style="display:inline-flex;align-items:center;gap:6px;margin:2px 8px 2px 0;cursor:${
+    disabled ? 'default' : 'pointer'
+  };">${buildCheckInputTag(
+    type,
+    fieldId,
+    groupName,
+    checked,
+    disabled
+  )}&nbsp;&nbsp;<span>${label}&nbsp;&nbsp;</span></label>`;
+
+const renderCheckFields = (html: string, disabled: boolean): string =>
+  html.replace(
+    /<span class="df-field" data-field-type="(checkbox|radio)" data-field-id="([^"]*)" data-field-group="([^"]*)">([\s\S]*?)<\/span>/g,
+    (_match, type, fieldId, groupName, label) =>
+      buildCheckFieldHtml(type, fieldId, groupName, label, false, disabled)
+  );
+
 const cleanHTMLForExport = (html: string, formTitle: string): string =>
   html
     .replace(/<style[\s\S]*?<\/style>/gi, '')
@@ -82,10 +125,15 @@ const cleanHTMLForExport = (html: string, formTitle: string): string =>
     });
 
 // ── PDF paragraph model ───────────────────────────────────────────────────
+interface PdfFieldMarker {
+  type: 'checkbox' | 'radio';
+  checked: boolean;
+}
 interface PdfChunk {
   text: string;
   bold: boolean;
   italic: boolean;
+  field?: PdfFieldMarker;
 }
 interface PdfParagraph {
   chunks: PdfChunk[];
@@ -96,11 +144,6 @@ interface PdfParagraph {
   imageDataUrl?: string;
 }
 
-// ── generateFormattedPDF ──────────────────────────────────────────────────
-// Shared PDF generation pipeline — used by BOTH handleDownloadPDF AND
-// the upload-on-sign flow so Document Viewer shows identical output.
-// The signature image and Signed By span remain embedded in the form body
-// at the location of the original underscore placeholder.
 export const generateFormattedPDF = async (
   formData: ConsentForm & { Signature?: string; SignedByName?: string },
   htmlContent: string,
@@ -272,6 +315,19 @@ export const generateFormattedPDF = async (
       return { chunks: [], fontSize: fSize, align: elAlign, isHeading: false };
     }
 
+    if (tag === 'input') {
+      const inputType = el.getAttribute('type');
+      if ((inputType === 'checkbox' || inputType === 'radio') && para) {
+        para.chunks.push({
+          text: '',
+          bold: false,
+          italic: false,
+          field: { type: inputType, checked: el.hasAttribute('checked') }
+        });
+      }
+      return para;
+    }
+
     const isBlock = BLOCK_TAGS.has(tag);
     let currentPara = para;
     if (isBlock) {
@@ -401,26 +457,53 @@ export const generateFormattedPDF = async (
       word: string;
       bold: boolean;
       italic: boolean;
+      field?: PdfFieldMarker;
     }
     const tokens: WordToken[] = [];
     for (const chunk of p.chunks) {
+      if (chunk.field) {
+        tokens.push({ word: '', bold: chunk.bold, italic: chunk.italic, field: chunk.field });
+        continue;
+      }
       const parts = sanitizeForPDF(chunk.text).split(/(\s+)/);
       for (const part of parts)
         if (part)
           tokens.push({ word: part, bold: chunk.bold, italic: chunk.italic });
     }
 
+    // Checkbox/radio glyphs are drawn as small vector shapes rather than
+    // measured text, so they get a fixed reserved width scaled to the
+    // paragraph's font size (roughly matching the surrounding text's
+    // x-height) instead of going through getWordWidth.
+    const fieldSize = fSize * 0.34;
+    const fieldGap = fieldSize * 0.55;
+    const fieldTokenWidth = fieldSize + fieldGap;
+
     // Word-wrap tokens into visual lines
     interface RenderedWord {
       word: string;
       bold: boolean;
       italic: boolean;
+      field?: PdfFieldMarker;
     }
     const lines: RenderedWord[][] = [];
     let currentLine: RenderedWord[] = [],
       currentLineWidth = 0;
 
     for (const token of tokens) {
+      if (token.field) {
+        if (
+          currentLineWidth + fieldTokenWidth > usableW &&
+          currentLine.length > 0
+        ) {
+          lines.push(currentLine);
+          currentLine = [];
+          currentLineWidth = 0;
+        }
+        currentLine.push(token);
+        currentLineWidth += fieldTokenWidth;
+        continue;
+      }
       if (/^\s+$/.test(token.word)) {
         if (currentLine.length > 0) {
           currentLine.push(token);
@@ -451,6 +534,42 @@ export const generateFormattedPDF = async (
       lines.push(currentLine);
     }
 
+    // Draws a checkbox/radio glyph at the given x, vertically centered
+    // against the current text baseline `y`.
+    const drawField = (field: PdfFieldMarker, x: number) => {
+      const boxY = y - fieldSize * 0.82;
+      pdf.setDrawColor(70, 70, 70);
+      pdf.setLineWidth(0.28);
+      if (field.type === 'checkbox') {
+        pdf.rect(x, boxY, fieldSize, fieldSize);
+        if (field.checked) {
+          pdf.setLineWidth(0.45);
+          pdf.setDrawColor(25, 25, 25);
+          pdf.line(
+            x + fieldSize * 0.18,
+            boxY + fieldSize * 0.52,
+            x + fieldSize * 0.42,
+            boxY + fieldSize * 0.82
+          );
+          pdf.line(
+            x + fieldSize * 0.42,
+            boxY + fieldSize * 0.82,
+            x + fieldSize * 0.86,
+            boxY + fieldSize * 0.14
+          );
+        }
+      } else {
+        const radius = fieldSize / 2;
+        const cx = x + radius;
+        const cy = boxY + radius;
+        pdf.circle(cx, cy, radius);
+        if (field.checked) {
+          pdf.setFillColor(30, 30, 30);
+          pdf.circle(cx, cy, radius * 0.45, 'F');
+        }
+      }
+    };
+
     const lineH = fSize * 0.5;
     for (const rLine of lines) {
       if (y + lineH > contentBottom) {
@@ -459,7 +578,21 @@ export const generateFormattedPDF = async (
       }
 
       if (p.align !== 'left') {
-        const lineText = sanitizeForPDF(rLine.map((w) => w.word).join(''));
+         const lineText = sanitizeForPDF(
+          rLine
+            .map((w) =>
+              w.field
+                ? w.field.type === 'checkbox'
+                  ? w.field.checked
+                    ? '[x] '
+                    : '[ ] '
+                  : w.field.checked
+                  ? '(x) '
+                  : '( ) '
+                : w.word
+            )
+            .join('')
+        );
         const hasBold = rLine.some((w) => w.bold);
         const hasItalic = rLine.some((w) => w.italic);
         const fontStyle =
@@ -480,6 +613,11 @@ export const generateFormattedPDF = async (
       } else {
         let xCursor = margin;
         for (const w of rLine) {
+          if (w.field) {
+            drawField(w.field, xCursor);
+            xCursor += fieldTokenWidth;
+            continue;
+          }
           if (/^\s+$/.test(w.word)) {
             xCursor += getWordWidth(' ', w.bold, w.italic);
             continue;
@@ -584,6 +722,13 @@ const ConsentFormViewer = ({
       );
     }
 
+    // Checkbox / RadioButton fields — interactive while Pending, disabled
+    // (but still showing their previously-saved checked state) once Signed
+    updatedContent = renderCheckFields(
+      updatedContent,
+      form.Status !== 'Pending'
+    );
+
     // Signature replacement — embeds image + Signed By into body
     if (form.Signature) {
       const signatureImg = `<img src="${form.Signature}" alt="Signature"
@@ -683,9 +828,15 @@ const ConsentFormViewer = ({
         <title>${form.Title}</title>
         <style>
           *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-          @page { size: A4 portrait; margin: 0; }
+          /* Top/bottom margin comes from @page so it repeats on every printed
+             page (a wrapper's own padding only ever reserves space at the
+             very top/bottom of the whole flow, i.e. page 1 and the last
+             page — leaving page 2+ with no top breathing room). Left/right
+             stays 0 here since that's handled by .page-wrapper's own
+             max-width + auto margin below, which already works correctly. */
+          @page { size: A4 portrait; margin: 15mm 0; }
           html, body { font-family: Arial, sans-serif; font-size: 10pt; color: #111; background: #fff; line-height: 1.65; }
-          .page-wrapper { width: 100%; max-width: 178mm; margin: 0 auto; padding-top: 22mm; padding-bottom: 22mm; }
+          .page-wrapper { width: 100%; max-width: 174mm; margin: 0 auto; }
 
           .print-header { display: flex; justify-content: space-between; align-items: center; font-size: 8pt; color: #666; padding-bottom: 5px; border-bottom: 0.5px solid #bbb; margin-bottom: 14px; }
           .print-header .doc-name { font-weight: bold; color: #444; }
@@ -719,7 +870,6 @@ const ConsentFormViewer = ({
 
           @media print {
             html, body { width: 210mm; print-color-adjust: exact; -webkit-print-color-adjust: exact; height: auto !important; overflow: hidden !important; }
-            .page-wrapper { max-width: 100%; }
             .audit-footer { page-break-inside: avoid !important; break-inside: avoid !important; }
             * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             .no-print { display: none !important; }
@@ -809,6 +959,43 @@ const ConsentFormViewer = ({
           `<span style="border-bottom:1.5px solid #555; padding:0 4px; font-size:inherit; font-family:inherit; display:inline-block; min-width:80px;">${value}</span>`
         );
       });
+
+      // Capture checkbox / radio selections the same way — read from the
+      // live DOM, then bake the checked state into both the raw content
+      // (still holding untouched df-field spans) and the display copy
+      // (already real <input> tags), each disabled going forward.
+      const checkInputs = contentRef.current.querySelectorAll(
+        'input[data-field="checkbox"], input[data-field="radio"]'
+      );
+      checkInputs.forEach((input) => {
+        const el = input as HTMLInputElement;
+        const type = el.getAttribute('data-field') as 'checkbox' | 'radio';
+        const fieldId = el.getAttribute('data-field-id') ?? '';
+        const groupName = el.getAttribute('data-field-group') ?? '';
+        const isChecked = el.checked;
+
+        finalContent = finalContent.replace(
+          new RegExp(
+            `<span class="df-field" data-field-type="${type}" data-field-id="${escapeRegExp(
+              fieldId
+            )}" data-field-group="${escapeRegExp(
+              groupName
+            )}">([\\s\\S]*?)<\\/span>`
+          ),
+          (_match: string, label: string) =>
+            buildCheckFieldHtml(type, fieldId, groupName, label, isChecked, true)
+        );
+
+        updatedRendered = updatedRendered.replace(
+          new RegExp(
+            `<input type="${type}" data-field="${type}" data-field-id="${escapeRegExp(
+              fieldId
+            )}"[^>]*\\/>`
+          ),
+          buildCheckInputTag(type, fieldId, groupName, isChecked, true)
+        );
+      });
+
       setRenderedContent(updatedRendered);
     }
 

@@ -197,46 +197,23 @@ const preprocessBlockText = (
       continue;
     }
 
-    // Case D: Wrong-range — replace placeholder with separator + mention value
-    let extendBack = 0;
-    for (let k = adjOffset - 1; k >= 0; k--) {
-      const ch = result[k];
-      if (ch === '(' || ch === '[') {
-        extendBack++;
-      } else if (ch === ' ') {
-        extendBack++;
-      } else {
-        break;
-      }
+    const WINDOW_PAD = 25;
+    const windowStart = Math.max(0, adjOffset - WINDOW_PAD);
+    const windowEnd = Math.min(result.length, adjOffset + er.length + WINDOW_PAD);
+    const window = result.slice(windowStart, windowEnd);
+    const idxInWindow = window.indexOf(mentionName);
+
+    if (idxInWindow !== -1) {
+      fixedRanges.push({
+        key: er.key,
+        offset: windowStart + idxInWindow,
+        length: mentionName.length
+      });
+    } else {
+      // Couldn't locate the mention value nearby — leave the block text
+      // as-is rather than risk deleting real content.
+      fixedRanges.push({ ...er, offset: adjOffset });
     }
-
-    const fullStart = adjOffset - extendBack;
-    const fullRangeText = result.slice(fullStart, adjOffset + er.length);
-    const lastColon = fullRangeText.lastIndexOf(':');
-    const lastDash = fullRangeText.lastIndexOf('-');
-    const lastSep = Math.max(lastColon, lastDash);
-    const separator = lastSep !== -1 ? fullRangeText.slice(lastSep) : ': ';
-
-    const afterRange = result.slice(adjOffset + er.length);
-    const afterTrimmed = afterRange.trimStart();
-    const dupSpaces = afterRange.length - afterTrimmed.length;
-    const hasDup = afterTrimmed.startsWith(mentionName);
-    const skipAfter = hasDup ? dupSpaces + mentionName.length : 0;
-
-    const totalReplace = extendBack + er.length + skipAfter;
-    const replacement = separator + mentionName;
-
-    // ── Track where mention VALUE lands — clear bold for it ───────────
-    plainValueRanges.push({
-      offset: fullStart + separator.length, // position of mention value in new text
-      length: mentionName.length
-    });
-
-    result =
-      result.slice(0, fullStart) +
-      replacement +
-      result.slice(fullStart + totalReplace);
-    offsetDelta += replacement.length - totalReplace;
   }
 
   return { text: result, entityRanges: fixedRanges, plainValueRanges };
@@ -383,6 +360,25 @@ const renderBlockText = (
         const d = entity.data as Record<string, string>;
         html += `<img src="${d.src ?? ''}" alt="${d.alt ?? ''}"
           style="height:${d.height ?? 'auto'};width:${d.width ?? 'auto'};" />`;
+        i = j;
+        continue;
+      }
+
+      if (entity?.type === 'Checkbox' || entity?.type === 'RadioButton') {
+        const isCheckbox = entity.type === 'Checkbox';
+        const fieldData =
+          (entity.data?.[isCheckbox ? 'checkbox' : 'radioButton'] as
+            | Record<string, unknown>
+            | undefined) ?? {};
+        const fieldId = escapeHtml(String(fieldData.id ?? entityKey));
+        const groupName = escapeHtml(String(fieldData.groupName ?? ''));
+        const label = escapeHtml(
+          String((fieldData.name as string) ?? rangeText).trim()
+        );
+
+        html += `<span class="df-field" data-field-type="${
+          isCheckbox ? 'checkbox' : 'radio'
+        }" data-field-id="${fieldId}" data-field-group="${groupName}">${label}</span>`;
         i = j;
         continue;
       }
