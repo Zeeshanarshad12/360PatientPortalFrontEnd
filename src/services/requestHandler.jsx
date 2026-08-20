@@ -342,11 +342,15 @@ const resetAuth0PatientPassword = (data, flag) =>
     ApiVersion2Req: flag
   });
 
-const UploadPatientDocument = (data) =>
-  post(SERVICE_URLSV2.UploadPatientDocuments, data, {
-    feature: featureConstants.static,
-    ApiVersion2Req: 'ApiVersion2Req'
-  });
+const UploadPatientDocument = (data, practiceId) =>
+  post(
+    `${SERVICE_URLSV2.UploadPatientDocuments}?practiceId=${practiceId}`,
+    data,
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: 'ApiVersion2Req'
+    }
+  );
 
 const AddDocument = (data) =>
   post(SERVICE_URLSV2.AddDocument, data, {
