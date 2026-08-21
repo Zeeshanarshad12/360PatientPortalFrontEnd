@@ -24,6 +24,12 @@ import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { isNull } from '@/utils/functions';
 import { SchedulerModal } from '@/components/Scheduler';
 import { AppointmentData } from '@/components/Scheduler/types';
+import {
+  DeleteAppointmentById,
+  resetDeleteAppointmentError
+} from '@/slices/ScheduleSlice';
+import ConfirmDialog from '@/components/ThemeComponent/ConfirmDialog';
+import SnackbarUtils from '@/content/snackbar';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -52,6 +58,13 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
   const [initialAppointmentData, setInitialAppointmentData] = useState<
     AppointmentData | undefined
   >(undefined);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [appointmentToCancel, setAppointmentToCancel] = useState<
+    string | number | null
+  >(null);
+  const { deleteAppointmentLoading, deleteAppointmentError } = useSelector(
+    (state: any) => state.schedule
+  );
 
   const fetchAppointments = async () => {
     try {
@@ -117,8 +130,30 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
   };
 
   const handleCancel = (appointmentId: string | number | null) => {
-    if (window.confirm('Are you sure you want to cancel this appointment?')) {
-      console.log('Cancelling appointment:', appointmentId);
+    dispatch(resetDeleteAppointmentError());
+    setAppointmentToCancel(appointmentId);
+    setCancelDialogOpen(true);
+  };
+
+  const handleCloseCancelDialog = () => {
+    setCancelDialogOpen(false);
+    setAppointmentToCancel(null);
+  };
+
+  const handleConfirmCancel = async () => {
+    if (appointmentToCancel === null) return;
+    try {
+      await dispatch(
+        DeleteAppointmentById({
+          appointmentId: appointmentToCancel,
+          series: false
+        })
+      ).unwrap();
+      handleCloseCancelDialog();
+      SnackbarUtils.success('Appointment cancelled successfully.', false);
+      fetchAppointments();
+    } catch (error) {
+      // deleteAppointmentError is shown inline in the dialog; keep it open.
     }
   };
 
@@ -319,6 +354,20 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
         onConfirm={handleSchedulerConfirm}
         appointmentId={selectedAppointmentId}
         initialAppointmentData={initialAppointmentData}
+      />
+
+      {/* Cancel Appointment Confirmation */}
+      <ConfirmDialog
+        open={cancelDialogOpen}
+        title="Cancel Appointment"
+        message="Are you sure you want to cancel this appointment? This action cannot be undone."
+        confirmText="Cancel Appointment"
+        cancelText="Keep Appointment"
+        confirmColor="error"
+        loading={deleteAppointmentLoading}
+        error={deleteAppointmentError}
+        onConfirm={handleConfirmCancel}
+        onClose={handleCloseCancelDialog}
       />
     </>
   );
