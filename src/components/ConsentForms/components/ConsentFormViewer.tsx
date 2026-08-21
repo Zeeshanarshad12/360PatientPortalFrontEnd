@@ -64,6 +64,39 @@ const sanitizeForPDF = (text: string): string =>
 const escapeRegExp = (str: string): string =>
   str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+// ── loadImageAsPngDataUrl — rasterizes an image (incl. SVG) via canvas so it
+// can be embedded with jsPDF's addImage, which does not accept SVG directly.
+const loadImageAsPngDataUrl = (
+  src: string
+): Promise<{ dataUrl: string; width: number; height: number } | null> =>
+  new Promise((resolve) => {
+    if (typeof window === 'undefined') {
+      resolve(null);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      const width = img.naturalWidth || img.width;
+      const height = img.naturalHeight || img.height;
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx || !width || !height) {
+        resolve(null);
+        return;
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      try {
+        resolve({ dataUrl: canvas.toDataURL('image/png'), width, height });
+      } catch {
+        resolve(null);
+      }
+    };
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+
 const buildCheckInputTag = (
   type: 'checkbox' | 'radio',
   fieldId: string,
@@ -171,6 +204,12 @@ export const generateFormattedPDF = async (
     hour12: true
   });
 
+  const logo =
+    typeof window !== 'undefined'
+      ? await loadImageAsPngDataUrl(
+          `${window.location.origin}/statics/Logo_PP.svg`
+        )
+      : null;
 
   // ── Header / Footer ───────────────────────────────────────────────────
   const drawHeader = (pageNum: number, totalPages: number) => {
@@ -187,9 +226,22 @@ export const generateFormattedPDF = async (
     pdf.setTextColor(80, 80, 80);
     pdf.text(sanitizeForPDF(formData.Title), margin, margin + 7);
     pdf.setFont('helvetica', 'normal');
-    pdf.text(`Page ${pageNum} of ${totalPages}`, pageW - margin, margin + 7, {
-      align: 'right'
-    });
+    if (logo) {
+      const logoH = 8;
+      const logoW = logoH * (logo.width / logo.height);
+      pdf.addImage(
+        logo.dataUrl,
+        'PNG',
+        pageW - margin - logoW,
+        margin + (headerH - logoH) / 2 - 1,
+        logoW,
+        logoH
+      );
+    } else {
+      pdf.text(`Page ${pageNum} of ${totalPages}`, pageW - margin, margin + 7, {
+        align: 'right'
+      });
+    }
     pdf.setTextColor(0, 0, 0);
   };
 
@@ -803,110 +855,29 @@ const ConsentFormViewer = ({
   // Renders form body AS-IS — no duplicate acknowledgement block appended.
   // The signature image, Signed By, and all patient details are already
   // embedded in renderedContent by the useEffect signature replacement.
-  const handlePrint = () => {
+  // Print now reuses the same generateFormattedPDF pipeline as Download —
+  // a real PDF file opened in Chrome's native PDF viewer never goes through
+  // Chrome's HTML print-rendering path, so none of the browser's own
+  // injected header/footer (date, page title, page URL, page count) can
+  // appear. Opening a blank window synchronously (before the async PDF
+  // generation) keeps this a direct response to the click so popup
+  // blockers don't intervene; we navigate it to the PDF once it's ready.
+  const handlePrint = async () => {
     if (typeof window === 'undefined' || !form) return;
-
-    const generatedAt = new Date().toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: '2-digit',
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
-    });
-
-    // Use shared cleaner — preserves all body content, removes only style/script/title dups
-    const cleanBodyContent = cleanHTMLForExport(renderedContent, form.Title);
-
-    const statusColor = form.Status === 'Signed' ? '#1a7a1a' : '#b45000';
-
-    const printHTML = `
-      <!DOCTYPE html>
-      <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <title>${form.Title}</title>
-        <style>
-          *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-          /* Top/bottom margin comes from @page so it repeats on every printed
-             page (a wrapper's own padding only ever reserves space at the
-             very top/bottom of the whole flow, i.e. page 1 and the last
-             page — leaving page 2+ with no top breathing room). Left/right
-             stays 0 here since that's handled by .page-wrapper's own
-             max-width + auto margin below, which already works correctly. */
-          @page { size: A4 portrait; margin: 15mm 0; }
-          html, body { font-family: Arial, sans-serif; font-size: 10pt; color: #111; background: #fff; line-height: 1.65; }
-          .page-wrapper { width: 100%; max-width: 174mm; margin: 0 auto; }
-
-          .print-header { display: flex; justify-content: space-between; align-items: center; font-size: 8pt; color: #666; padding-bottom: 5px; border-bottom: 0.5px solid #bbb; margin-bottom: 14px; }
-          .print-header .doc-name { font-weight: bold; color: #444; }
-          .print-header .confidential-badge { font-size: 7.5pt; color: #888; }
-
-          .doc-title { text-align: center; font-size: 15pt; font-weight: bold; color: #1a3c5e; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 1.5px solid #1a3c5e; }
-
-          .body-content { font-size: 10pt; line-height: 1.7; color: #111; }
-          .body-content p { margin-top: 0; margin-bottom: 8px; }
-          .body-content p:last-child { margin-bottom: 0; }
-          .body-content h1 { font-size: 15pt; font-weight: bold; margin: 14px 0 8px; }
-          .body-content h2 { font-size: 13pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; margin: 14px 0 8px; }
-          .body-content h3, .body-content h4, .body-content h5, .body-content h6 { font-weight: bold; margin: 12px 0 6px; }
-          .body-content strong, .body-content b { font-weight: 700 !important; }
-          .body-content em, .body-content i { font-style: italic; }
-          .body-content u { text-decoration: underline; }
-          .body-content .center-align, .body-content [style*="text-align:center"], .body-content [style*="text-align: center"] { text-align: center; }
-          .body-content .right-align,  .body-content [style*="text-align:right"],  .body-content [style*="text-align: right"]  { text-align: right; }
-          .body-content ul, .body-content ol { margin-left: 20px !important; padding-left: 8px !important; margin-top: 4px !important; margin-bottom: 8px !important; }
-          .body-content ul { list-style-type: disc    !important; list-style-position: outside !important; }
-          .body-content ol { list-style-type: decimal !important; list-style-position: outside !important; }
-          .body-content li { display: list-item !important; margin-bottom: 4px !important; line-height: 1.65 !important; }
-          .body-content li p, .body-content li > p { display: inline !important; margin: 0 !important; padding: 0 !important; }
-          .body-content ul ul, .body-content ol ol, .body-content ul ol, .body-content ol ul { margin-left: 16px !important; padding-left: 8px !important; margin-top: 2px !important; margin-bottom: 2px !important; }
-          .body-content * { background: transparent !important; }
-
-          /* Signature image within body content */
-          .body-content img { max-width: 250px; height: auto; display: block; margin: 4px 0; }
-
-          .audit-footer { margin-top: 24px; padding-top: 6px; border-top: 0.5px solid #ddd; display: flex; justify-content: space-between; font-size: 7.5pt; color: #888; page-break-inside: avoid; break-inside: avoid; }
-
-          @media print {
-            html, body { width: 210mm; print-color-adjust: exact; -webkit-print-color-adjust: exact; height: auto !important; overflow: hidden !important; }
-            .audit-footer { page-break-inside: avoid !important; break-inside: avoid !important; }
-            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
-            .no-print { display: none !important; }
-          }
-        </style>
-      </head>
-      <body>
-        <div class="page-wrapper">
-          <div class="print-header">
-            <span class="doc-name">${form.Title}</span>
-            <span class="confidential-badge">CONFIDENTIAL - Patient Medical Record</span>
-          </div>
-
-          <h1 class="doc-title">${form.Title}</h1>
-
-          <!-- Form body contains complete content: signature image, Signed By,
-               patient details — exactly matching the Patient Portal view -->
-          <div class="body-content">${cleanBodyContent}</div>
-
-          <div class="audit-footer">
-            <span>Generated: ${generatedAt}</span>
-            <span>CONFIDENTIAL - Patient Medical Record</span>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
-
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
-    printWindow.document.write(printHTML);
-    printWindow.document.close();
-    printWindow.focus();
-    setTimeout(() => {
-      printWindow.print();
+    try {
+      const pdfBlob = await generateFormattedPDF(
+        form,
+        renderedContent,
+        form.Signature ?? ''
+      );
+      const url = URL.createObjectURL(pdfBlob);
+      printWindow.location.href = url;
+    } catch (err) {
       printWindow.close();
-    }, 500);
+      console.error('Failed to generate PDF for printing', err);
+    }
   };
 
   // ── 5. Download PDF ───────────────────────────────────────────────────
