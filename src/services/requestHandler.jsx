@@ -1,4 +1,4 @@
-import { get, getWithoutToken, post, postWithoutToken, put } from './HttpProvider';
+import { get, getWithoutToken, post, postWithoutToken, put, del } from './HttpProvider';
 import featureConstants from './features-constants';
 import { SERVICE_URLSV2 } from './ServiceUrl';
 import { getPatientId } from '../utils/functions';
@@ -541,6 +541,13 @@ const GetAllAppointmentType = (data, flag) =>
     ApiVersion2Req: flag
   });
 
+const DeleteAppointmentById = (data, flag) =>
+  del(SERVICE_URLSV2.DeleteAppointmentById, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
+
+
 const apiServicesV2 = {
   GetGeneralLookup,
   ClearCahce,
@@ -605,7 +612,8 @@ const apiServicesV2 = {
   CreatePatientAppointment,
   UpdatePatientAppointment,
   FilterAppointments,
-  GetAllAppointmentType
+  GetAllAppointmentType,
+  DeleteAppointmentById
 };
 
 export default apiServicesV2;

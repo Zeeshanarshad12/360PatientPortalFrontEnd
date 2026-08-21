@@ -27,7 +27,9 @@ const initialState = {
   filteredAppointmentsError: null,
   appointmentTypes: [],
   appointmentTypesLoading: false,
-  appointmentTypesError: null
+  appointmentTypesError: null,
+  deleteAppointmentLoading: false,
+  deleteAppointmentError: null
 };
 
 export const Searchappointmentreason: any = createAsyncThunk(
@@ -243,6 +245,33 @@ export const GetAllAppointmentType: any = createAsyncThunk(
   }
 );
 
+export const DeleteAppointmentById: any = createAsyncThunk(
+  'schedule/deleteAppointmentById',
+  async (
+    data: { appointmentId: string | number; series?: boolean },
+    thunkAPI
+  ) => {
+    try {
+      const res = await apiServicesV2.DeleteAppointmentById(
+        { appointmentId: data.appointmentId, series: data.series ?? false },
+        'ApiVersion2Req'
+      );
+      if (res?.status === 200) {
+        return res?.data?.result;
+      } else {
+        return thunkAPI.rejectWithValue(
+          res?.data?.message || 'Failed to cancel appointment'
+        );
+      }
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message || error?.message || 'An error occurred';
+      SnackbarUtils.error(errorMessage, false);
+      return thunkAPI.rejectWithValue(errorMessage);
+    }
+  }
+);
+
 const scheduleSlice = createSlice({
   name: 'schedule',
   initialState,
@@ -253,6 +282,9 @@ const scheduleSlice = createSlice({
     },
     resetAppointmentReasonsError: (state) => {
       state.appointmentReasonsError = null;
+    },
+    resetDeleteAppointmentError: (state) => {
+      state.deleteAppointmentError = null;
     },
     setSelectedLocation: (state, action) => {
       state.selectedLocation = action.payload;
@@ -357,6 +389,17 @@ const scheduleSlice = createSlice({
       .addCase(GetAllAppointmentType.rejected, (state, action) => {
         state.appointmentTypesLoading = false;
         state.appointmentTypesError = action.payload as string;
+      })
+      .addCase(DeleteAppointmentById.pending, (state) => {
+        state.deleteAppointmentLoading = true;
+        state.deleteAppointmentError = null;
+      })
+      .addCase(DeleteAppointmentById.fulfilled, (state) => {
+        state.deleteAppointmentLoading = false;
+      })
+      .addCase(DeleteAppointmentById.rejected, (state, action) => {
+        state.deleteAppointmentLoading = false;
+        state.deleteAppointmentError = action.payload as string;
       });
   }
 });
@@ -364,6 +407,7 @@ const scheduleSlice = createSlice({
 export const {
   clearAppointmentReasons,
   resetAppointmentReasonsError,
+  resetDeleteAppointmentError,
   setSelectedLocation
 } = scheduleSlice.actions;
 export default scheduleSlice.reducer;
