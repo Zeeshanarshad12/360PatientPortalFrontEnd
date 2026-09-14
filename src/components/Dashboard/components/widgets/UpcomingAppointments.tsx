@@ -6,9 +6,7 @@ import {
   Box,
   Chip,
   IconButton,
-  Link,
-  Button,
-  Stack
+  Link
 } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -22,14 +20,6 @@ import CircularProgressLoader from '@/components/ProgressLoaders/components/Circ
 import moment from 'moment';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { isNull } from '@/utils/functions';
-import { SchedulerModal } from '@/components/Scheduler';
-import { AppointmentData } from '@/components/Scheduler/types';
-import {
-  DeleteAppointmentById,
-  resetDeleteAppointmentError
-} from '@/slices/ScheduleSlice';
-import ConfirmDialog from '@/components/ThemeComponent/ConfirmDialog';
-import SnackbarUtils from '@/content/snackbar';
 
 interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
@@ -51,126 +41,29 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
   const [appointments, setappointments] = useState([]);
   const [loading, setLoading] = useState(true);
   const { patientId, practiceId } = useCurrentPatient();
-  const [schedulerOpen, setSchedulerOpen] = useState(false);
-  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
-    string | number | null
-  >(null);
-  const [initialAppointmentData, setInitialAppointmentData] = useState<
-    AppointmentData | undefined
-  >(undefined);
-  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
-  const [appointmentToCancel, setAppointmentToCancel] = useState<
-    string | number | null
-  >(null);
-  const { deleteAppointmentLoading, deleteAppointmentError } = useSelector(
-    (state: any) => state.schedule
-  );
-
-  const fetchAppointments = async () => {
-    try {
-      if (!isNull(patientId) && !isNull(practiceId)) {
-        const Obj = {
-          PatientId: patientId,
-          PracticeId: practiceId
-        };
-
-        const response = await dispatch(getpatientappointments(Obj)).unwrap();
-        const data = response.result;
-        setappointments(data);
-      }
-    } catch (error) {
-      console.error('Error fetching medications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchAppointments();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const fetchData = async () => {
+      try {
+        if (!isNull(patientId) && !isNull(practiceId)) {
+          const Obj = {
+            PatientId: patientId,
+            PracticeId: practiceId
+          };
+
+          const response = await dispatch(getpatientappointments(Obj)).unwrap();
+          const data = response.result;
+          setappointments(data);
+        }
+      } catch (error) {
+        console.error('Error fetching medications:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
   }, [dispatch, practiceId, patientId]);
-
-  const resolveAppointmentId = (appt: any) => appt?.appointmentId ?? null;
-
-  const handleReschedule = (appt: any) => {
-    const startDate = appt?.startTime;
-    const endDate = appt?.endTime;
-
-    setInitialAppointmentData({
-      facility: {
-        id: appt?.locationId,
-        name: appt.providerLocation || appt.address || 'Selected Location',
-        address: appt.address || ''
-      },
-      provider: {
-        providerId: appt?.providerId,
-        firstName: '',
-        lastName: '',
-        providerFullName: appt.providerName || '',
-        providerSpeciality: ''
-      },
-      reasonForVisit: {
-        id: 0,
-        appReason: appt.appointmentReason || '',
-        isActive: true,
-        totalCount: 0
-      },
-      appointmentType: appt.appointmentType
-        ? { text: appt.appointmentType }
-        : undefined,
-      date: startDate ? moment(startDate).format('YYYY-MM-DD') : undefined,
-      time: startDate ? moment(startDate).format('hh:mm A') : undefined,
-      slotDurationMinutes:
-        startDate && endDate
-          ? moment(endDate).diff(moment(startDate), 'minutes')
-          : undefined
-    });
-    setSelectedAppointmentId(resolveAppointmentId(appt));
-    setSchedulerOpen(true);
-  };
-
-  const handleCancel = (appointmentId: string | number | null) => {
-    dispatch(resetDeleteAppointmentError());
-    setAppointmentToCancel(appointmentId);
-    setCancelDialogOpen(true);
-  };
-
-  const handleCloseCancelDialog = () => {
-    setCancelDialogOpen(false);
-    setAppointmentToCancel(null);
-  };
-
-  const handleConfirmCancel = async () => {
-    if (appointmentToCancel === null) return;
-    try {
-      await dispatch(
-        DeleteAppointmentById({
-          appointmentId: appointmentToCancel,
-          series: false
-        })
-      ).unwrap();
-      handleCloseCancelDialog();
-      SnackbarUtils.success('Appointment cancelled successfully.', false);
-      fetchAppointments();
-    } catch (error) {
-      // deleteAppointmentError is shown inline in the dialog; keep it open.
-    }
-  };
-
-  const handleNewAppointment = () => {
-    setSelectedAppointmentId(null);
-    setInitialAppointmentData(undefined);
-    setSchedulerOpen(true);
-  };
-
-  const handleSchedulerConfirm = (appointmentData: AppointmentData) => {
-    fetchAppointments();
-  };
-
-  const handleSchedulerClose = () => {
-    setSchedulerOpen(false);
-    setSelectedAppointmentId(null);
-  };
 
   return (
     <>
@@ -223,14 +116,16 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                 {widgetContent.upcomingAppointments.title}
               </Typography>
               <Box display="flex" alignItems="center" gap={1}>
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={handleNewAppointment}
-                  sx={{ textTransform: 'none' }}
+                {/* <Link
+                  href="#"
+                  underline="hover"
+                  color="primary"
+                  fontSize="0.95rem"
+                  fontWeight="bold"
+                  sx={{ mr: 1 }}
                 >
-                  New Appointment
-                </Button>
+                  Schedule Appointment
+                </Link> */}
                 <Box {...dragHandleProps}>
                   <IconButton size="small" sx={{ cursor: 'grab' }}>
                     <DragIndicatorIcon />
@@ -318,57 +213,26 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                         {appt.address}
                       </Typography>
                     </Box>
-
-                    {/* Action Buttons */}
-                    <Stack direction="row" gap={1} sx={{ mt: 2 }}>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        onClick={() => handleReschedule(appt)}
-                      >
-                        Reschedule
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        color="error"
-                        onClick={() => handleCancel(resolveAppointmentId(appt))}
-                      >
-                        Cancel
-                      </Button>
-                    </Stack>
                   </Box>
                 );
               })}
             </Box>
+
+            {/* View All Link */}
+            {/* <Box textAlign="center" mt={2}>
+              <Link
+                href="#"
+                underline="hover"
+                color="primary"
+                fontSize="0.95rem"
+                fontWeight="bold"
+              >
+                View all Appointments
+              </Link>
+            </Box> */}
           </CardContent>
         </Card>
       )}
-
-      {/* Scheduler Modal */}
-      <SchedulerModal
-        open={schedulerOpen}
-        onClose={handleSchedulerClose}
-        onConfirm={handleSchedulerConfirm}
-        appointmentId={selectedAppointmentId}
-        initialAppointmentData={initialAppointmentData}
-      />
-
-      {/* Cancel Appointment Confirmation */}
-      <ConfirmDialog
-        open={cancelDialogOpen}
-        title="Cancel Appointment"
-        message="Are you sure you want to cancel this appointment? This action cannot be undone."
-        confirmText="Cancel Appointment"
-        cancelText="Keep Appointment"
-        confirmColor="error"
-        loading={deleteAppointmentLoading}
-        error={deleteAppointmentError}
-        onConfirm={handleConfirmCancel}
-        onClose={handleCloseCancelDialog}
-      />
     </>
   );
 };

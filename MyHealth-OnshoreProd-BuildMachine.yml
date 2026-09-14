@@ -1,0 +1,147 @@
+trigger:
+  branches:
+    include:
+      - Release_2026.05.13.11
+
+pool:
+  name: 'Ubuntu- AgentPool'
+
+variables:
+  imageName: 'onshore-myhealth-prod'
+  acrName: 'onshoreemracr.azurecr.io'
+  acrShortName: 'OnshoreEMRACR'
+  tag: '$(Build.SourceBranchName).$(Build.BuildNumber)'
+  latestTag: 'latest'
+
+steps:
+
+# --------------------------------
+# Checkout
+# --------------------------------
+- checkout: self
+  displayName: 'Checkout Source Code'
+
+# --------------------------------
+# Build Docker Image
+# --------------------------------
+- task: Docker@2
+  displayName: 'Build Docker Image'
+  inputs:
+    command: build
+    repository: '$(imageName)'
+    Dockerfile: '**/DockerfileOnshore'
+    tags: |
+      $(tag)
+      $(latestTag)
+
+# --------------------------------
+# Verify Local Images
+# --------------------------------
+- script: |
+    echo "=============================="
+    echo "LOCAL IMAGES AFTER BUILD"
+    echo "=============================="
+    docker images
+  displayName: 'Show Local Docker Images'
+
+# --------------------------------
+# Verify Azure Login
+# --------------------------------
+- task: AzureCLI@2
+  displayName: 'Verify Azure Subscription Access'
+  inputs:
+    azureSubscription: 'Onshore-EMR-ServiceConnection'
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+
+      echo "=============================="
+      echo "AZURE ACCOUNT"
+      echo "=============================="
+
+      az account show
+
+# --------------------------------
+# Verify ACR Access
+# --------------------------------
+- task: AzureCLI@2
+  displayName: 'Verify ACR Access'
+  inputs:
+    azureSubscription: 'Onshore-EMR-ServiceConnection'
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+
+      echo "=============================="
+      echo "ACR DETAILS"
+      echo "=============================="
+
+      az acr show --name $(acrShortName)
+
+# --------------------------------
+# Login, Tag and Push
+# --------------------------------
+- task: AzureCLI@2
+  displayName: 'Push Image To ACR'
+  inputs:
+    azureSubscription: 'Onshore-EMR-ServiceConnection'
+    scriptType: bash
+    scriptLocation: inlineScript
+    inlineScript: |
+
+      set -e
+
+      echo "=============================="
+      echo "LOGIN TO ACR"
+      echo "=============================="
+
+      az acr login --name $(acrShortName)
+
+      echo "=============================="
+      echo "TAGGING IMAGES"
+      echo "=============================="
+
+      docker tag $(imageName):$(tag) \
+        $(acrName)/$(imageName):$(tag)
+
+      docker tag $(imageName):$(latestTag) \
+        $(acrName)/$(imageName):$(latestTag)
+
+      echo "=============================="
+      echo "IMAGES AFTER TAGGING"
+      echo "=============================="
+
+      docker images
+
+      echo "=============================="
+      echo "PUSH VERSION TAG"
+      echo "=============================="
+
+      docker push $(acrName)/$(imageName):$(tag)
+
+      echo "=============================="
+      echo "PUSH LATEST TAG"
+      echo "=============================="
+
+      docker push $(acrName)/$(imageName):$(latestTag)
+
+      echo "=============================="
+      echo "PUSH COMPLETED"
+      echo "=============================="
+
+# --------------------------------
+# Deploy To Web App (Empty For NOW)
+# --------------------------------
+
+
+# --------------------------------
+# Summary
+# --------------------------------
+- script: |
+    echo "------------------------------------------"
+    echo "Build ID      : $(Build.BuildId)"
+    echo "Image         : $(acrName)/$(imageName):$(latestTag)"
+    echo "Web App       : Onshore-EMR-FrontEnd"
+    echo "Resource Group: Onshore-EMR-RG"
+    echo "------------------------------------------"
+  displayName: 'Build Summary'

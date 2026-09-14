@@ -55,14 +55,5 @@ export const SERVICE_URLSV2 = {
   SaveFamilyHistory: 'patientportal/savefamilyhistory',
   SaveSmokingStatus: 'patientportal/savesmokingstatus',
   SaveSocialStatus: 'patientportal/SaveSocialStatus',
-  GetFamilyRelations: 'patientportal/getfamilyrelation',
-  searchappointmentreason: 'patientportal/searchappointmentreason',
-  GetProvidersbyPracticeID: 'patientportal/GetProvidersbyPracticeID',
-  GetPracticeLocationForPatient:'patientportal/GetPracticeLocationForPatient',
-  GetProviderLocationScheduleInfo: 'patientportal/GetProviderLocationScheduleInfo',
-  CreatePatientAppointment: 'patientportal/CreatePatientAppointment',
-  UpdatePatientAppointment: 'patientportal/UpdatePatientAppointment',
-  FilterAppointments: 'patientportal/filterappointment',
-  GetAllAppointmentType: 'patientportal/GetAllAppointmentType',
-  DeleteAppointmentById: 'patientportal/DeleteAppointmentById'
+  GetFamilyRelations: 'patientportal/getfamilyrelation'
 };

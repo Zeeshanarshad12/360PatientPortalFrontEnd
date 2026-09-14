@@ -1,4 +1,4 @@
-import { get, getWithoutToken, post, postWithoutToken, put, del } from './HttpProvider';
+import { get, getWithoutToken, post, postWithoutToken } from './HttpProvider';
 import featureConstants from './features-constants';
 import { SERVICE_URLSV2 } from './ServiceUrl';
 import { getPatientId } from '../utils/functions';
@@ -342,15 +342,11 @@ const resetAuth0PatientPassword = (data, flag) =>
     ApiVersion2Req: flag
   });
 
-const UploadPatientDocument = (data, practiceId) =>
-  post(
-    `${SERVICE_URLSV2.UploadPatientDocuments}?practiceId=${practiceId}`,
-    data,
-    {
-      feature: featureConstants.static,
-      ApiVersion2Req: 'ApiVersion2Req'
-    }
-  );
+const UploadPatientDocument = (data) =>
+  post(SERVICE_URLSV2.UploadPatientDocuments, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: 'ApiVersion2Req'
+  });
 
 const AddDocument = (data) =>
   post(SERVICE_URLSV2.AddDocument, data, {
@@ -477,77 +473,6 @@ const SaveSocialStatus = (data, flag) => {
   });
 };
 
-/*----------------------Appointment---------------------*/
-const Searchappointmentreason = (data, flag) =>
-  get(
-    SERVICE_URLSV2.searchappointmentreason +
-      `?SearchReason=${data.searchTerm ? encodeURIComponent(data.searchTerm) : 'null'}&practiceId=${encodeURIComponent(
-        data.practiceId ?? ''
-      )}&PatientOnly=${encodeURIComponent(data.patientOnly ?? true)}`,
-    {},
-    {
-      feature: featureConstants.static,
-      ApiVersion2Req: flag
-    }
-  );
-
-const GetProvidersbyPracticeID = (data, flag) =>
-  get(
-    `${SERVICE_URLSV2.GetProvidersbyPracticeID}?PracticeId=${data.practiceId}`,
-    {},
-    {
-      feature: featureConstants.static,
-      ApiVersion2Req: flag
-    }
-  );
-
-const GetPracticeLocationForPatient = (data, flag) =>
-  get(
-    `${SERVICE_URLSV2.GetPracticeLocationForPatient}?PracticeId=${data.practiceId}`,
-    {},
-    {
-      feature: featureConstants.static,
-      ApiVersion2Req: flag
-    }
-  );
-
-const GetProviderLocationScheduleInfo = (data, flag) =>
-  post(`${SERVICE_URLSV2.GetProviderLocationScheduleInfo}`, data, {
-    feature: featureConstants.static,
-    ApiVersion2Req: flag
-  });
-
-const CreatePatientAppointment = (data, flag) =>
-  post(SERVICE_URLSV2.CreatePatientAppointment, data, {
-    feature: featureConstants.static,
-    ApiVersion2Req: flag
-  });
-
-const UpdatePatientAppointment = (data, flag) =>
-  put(SERVICE_URLSV2.UpdatePatientAppointment, data, {
-    feature: featureConstants.static,
-    ApiVersion2Req: flag
-  });
-
-const FilterAppointments = (data, flag) =>
-  post(SERVICE_URLSV2.FilterAppointments, data, {
-    feature: featureConstants.static,
-    ApiVersion2Req: flag
-  });
-
-const GetAllAppointmentType = (data, flag) =>
-  post(SERVICE_URLSV2.GetAllAppointmentType, data, {
-    feature: featureConstants.static,
-    ApiVersion2Req: flag
-  });
-
-const DeleteAppointmentById = (data, flag) =>
-  del(SERVICE_URLSV2.DeleteAppointmentById, data, {
-    feature: featureConstants.static,
-    ApiVersion2Req: flag
-  });
-
-
 const apiServicesV2 = {
   GetGeneralLookup,
   ClearCahce,
@@ -604,16 +529,7 @@ const apiServicesV2 = {
   SaveFamilyHistory,
   SaveSmokingStatus,
   SaveSocialStatus,
-  GetFamilyRelations,
-  Searchappointmentreason,
-  GetProvidersbyPracticeID,
-  GetPracticeLocationForPatient,
-  GetProviderLocationScheduleInfo,
-  CreatePatientAppointment,
-  UpdatePatientAppointment,
-  FilterAppointments,
-  GetAllAppointmentType,
-  DeleteAppointmentById
+  GetFamilyRelations
 };
 
 export default apiServicesV2;

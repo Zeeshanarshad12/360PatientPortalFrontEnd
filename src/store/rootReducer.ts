@@ -6,14 +6,12 @@ import { staticReducer } from '@/slices/static';
 import { patientProfileReducer } from '@/slices/patientprofileslice';
 import messagesReducer from '@/slices/messagesSlice';
 import patientHistoryReducer from '@/slices/patientHistorySlice';
-import scheduleReducer from '@/slices/ScheduleSlice';
 
 export const rootReducer = combineReducers({
   static: staticReducer,
   patientprofileslice: patientProfileReducer,
   messages: messagesReducer,
-  patientHistory: patientHistoryReducer,
-  schedule: scheduleReducer
+  patientHistory: patientHistoryReducer
 });
 
 const GeneralLookupDataFilter = createFilter('static', ['GeneralLookupData']);
