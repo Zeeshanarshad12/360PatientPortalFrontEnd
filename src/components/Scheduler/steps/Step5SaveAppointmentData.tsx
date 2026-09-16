@@ -19,6 +19,7 @@ import {
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { AppointmentData } from '../types';
 import moment from 'moment';
+import StepLayout from './StepLayout';
 
 interface Step5Props {
   onConfirm: () => void;
@@ -117,7 +118,6 @@ const Step5SaveAppointmentData: React.FC<Step5Props> = ({
   };
 
   const handleConfirmBooking = () => {
-    debugger;
     setBookingStatus('idle');
     setSubmitted(true);
     const payload = buildAppointmentPayload();
@@ -154,9 +154,34 @@ const Step5SaveAppointmentData: React.FC<Step5Props> = ({
   };
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <StepLayout
+      footer={
+        <>
+          <Button variant="outlined" onClick={onBack} disabled={submitLoading}>
+            Back
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleConfirmBooking}
+            disabled={submitLoading}
+            sx={{ ml: 'auto' }}
+          >
+            {submitLoading ? (
+              <>
+                <CircularProgress size={20} sx={{ mr: 1 }} />
+                {isReschedule ? 'Updating...' : 'Confirming...'}
+              </>
+            ) : isReschedule ? (
+              'Update'
+            ) : (
+              'Confirm Booking'
+            )}
+          </Button>
+        </>
+      }
+    >
       <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-        {isReschedule ? 'Confirm Reschedule' : 'Confirm Appointment'}
+        {isReschedule ? 'Confirm Reschedule' : 'Confirm Booking'}
       </Typography>
 
       {/* Summary Card */}
@@ -187,7 +212,7 @@ const Step5SaveAppointmentData: React.FC<Step5Props> = ({
                 {currentData?.provider?.providerFullName}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {currentData?.provider?.providerSpeciality}
+                {currentData?.provider?.providerSpecialty}
               </Typography>
             </Box>
           </Box>
@@ -260,30 +285,7 @@ const Step5SaveAppointmentData: React.FC<Step5Props> = ({
               : 'Failed to confirm appointment. Please try again.')}
         </Alert>
       )}
-
-      <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
-        <Button variant="outlined" onClick={onBack} disabled={submitLoading}>
-          Back
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleConfirmBooking}
-          disabled={submitLoading}
-          sx={{ ml: 'auto' }}
-        >
-          {submitLoading ? (
-            <>
-              <CircularProgress size={20} sx={{ mr: 1 }} />
-              {isReschedule ? 'Updating...' : 'Confirming...'}
-            </>
-          ) : isReschedule ? (
-            'Update'
-          ) : (
-            'Confirm Booking'
-          )}
-        </Button>
-      </Box>
-    </Box>
+    </StepLayout>
   );
 };
 

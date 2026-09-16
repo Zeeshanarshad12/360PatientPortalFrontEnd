@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Typography,
@@ -17,6 +17,7 @@ import {
 } from '@/slices/ScheduleSlice';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { Facility, AppointmentData } from '../types';
+import StepLayout from './StepLayout';
 
 interface Step1Props {
   onNext: (data: AppointmentData) => void;
@@ -108,6 +109,27 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facilities]);
 
+  // TPM feedback: when the practice only has one location, there's nothing
+  // for the patient to choose between, so skip showing the location picker
+  // and go straight to the next step with that location pre-selected.
+  const autoAdvancedRef = useRef(false);
+  useEffect(() => {
+    if (
+      locationsLoading ||
+      selectedFacility ||
+      autoAdvancedRef.current ||
+      facilities.length !== 1
+    ) {
+      return;
+    }
+    autoAdvancedRef.current = true;
+    const onlyFacility = facilities[0];
+    setSelectedFacility(onlyFacility);
+    dispatch(setSelectedLocation(onlyFacility));
+    onNext({ ...currentData, facility: onlyFacility });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [facilities, locationsLoading, selectedFacility]);
+
   const handleSelectFacility = (facility: Facility) => {
     setSelectedFacility(facility);
     dispatch(setSelectedLocation(facility));
@@ -183,7 +205,25 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
   );
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <StepLayout
+      footer={
+        <>
+          {onBack && (
+            <Button variant="outlined" onClick={onBack}>
+              Cancel
+            </Button>
+          )}
+          <Button
+            variant="contained"
+            onClick={handleNext}
+            sx={{ ml: 'auto' }}
+            disabled={!selectedFacility}
+          >
+            Continue
+          </Button>
+        </>
+      }
+    >
       <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
         Please select the facility
       </Typography>
@@ -233,23 +273,7 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
           </Stack>
         )
       )}
-
-      <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
-        {onBack && (
-          <Button variant="outlined" onClick={onBack}>
-            Cancel
-          </Button>
-        )}
-        <Button
-          variant="contained"
-          onClick={handleNext}
-          sx={{ ml: 'auto' }}
-          disabled={!selectedFacility}
-        >
-          Continue
-        </Button>
-      </Box>
-    </Box>
+    </StepLayout>
   );
 };
 

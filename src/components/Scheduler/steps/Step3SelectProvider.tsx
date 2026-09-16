@@ -9,15 +9,18 @@ import {
   Avatar,
   Tabs,
   Tab,
-  Autocomplete,
   TextField,
+  InputAdornment,
   CircularProgress,
-  Alert
+  Alert,
+  Pagination
 } from '@mui/material';
+import SearchIcon from '@mui/icons-material/Search';
 import { useDispatch, useSelector } from '@/store/index';
 import { GetProvidersbyPracticeID } from '@/slices/ScheduleSlice';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { Provider, AppointmentData } from '../types';
+import StepLayout from './StepLayout';
 
 interface Step3Props {
   onNext: (data: AppointmentData) => void;
@@ -25,22 +28,7 @@ interface Step3Props {
   currentData?: AppointmentData;
 }
 
-const DEFAULT_VISIBLE_COUNT = 5;
-
-const SPECIALTIES = [
-  'All',
-  'Primary Care',
-  'Cardiology',
-  'Neurology',
-  'Orthopedics'
-];
-
-const SPECIALTY_KEYWORDS: Record<string, string[]> = {
-  'Primary Care': ['primary care', 'family medicine', 'internal medicine'],
-  Cardiology: ['cardiology', 'cardiac', 'cardio'],
-  Neurology: ['neurology', 'neuro'],
-  Orthopedics: ['orthopedic', 'ortho']
-};
+const PROVIDERS_PAGE_SIZE = 6;
 
 const Step3SelectProvider: React.FC<Step3Props> = ({
   onNext,
@@ -53,6 +41,8 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
     currentData?.provider || null
   );
   const [selectedSpecialty, setSelectedSpecialty] = useState(0);
+  const [providerSearchTerm, setProviderSearchTerm] = useState('');
+  const [page, setPage] = useState(1);
 
   const { providers, providersLoading, providersError } = useSelector(
     (state: any) => state.schedule
@@ -73,34 +63,97 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [providers]);
 
-  const providersWithLowerSpecialty = useMemo(() => {
-    const list: Provider[] = providers || [];
-    return list.map((p) => ({
-      provider: p,
-      specialtyLower: (p.providerSpeciality || '').toLowerCase()
-    }));
-  }, [providers]);
+  const selectedFacilityId = currentData?.facility?.id;
 
-  const specialtyFilteredProviders = useMemo(() => {
-    const specialty = SPECIALTIES[selectedSpecialty];
-    if (!specialty || specialty === 'All') {
-      return providersWithLowerSpecialty.map((entry) => entry.provider);
+  // TPM feedback: inactive providers must not be shown to the patient.
+  // Also defensively exclude providers explicitly
+  // flagged as ineligible for patient scheduling (e.g. Clinical
+  // Support/training accounts) and providers explicitly tied to a
+  // different location than the one the patient selected. locationId 0
+  // means "no location assigned" in the API data, not an actual location,
+  // so it's treated like null and doesn't trigger a mismatch. The taxonomy
+  // over-restriction still needs a backend fix — this only filters on
+  // fields the API already sends.
+  const activeProviders: Provider[] = useMemo(() => {
+    return (providers || []).filter((p: Provider) => {
+      if (p.providerIsActive === false) return false;
+      if (p.isSchedulingProvider === false) return false;
+      if (
+        selectedFacilityId != null &&
+        p.locationId != null &&
+        p.locationId !== 0 &&
+        String(p.locationId) !== String(selectedFacilityId)
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [providers, selectedFacilityId]);
+
+  const providersWithLowerSpecialty = useMemo(() => {
+    return activeProviders.map((p) => ({
+      provider: p,
+      specialtyLower: (p.providerSpecialty || '').trim().toLowerCase()
+    }));
+  }, [activeProviders]);
+
+  // TPM feedback: specialty tabs must be practice-wise configurable. There's
+  // no per-practice specialty API/settings anywhere in the system yet, so
+  // instead of a hardcoded fixed list of specialties, derive the tabs from
+  // whatever specialties this practice's own providers actually have.
+  const specialties = useMemo(() => {
+    const seen = new Map<string, string>();
+    providersWithLowerSpecialty.forEach(({ provider, specialtyLower }) => {
+      if (specialtyLower && !seen.has(specialtyLower)) {
+        seen.set(specialtyLower, (provider.providerSpecialty || '').trim());
+      }
+    });
+    const distinct = Array.from(seen.values()).sort((a, b) =>
+      a.localeCompare(b)
+    );
+    return ['All', ...distinct];
+  }, [providersWithLowerSpecialty]);
+
+  useEffect(() => {
+    if (selectedSpecialty >= specialties.length) {
+      setSelectedSpecialty(0);
     }
-    const keywords = SPECIALTY_KEYWORDS[specialty] || [];
-    return providersWithLowerSpecialty
-      .filter((entry) =>
-        keywords.some((keyword) => entry.specialtyLower.includes(keyword))
-      )
-      .map((entry) => entry.provider);
-  }, [providersWithLowerSpecialty, selectedSpecialty]);
+  }, [specialties, selectedSpecialty]);
+
+  // The provider search should filter the existing card list in
+  // place instead of showing matches in a separate dropdown.
+  const specialtyFilteredProviders = useMemo(() => {
+    const specialty = specialties[selectedSpecialty];
+    let list = providersWithLowerSpecialty;
+    if (specialty && specialty !== 'All') {
+      const specialtyLower = specialty.toLowerCase();
+      list = list.filter((entry) => entry.specialtyLower === specialtyLower);
+    }
+    const term = providerSearchTerm.trim().toLowerCase();
+    if (term) {
+      list = list.filter((entry) =>
+        entry.provider.providerFullName.toLowerCase().includes(term)
+      );
+    }
+    return list.map((entry) => entry.provider);
+  }, [providersWithLowerSpecialty, specialties, selectedSpecialty, providerSearchTerm]);
+
+  // Bug 432560: paginate the provider list (both the "All" tab and every
+  // specialty tab) instead of showing an arbitrary top-5 slice or one long
+  // unpaginated list.
+  const pageCount = Math.max(
+    1,
+    Math.ceil(specialtyFilteredProviders.length / PROVIDERS_PAGE_SIZE)
+  );
+
+  useEffect(() => {
+    setPage(1);
+  }, [selectedSpecialty, providerSearchTerm]);
 
   const visibleProviders = useMemo(() => {
-    const specialty = SPECIALTIES[selectedSpecialty];
-    if (!specialty || specialty === 'All') {
-      return specialtyFilteredProviders.slice(0, DEFAULT_VISIBLE_COUNT);
-    }
-    return specialtyFilteredProviders;
-  }, [specialtyFilteredProviders, selectedSpecialty]);
+    const start = (page - 1) * PROVIDERS_PAGE_SIZE;
+    return specialtyFilteredProviders.slice(start, start + PROVIDERS_PAGE_SIZE);
+  }, [specialtyFilteredProviders, page]);
 
   const handleNext = () => {
     if (!selectedProvider) {
@@ -164,7 +217,7 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
               {provider.providerFullName}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {provider.providerSpeciality}
+              {provider.providerSpecialty}
             </Typography>
             {provider.nextAvailable && (
               <Typography variant="caption" color="text.secondary">
@@ -184,7 +237,23 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
   );
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <StepLayout
+      footer={
+        <>
+          <Button variant="outlined" onClick={onBack}>
+            Back
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleNext}
+            sx={{ ml: 'auto' }}
+            disabled={!selectedProvider}
+          >
+            Continue
+          </Button>
+        </>
+      }
+    >
       <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
         Please select a provider for {currentData?.reasonForVisit?.appReason}
       </Typography>
@@ -210,58 +279,25 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
         </Box>
       ) : (
         <>
-          {/* Search / Dropdown */}
-          <Autocomplete<Provider, false, false, false>
-            options={providers || []}
-            value={selectedProvider}
-            onChange={(e, newValue) => setSelectedProvider(newValue)}
-            getOptionLabel={(option: Provider) => option.providerFullName}
-            isOptionEqualToValue={(option, value) =>
-              option.providerId === value.providerId
-            }
-            loading={providersLoading}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder="Search provider..."
-                label="Search Provider"
-                InputProps={{
-                  ...params.InputProps,
-                  endAdornment: (
-                    <>
-                      {providersLoading ? (
-                        <CircularProgress color="inherit" size={18} />
-                      ) : null}
-                      {params.InputProps.endAdornment}
-                    </>
-                  )
-                }}
-              />
-            )}
-            renderOption={(props, option: Provider) => (
-              <Box component="li" {...props} key={option.providerId}>
-                <Avatar
-                  sx={{
-                    bgcolor: 'primary.main',
-                    color: 'white',
-                    width: 32,
-                    height: 32,
-                    fontSize: 14,
-                    mr: 1.5
-                  }}
-                >
-                  {getInitials(option.providerFullName)}
-                </Avatar>
-                <Box>
-                  <Typography variant="body2" fontWeight={600}>
-                    {option.providerFullName}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {option.providerSpeciality}
-                  </Typography>
-                </Box>
-              </Box>
-            )}
+          {/* Filters the provider cards below in place; no
+              separate results dropdown. */}
+          <TextField
+            fullWidth
+            label="Select Provider"
+            placeholder="Search provider by name..."
+            value={providerSearchTerm}
+            onChange={(e) => setProviderSearchTerm(e.target.value)}
+            disabled={providersLoading}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" color="action" />
+                </InputAdornment>
+              ),
+              endAdornment: providersLoading ? (
+                <CircularProgress color="inherit" size={18} />
+              ) : undefined
+            }}
             sx={{ mb: 3 }}
           />
 
@@ -273,7 +309,7 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
               variant="scrollable"
               scrollButtons="auto"
             >
-              {SPECIALTIES.map((specialty) => (
+              {specialties.map((specialty) => (
                 <Tab key={specialty} label={specialty} />
               ))}
             </Tabs>
@@ -288,36 +324,35 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
 
           {/* Provider Cards */}
           {!providersLoading && (
-            <Stack spacing={2}>
-              {visibleProviders.length > 0 ? (
-                visibleProviders.map(renderProviderCard)
-              ) : (
-                <Typography
-                  color="text.secondary"
-                  sx={{ textAlign: 'center', py: 4 }}
-                >
-                  No providers available for this specialty
-                </Typography>
+            <>
+              <Stack spacing={2}>
+                {visibleProviders.length > 0 ? (
+                  visibleProviders.map(renderProviderCard)
+                ) : (
+                  <Typography
+                    color="text.secondary"
+                    sx={{ textAlign: 'center', py: 4 }}
+                  >
+                    No providers available for this specialty
+                  </Typography>
+                )}
+              </Stack>
+              {pageCount > 1 && (
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                  <Pagination
+                    count={pageCount}
+                    page={page}
+                    onChange={(_e, value) => setPage(value)}
+                    size="small"
+                    color="primary"
+                  />
+                </Box>
               )}
-            </Stack>
+            </>
           )}
         </>
       )}
-
-      <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
-        <Button variant="outlined" onClick={onBack}>
-          Back
-        </Button>
-        <Button
-          variant="contained"
-          onClick={handleNext}
-          sx={{ ml: 'auto' }}
-          disabled={!selectedProvider}
-        >
-          Continue
-        </Button>
-      </Box>
-    </Box>
+    </StepLayout>
   );
 };
 

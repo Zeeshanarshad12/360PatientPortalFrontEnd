@@ -29,7 +29,7 @@ export interface Provider {
   locationName?: string | null;
   practiceId?: number;
   practiceName?: string | null;
-  providerSpeciality: string;
+  providerSpecialty: string;
   isDefault?: boolean;
   isSupervising?: boolean;
   isBillingProvider?: boolean;

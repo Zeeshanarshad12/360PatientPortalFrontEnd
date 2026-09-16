@@ -137,7 +137,10 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
         if (reason === 'backdropClick') return;
         handleClose();
       }}
-      maxWidth="sm"
+      // Bug 432589: "sm" (600px) was too cramped for the appointment
+      // details and date/time slot grid, especially now that a full week
+      // can show up to 7 day columns.
+      maxWidth="md"
       fullWidth
       PaperProps={{
         sx: {
@@ -186,7 +189,11 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
       </Box>
 
       {/* Content */}
-      <DialogContent sx={{ minHeight: 400, overflow: 'auto' }}>
+      {/* Bug 432480: fixed height + flex column so each step's footer buttons
+          render in a stable position instead of drifting with content length. */}
+      <DialogContent
+        sx={{ height: 520, display: 'flex', flexDirection: 'column', p: 3 }}
+      >
         {renderStepContent()}
       </DialogContent>
     </Dialog>

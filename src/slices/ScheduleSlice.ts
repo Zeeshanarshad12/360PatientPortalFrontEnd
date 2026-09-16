@@ -166,7 +166,6 @@ export const UpdatePatientAppointment: any = createAsyncThunk(
   'schedule/updatePatientAppointment',
   async (data: Record<string, any>, thunkAPI) => {
     try {
-      debugger;
       const res = await apiServicesV2.UpdatePatientAppointment(
         data,
         'ApiVersion2Req'
