@@ -64,5 +64,6 @@ export const SERVICE_URLSV2 = {
   UpdatePatientAppointment: 'patientportal/UpdatePatientAppointment',
   FilterAppointments: 'patientportal/filterappointment',
   GetAllAppointmentType: 'patientportal/GetAllAppointmentType',
-  DeleteAppointmentById: 'patientportal/DeleteAppointmentById'
+  DeleteAppointmentById: 'patientportal/DeleteAppointmentById',
+  UpdateExistingAppointmentStatus: 'patientportal/updateexistingappointmentstatus'
 };

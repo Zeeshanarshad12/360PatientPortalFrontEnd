@@ -342,11 +342,15 @@ const resetAuth0PatientPassword = (data, flag) =>
     ApiVersion2Req: flag
   });
 
-const UploadPatientDocument = (data) =>
-  post(SERVICE_URLSV2.UploadPatientDocuments, data, {
-    feature: featureConstants.static,
-    ApiVersion2Req: 'ApiVersion2Req'
-  });
+const UploadPatientDocument = (data, practiceId) =>
+  post(
+    `${SERVICE_URLSV2.UploadPatientDocuments}?practiceId=${practiceId}`,
+    data,
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: 'ApiVersion2Req'
+    }
+  );
 
 const AddDocument = (data) =>
   post(SERVICE_URLSV2.AddDocument, data, {
@@ -489,7 +493,9 @@ const Searchappointmentreason = (data, flag) =>
 
 const GetProvidersbyPracticeID = (data, flag) =>
   get(
-    `${SERVICE_URLSV2.GetProvidersbyPracticeID}?PracticeId=${data.practiceId}`,
+    `${SERVICE_URLSV2.GetProvidersbyPracticeID}?PracticeId=${data.practiceId}${
+      data.locationId != null ? `&locationId=${data.locationId}` : ''
+    }`,
     {},
     {
       feature: featureConstants.static,
@@ -539,6 +545,12 @@ const GetAllAppointmentType = (data, flag) =>
 
 const DeleteAppointmentById = (data, flag) =>
   del(SERVICE_URLSV2.DeleteAppointmentById, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
+
+const UpdateExistingAppointmentStatus = (data, flag) =>
+  put(SERVICE_URLSV2.UpdateExistingAppointmentStatus, data, {
     feature: featureConstants.static,
     ApiVersion2Req: flag
   });
@@ -609,7 +621,8 @@ const apiServicesV2 = {
   UpdatePatientAppointment,
   FilterAppointments,
   GetAllAppointmentType,
-  DeleteAppointmentById
+  DeleteAppointmentById,
+  UpdateExistingAppointmentStatus
 };
 
 export default apiServicesV2;

@@ -6,10 +6,12 @@ import {
   Paper,
   Typography,
   CircularProgress,
-  Alert
+  Alert,
+  TextField,
+  InputAdornment
 } from '@mui/material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import SearchIcon from '@mui/icons-material/Search';
 import { useDispatch, useSelector } from '@/store/index';
 import {
   Searchappointmentreason,
@@ -44,6 +46,9 @@ const Step2SelectAppointmentReason: React.FC<Step2Props> = ({
   );
   const [selectedAppointmentType, setSelectedAppointmentType] =
     useState<AppointmentTypeOption | null>(currentData?.appointmentType || null);
+  const [reasonSearchTerm, setReasonSearchTerm] = useState('');
+  const [appointmentTypeSearchTerm, setAppointmentTypeSearchTerm] =
+    useState('');
 
   const {
     appointmentReasons,
@@ -94,6 +99,23 @@ const Step2SelectAppointmentReason: React.FC<Step2Props> = ({
     [appointmentReasons]
   );
 
+  // Filters the reason chips below in place.
+  const filteredReasons = useMemo(() => {
+    const term = reasonSearchTerm.trim().toLowerCase();
+    if (!term) return reasons;
+    return reasons.filter((reason: any) =>
+      (reason.appReason || '').toLowerCase().includes(term)
+    );
+  }, [reasons, reasonSearchTerm]);
+
+  const filteredAppointmentTypes = useMemo(() => {
+    const term = appointmentTypeSearchTerm.trim().toLowerCase();
+    if (!term) return appointmentTypes || [];
+    return (appointmentTypes || []).filter((type: AppointmentTypeOption) =>
+      (type.text || '').toLowerCase().includes(term)
+    );
+  }, [appointmentTypes, appointmentTypeSearchTerm]);
+
   const isReasonSelected = (reason: any) =>
     selectedReason?.id === reason.id ||
     (!!selectedReason?.appReason &&
@@ -140,7 +162,7 @@ const Step2SelectAppointmentReason: React.FC<Step2Props> = ({
         </>
       }
     >
-      <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 0.75 }}>
+      <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
         Select reason for your visit
       </Typography>
 
@@ -155,30 +177,61 @@ const Step2SelectAppointmentReason: React.FC<Step2Props> = ({
           <CircularProgress size={24} />
         </Box>
       ) : (
-        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.75, mb: 2 }}>
-          <Chip
-            size="small"
-            label="All"
-            onClick={() => setSelectedReason(null)}
-            color={!selectedReason ? 'primary' : 'default'}
-            variant={!selectedReason ? 'filled' : 'outlined'}
-          />
-          {reasons.map((reason: any) => (
-            <Chip
-              key={reason.id}
+        <>
+          {reasons.length > 0 && (
+            <TextField
+              fullWidth
               size="small"
-              label={reason.appReason}
-              onClick={() => setSelectedReason(reason)}
-              color={isReasonSelected(reason) ? 'primary' : 'default'}
-              variant={isReasonSelected(reason) ? 'filled' : 'outlined'}
+              placeholder="Search reason for visit..."
+              value={reasonSearchTerm}
+              onChange={(e) => setReasonSearchTerm(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon fontSize="small" color="action" />
+                  </InputAdornment>
+                )
+              }}
+              sx={{ mb: 1 }}
             />
-          ))}
-          {reasons.length === 0 && (
-            <Typography variant="body2" color="text.secondary">
-              No appointment reasons available.
-            </Typography>
           )}
-        </Box>
+          {/* Bug: reason list needs its own scroll region so the
+              Appointment Type list below stays visible instead of
+              requiring one long page-level scroll. */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignContent: 'flex-start',
+              gap: 0.5,
+              mb: 2,
+              maxHeight: 110,
+              overflowY: 'auto',
+              pr: 0.5
+            }}
+          >
+            {filteredReasons.map((reason: any) => (
+              <Chip
+                key={reason.id}
+                size="small"
+                label={reason.appReason}
+                onClick={() => setSelectedReason(reason)}
+                color={isReasonSelected(reason) ? 'primary' : 'default'}
+                variant={isReasonSelected(reason) ? 'filled' : 'outlined'}
+              />
+            ))}
+            {reasons.length === 0 && (
+              <Typography variant="body2" color="text.secondary">
+                No appointment reasons available.
+              </Typography>
+            )}
+            {reasons.length > 0 && filteredReasons.length === 0 && (
+              <Typography variant="body2" color="text.secondary">
+                No reasons found.
+              </Typography>
+            )}
+          </Box>
+        </>
       )}
 
       <Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1 }}>
@@ -198,59 +251,83 @@ const Step2SelectAppointmentReason: React.FC<Step2Props> = ({
       ) : (appointmentTypes || []).length === 0 ? (
         <Alert severity="info">No appointment types available.</Alert>
       ) : (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-          {(appointmentTypes || []).map((type: AppointmentTypeOption) => {
-            const selected = isTypeSelected(type);
-            return (
-              <Paper
-                key={type.id}
-                onClick={() =>
-                  !type.disableType && setSelectedAppointmentType(type)
-                }
-                sx={{
-                  py: 1,
-                  px: 1.5,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  cursor: type.disableType ? 'not-allowed' : 'pointer',
-                  opacity: type.disableType ? 0.5 : 1,
-                  border: '2px solid',
-                  borderColor: selected ? 'primary.main' : '#e0e0e0',
-                  bgcolor: selected ? 'primary.lighter' : 'white',
-                  transition: 'all 0.2s',
-                  '&:hover': type.disableType
-                    ? undefined
-                    : { borderColor: 'primary.main', boxShadow: 1 }
-                }}
-              >
-                <Box>
-                  <Typography fontWeight="bold" variant="body2">
-                    {type.text}
-                  </Typography>
-                  <Box
+        <>
+          <TextField
+            fullWidth
+            size="small"
+            placeholder="Search appointment type..."
+            value={appointmentTypeSearchTerm}
+            onChange={(e) => setAppointmentTypeSearchTerm(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" color="action" />
+                </InputAdornment>
+              )
+            }}
+            sx={{ mb: 1 }}
+          />
+          {filteredAppointmentTypes.length === 0 ? (
+            <Typography
+              color="text.secondary"
+              sx={{ textAlign: 'center', py: 2 }}
+            >
+              No results found.
+            </Typography>
+          ) : (
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+              {filteredAppointmentTypes.map((type: AppointmentTypeOption) => {
+                const selected = isTypeSelected(type);
+                return (
+                  <Paper
+                    key={type.id}
+                    onClick={() =>
+                      !type.disableType && setSelectedAppointmentType(type)
+                    }
                     sx={{
+                      py: 1,
+                      px: 1.5,
                       display: 'flex',
                       alignItems: 'center',
-                      gap: 0.5,
-                      color: 'text.secondary',
-                      mt: 0.25
+                      justifyContent: 'space-between',
+                      cursor: type.disableType ? 'not-allowed' : 'pointer',
+                      opacity: type.disableType ? 0.5 : 1,
+                      border: '2px solid',
+                      borderColor: selected ? 'primary.main' : '#e0e0e0',
+                      bgcolor: selected ? 'primary.lighter' : 'white',
+                      transition: 'all 0.2s',
+                      '&:hover': type.disableType
+                        ? undefined
+                        : { borderColor: 'primary.main', boxShadow: 1 }
                     }}
                   >
-                    <AccessTimeIcon sx={{ fontSize: 14 }} />
-                    <Typography variant="caption">
-                      {type.slotDuration ? `${type.slotDuration} minutes` : '—'}
-                    </Typography>
-                  </Box>
-                </Box>
-                <ArrowForwardIcon
-                  fontSize="small"
-                  color={selected ? 'primary' : 'action'}
-                />
-              </Paper>
-            );
-          })}
-        </Box>
+                    <Box>
+                      <Typography fontWeight="bold" variant="body2">
+                        {type.text}
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.5,
+                          color: 'text.secondary',
+                          mt: 0.25
+                        }}
+                      >
+                        <AccessTimeIcon sx={{ fontSize: 14 }} />
+                        <Typography variant="caption">
+                          {type.slotDuration
+                            ? `${type.slotDuration} minutes`
+                            : '—'}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </Paper>
+                );
+              })}
+            </Box>
+          )}
+        </>
       )}
     </StepLayout>
   );

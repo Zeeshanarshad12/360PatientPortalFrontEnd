@@ -178,7 +178,7 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
       </Box>
 
       {/* Stepper */}
-      <Box sx={{ px: 2, pt: 2, mb: 2 }}>
+      <Box sx={{ px: 2, pt: 1.5, mb: 0.5 }}>
         <Stepper activeStep={currentStep} alternativeLabel>
           {steps.map((label) => (
             <Step key={label}>
@@ -192,7 +192,14 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
       {/* Bug 432480: fixed height + flex column so each step's footer buttons
           render in a stable position instead of drifting with content length. */}
       <DialogContent
-        sx={{ height: 520, display: 'flex', flexDirection: 'column', p: 3 }}
+        sx={{
+          height: 520,
+          display: 'flex',
+          flexDirection: 'column',
+          px: 3,
+          pt: 1,
+          pb: 3
+        }}
       >
         {renderStepContent()}
       </DialogContent>

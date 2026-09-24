@@ -48,9 +48,16 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
     (state: any) => state.schedule
   );
 
+  const selectedFacilityId = currentData?.facility?.id;
+
   useEffect(() => {
-    dispatch(GetProvidersbyPracticeID({ practiceId }) as any);
-  }, [practiceId, dispatch]);
+    dispatch(
+      GetProvidersbyPracticeID({
+        practiceId,
+        locationId: selectedFacilityId
+      }) as any
+    );
+  }, [practiceId, selectedFacilityId, dispatch]);
 
   useEffect(() => {
     if (!selectedProvider || !providers || providers.length === 0) return;
@@ -62,8 +69,6 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [providers]);
-
-  const selectedFacilityId = currentData?.facility?.id;
 
   // TPM feedback: inactive providers must not be shown to the patient.
   // Also defensively exclude providers explicitly
@@ -77,7 +82,10 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
   const activeProviders: Provider[] = useMemo(() => {
     return (providers || []).filter((p: Provider) => {
       if (p.providerIsActive === false) return false;
-      if (p.isSchedulingProvider === false) return false;
+      // Commented out per backend dev request: GetProvidersbyPracticeID now
+      // receives locationId, so scheduling-eligibility filtering may be
+      // handled server-side. Not deleted - may be reinstated.
+      // if (p.isSchedulingProvider === false) return false;
       if (
         selectedFacilityId != null &&
         p.locationId != null &&

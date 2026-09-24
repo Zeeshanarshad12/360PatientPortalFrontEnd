@@ -562,7 +562,7 @@ export const uploadAndSaveConsentFormDocument: any = createAsyncThunk(
     formData.append('files', documentFile);
 
     try {
-      const uploadRes = await apiServicesV2.UploadPatientDocument(formData);
+      const uploadRes = await apiServicesV2.UploadPatientDocument(formData,Number(practiceId));
       if (uploadRes?.status !== 200 && uploadRes?.status !== 201) {
         return thunkAPI.rejectWithValue('Document upload failed');
       }

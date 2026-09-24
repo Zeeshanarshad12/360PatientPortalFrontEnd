@@ -3,8 +3,7 @@ import PatientDashboard from '@/components/Dashboard/index';
 import { ProtectedRoute } from '@/contexts/protectedRoute';
 import { useDispatch, useSelector } from '@/store/index';
 import { GetPatientByEmail } from '@/slices/patientprofileslice';
-import { CircularProgress } from '@mui/material';
-import { Box } from '@mui/system';
+import DashboardSkeleton from '@/components/Dashboard/components/DashboardSkeleton';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 
 const Dashboard = () => {
@@ -83,20 +82,12 @@ const Dashboard = () => {
     setIsSessionReady(true);
   }, [PatientByEmailData]);
 
-  // Block the entire dashboard until session is verified
+  // Session must be verified before widgets can fetch; show the widget
+  // skeleton meanwhile instead of an empty spinner screen.
   if (!isSessionReady) {
     return (
       <ProtectedRoute>
-        <Box
-          sx={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '100vh'
-          }}
-        >
-          <CircularProgress />
-        </Box>
+        <DashboardSkeleton />
       </ProtectedRoute>
     );
   }

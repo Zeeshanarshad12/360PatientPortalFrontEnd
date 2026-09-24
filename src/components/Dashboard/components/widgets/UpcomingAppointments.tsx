@@ -23,11 +23,13 @@ import moment from 'moment';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { isNull } from '@/utils/functions';
 import { SchedulerModal } from '@/components/Scheduler';
-import { AppointmentData } from '@/components/Scheduler/types';
+import { AppointmentData, Facility } from '@/components/Scheduler/types';
+import { mapToFacility } from '@/components/Scheduler/steps/Step1SelectLocation';
 import {
-  DeleteAppointmentById,
-  resetDeleteAppointmentError,
-  GetProvidersbyPracticeID
+  UpdateExistingAppointmentStatus,
+  resetUpdateAppointmentStatusError,
+  GetProvidersbyPracticeID,
+  GetPracticeLocationForPatient
 } from '@/slices/ScheduleSlice';
 import ConfirmDialog from '@/components/ThemeComponent/ConfirmDialog';
 import SnackbarUtils from '@/content/snackbar';
@@ -72,6 +74,30 @@ const getStatusColor = (appointmentStatus: string) =>
     textColor: '#666'
   };
 
+// Bug 432581: once the patient has physically checked in at the practice,
+// the Patient Portal must not let them cancel the appointment anymore.
+const CANCEL_BLOCKED_STATUSES = new Set(['check-in', 'in lobby', 'in room']);
+
+const isCancelBlocked = (appointmentStatus: string) =>
+  CANCEL_BLOCKED_STATUSES.has(appointmentStatus?.toLowerCase());
+
+// Bug 432755: an appointment already cancelled - by the patient here or
+// from SummitEHR - must not offer Reschedule/Cancel actions anymore.
+const CANCELLED_STATUSES = new Set([
+  'cancelled',
+  'cancelled by patient',
+  'doctor cancelled',
+  'deleted',
+  'deny',
+  'denied'
+]);
+
+const isAppointmentCancelled = (appointmentStatus: string) =>
+  CANCELLED_STATUSES.has(appointmentStatus?.toLowerCase());
+
+// Bug 432545: the "Cancelled" status ID in SummitEHR's appointment status list.
+const CANCELLED_STATUS_ID = 2;
+
 const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
   const dispatch = useDispatch();
   const [appointments, setappointments] = useState([]);
@@ -88,8 +114,12 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
   const [appointmentToCancel, setAppointmentToCancel] = useState<
     string | number | null
   >(null);
-  const { deleteAppointmentLoading, deleteAppointmentError, providers } =
-    useSelector((state: any) => state.schedule);
+  const {
+    updateAppointmentStatusLoading,
+    updateAppointmentStatusError,
+    providers,
+    locations
+  } = useSelector((state: any) => state.schedule);
 
   // getpatientappointments returns a raw providerName string that's
   // sometimes malformed (concatenated login-style token) or missing the
@@ -100,6 +130,7 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
   useEffect(() => {
     if (!isNull(practiceId)) {
       dispatch(GetProvidersbyPracticeID({ practiceId }) as any);
+      dispatch(GetPracticeLocationForPatient({ practiceId }) as any);
     }
   }, [practiceId, dispatch]);
 
@@ -112,6 +143,20 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
     });
     return map;
   }, [providers]);
+
+  // Bug 432706: Reschedule must show the same Location Name/Address/Phone
+  // as the New Appointment flow, not the raw (often incomplete) address
+  // string on the appointment record.
+  const facilityByLocationId = useMemo(() => {
+    const map: Record<string, Facility> = {};
+    (locations || []).forEach((loc: any) => {
+      const facility = mapToFacility(loc);
+      if (facility.id != null) {
+        map[String(facility.id)] = facility;
+      }
+    });
+    return map;
+  }, [locations]);
 
   const getDisplayProviderName = (appt: any) =>
     (appt?.providerId != null && providerNameById[String(appt.providerId)]) ||
@@ -141,14 +186,19 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, practiceId, patientId]);
 
-  const resolveAppointmentId = (appt: any) => appt?.appointmentId ?? null;
+  const resolveAppointmentId = (appt: any) =>
+    appt?.appointmentId ?? appt?.AppointmentId ?? appt?.id ?? null;
 
   const handleReschedule = (appt: any) => {
     const startDate = appt?.startTime;
     const endDate = appt?.endTime;
+    const matchedFacility =
+      appt?.locationId != null
+        ? facilityByLocationId[String(appt.locationId)]
+        : undefined;
 
     setInitialAppointmentData({
-      facility: {
+      facility: matchedFacility || {
         id: appt?.locationId,
         name: appt.providerLocation || appt.address || 'Selected Location',
         address: appt.address || ''
@@ -181,7 +231,7 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
   };
 
   const handleCancel = (appointmentId: string | number | null) => {
-    dispatch(resetDeleteAppointmentError());
+    dispatch(resetUpdateAppointmentStatusError());
     setAppointmentToCancel(appointmentId);
     setCancelDialogOpen(true);
   };
@@ -195,16 +245,17 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
     if (appointmentToCancel === null) return;
     try {
       await dispatch(
-        DeleteAppointmentById({
+        UpdateExistingAppointmentStatus({
           appointmentId: appointmentToCancel,
-          series: false
+          statusId: CANCELLED_STATUS_ID,
+          updatedBy: patientId || ''
         })
       ).unwrap();
       handleCloseCancelDialog();
       SnackbarUtils.success('Appointment cancelled successfully.', false);
       fetchAppointments();
     } catch (error) {
-      // deleteAppointmentError is shown inline in the dialog; keep it open.
+      // updateAppointmentStatusError is shown inline in the dialog; keep it open.
     }
   };
 
@@ -371,25 +422,29 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                     </Box>
 
                     {/* Action Buttons */}
-                    <Stack direction="row" gap={1} sx={{ mt: 2 }}>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        onClick={() => handleReschedule(appt)}
-                      >
-                        Reschedule
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        fullWidth
-                        color="error"
-                        onClick={() => handleCancel(resolveAppointmentId(appt))}
-                      >
-                        Cancel
-                      </Button>
-                    </Stack>
+                    {!isAppointmentCancelled(appt.appointmentStatus) && (
+                      <Stack direction="row" gap={1} sx={{ mt: 2 }}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          onClick={() => handleReschedule(appt)}
+                        >
+                          Reschedule
+                        </Button>
+                        {!isCancelBlocked(appt.appointmentStatus) && (
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            fullWidth
+                            color="error"
+                            onClick={() => handleCancel(resolveAppointmentId(appt))}
+                          >
+                            Cancel
+                          </Button>
+                        )}
+                      </Stack>
+                    )}
                   </Box>
                 );
               })}
@@ -434,8 +489,8 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
         confirmText="Cancel Appointment"
         cancelText="Keep Appointment"
         confirmColor="error"
-        loading={deleteAppointmentLoading}
-        error={deleteAppointmentError}
+        loading={updateAppointmentStatusLoading}
+        error={updateAppointmentStatusError}
         onConfirm={handleConfirmCancel}
         onClose={handleCloseCancelDialog}
       />

@@ -21,7 +21,7 @@ import {
 import { useInitialLayout } from './contexts/widgetData';
 import SortableItem from './components/SortableItem';
 import WidgetWrapper from './components/WidgetWrapper';
-import HeartProgressLoader from '@/components/ProgressLoaders/components/HeartLoader';
+import DashboardSkeleton from './components/DashboardSkeleton';
 import { saveDashboardConfiguration } from '@/slices/patientprofileslice';
 
 const DroppableColumn = ({
@@ -51,8 +51,7 @@ const DroppableColumn = ({
 };
 
 const PatientDashboard = () => {
-  const [heartLoading, setHeartLoading] = useState(true);
-  const layout = useInitialLayout();
+  const { layout, layoutLoading } = useInitialLayout();
   const [columns, setColumns] = useState(layout);
   const [activeId, setActiveId] = useState<string | null>('');
   const dispatch = useDispatch();
@@ -195,17 +194,12 @@ const PatientDashboard = () => {
     setActiveId(null);
   };
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setHeartLoading(false);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <>
-      {heartLoading ? (
-        <HeartProgressLoader />
+      {layoutLoading ? (
+        // Saved layout still loading: show widget skeletons right away; each
+        // real widget then shows its own loader while its data loads.
+        <DashboardSkeleton />
       ) : (
         <Box
           sx={{

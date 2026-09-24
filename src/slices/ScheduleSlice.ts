@@ -29,7 +29,9 @@ const initialState = {
   appointmentTypesLoading: false,
   appointmentTypesError: null,
   deleteAppointmentLoading: false,
-  deleteAppointmentError: null
+  deleteAppointmentError: null,
+  updateAppointmentStatusLoading: false,
+  updateAppointmentStatusError: null
 };
 
 export const Searchappointmentreason: any = createAsyncThunk(
@@ -65,7 +67,10 @@ export const Searchappointmentreason: any = createAsyncThunk(
 
 export const GetProvidersbyPracticeID: any = createAsyncThunk(
   'schedule/getProvidersbyPracticeID',
-  async (data: { practiceId?: string | number }, thunkAPI) => {
+  async (
+    data: { practiceId?: string | number; locationId?: string | number },
+    thunkAPI
+  ) => {
     try {
       const res = await apiServicesV2.GetProvidersbyPracticeID(
         data,
@@ -271,6 +276,42 @@ export const DeleteAppointmentById: any = createAsyncThunk(
   }
 );
 
+// Bug 432545: cancelling from the Patient Portal must update the
+// appointment's Status field instead of soft-deleting the record
+// (DeleteAppointmentById flips IsDeleted, which loses the audit trail).
+// DeleteAppointmentById is left in place since it may still be used
+// elsewhere.
+export const UpdateExistingAppointmentStatus: any = createAsyncThunk(
+  'schedule/updateExistingAppointmentStatus',
+  async (
+    data: {
+      appointmentId: string | number;
+      statusId: number;
+      updatedBy: string;
+    },
+    thunkAPI
+  ) => {
+    try {
+      const res = await apiServicesV2.UpdateExistingAppointmentStatus(
+        data,
+        'ApiVersion2Req'
+      );
+      if (res?.status === 200) {
+        return res?.data?.result;
+      } else {
+        return thunkAPI.rejectWithValue(
+          res?.data?.message || 'Failed to cancel appointment'
+        );
+      }
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message || error?.message || 'An error occurred';
+      SnackbarUtils.error(errorMessage, false);
+      return thunkAPI.rejectWithValue(errorMessage);
+    }
+  }
+);
+
 const scheduleSlice = createSlice({
   name: 'schedule',
   initialState,
@@ -284,6 +325,9 @@ const scheduleSlice = createSlice({
     },
     resetDeleteAppointmentError: (state) => {
       state.deleteAppointmentError = null;
+    },
+    resetUpdateAppointmentStatusError: (state) => {
+      state.updateAppointmentStatusError = null;
     },
     setSelectedLocation: (state, action) => {
       state.selectedLocation = action.payload;
@@ -399,6 +443,17 @@ const scheduleSlice = createSlice({
       .addCase(DeleteAppointmentById.rejected, (state, action) => {
         state.deleteAppointmentLoading = false;
         state.deleteAppointmentError = action.payload as string;
+      })
+      .addCase(UpdateExistingAppointmentStatus.pending, (state) => {
+        state.updateAppointmentStatusLoading = true;
+        state.updateAppointmentStatusError = null;
+      })
+      .addCase(UpdateExistingAppointmentStatus.fulfilled, (state) => {
+        state.updateAppointmentStatusLoading = false;
+      })
+      .addCase(UpdateExistingAppointmentStatus.rejected, (state, action) => {
+        state.updateAppointmentStatusLoading = false;
+        state.updateAppointmentStatusError = action.payload as string;
       });
   }
 });
@@ -407,6 +462,7 @@ export const {
   clearAppointmentReasons,
   resetAppointmentReasonsError,
   resetDeleteAppointmentError,
+  resetUpdateAppointmentStatusError,
   setSelectedLocation
 } = scheduleSlice.actions;
 export default scheduleSlice.reducer;

@@ -6,10 +6,13 @@ import {
   Stack,
   Paper,
   CircularProgress,
-  Alert
+  Alert,
+  TextField,
+  InputAdornment
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PhoneIcon from '@mui/icons-material/Phone';
+import SearchIcon from '@mui/icons-material/Search';
 import { useDispatch, useSelector } from '@/store/index';
 import {
   GetPracticeLocationForPatient,
@@ -85,6 +88,7 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(
     currentData?.facility || null
   );
+  const [locationSearchTerm, setLocationSearchTerm] = useState('');
 
   const { locations, locationsLoading, locationsError } = useSelector(
     (state: any) => state.schedule
@@ -94,10 +98,25 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
     dispatch(GetPracticeLocationForPatient({ practiceId }) as any);
   }, [practiceId, dispatch]);
 
+  // Bug 432658: locations must be listed A-Z by name by default.
   const facilities: Facility[] = useMemo(
-    () => (locations || []).map(mapToFacility),
+    () =>
+      (locations || [])
+        .map(mapToFacility)
+        .sort((a: Facility, b: Facility) =>
+          (a.name || '').localeCompare(b.name || '')
+        ),
     [locations]
   );
+
+  // Filters the facility cards below in place; no separate results dropdown.
+  const filteredFacilities = useMemo(() => {
+    const term = locationSearchTerm.trim().toLowerCase();
+    if (!term) return facilities;
+    return facilities.filter((facility) =>
+      (facility.name || '').toLowerCase().includes(term)
+    );
+  }, [facilities, locationSearchTerm]);
 
   useEffect(() => {
     if (!selectedFacility || facilities.length === 0) return;
@@ -257,20 +276,46 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
         </Box>
       ) : (
         !locationsLoading && (
-          <Stack spacing={2}>
-            {facilities.length > 0 ? (
-              facilities.map((facility: Facility) =>
-                renderFacilityCard(facility, false)
-              )
-            ) : (
-              <Typography
-                color="text.secondary"
-                sx={{ textAlign: 'center', py: 4 }}
-              >
-                No facilities available
-              </Typography>
+          <>
+            {facilities.length > 0 && (
+              <TextField
+                fullWidth
+                label="Search Location"
+                placeholder="Search location by name..."
+                value={locationSearchTerm}
+                onChange={(e) => setLocationSearchTerm(e.target.value)}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon fontSize="small" color="action" />
+                    </InputAdornment>
+                  )
+                }}
+                sx={{ mb: 2 }}
+              />
             )}
-          </Stack>
+            <Stack spacing={2}>
+              {facilities.length === 0 ? (
+                <Typography
+                  color="text.secondary"
+                  sx={{ textAlign: 'center', py: 4 }}
+                >
+                  No facilities available
+                </Typography>
+              ) : filteredFacilities.length > 0 ? (
+                filteredFacilities.map((facility: Facility) =>
+                  renderFacilityCard(facility, false)
+                )
+              ) : (
+                <Typography
+                  color="text.secondary"
+                  sx={{ textAlign: 'center', py: 4 }}
+                >
+                  No locations found
+                </Typography>
+              )}
+            </Stack>
+          </>
         )
       )}
     </StepLayout>
