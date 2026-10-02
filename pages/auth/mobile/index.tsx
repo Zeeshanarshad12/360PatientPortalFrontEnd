@@ -2,7 +2,23 @@ import { useEffect, useState } from 'react';
 import { Box, Alert, CircularProgress, Button } from '@mui/material';
 import Router from 'next/router';
 import apiServicesV2 from '@/services/requestHandler';
-import { setToken } from '@/utils/functions';
+import { setToken, getTokenIssuer } from '@/utils/functions';
+import axios from 'axios';
+
+// AuthenticateUserWithToken returns Email as "", but the dashboard looks the patient up by
+// email (GetPatientByEmail), so read it from Auth0's /userinfo using the same access token.
+const fetchEmail = async (accessToken: string): Promise<string> => {
+  const issuer = getTokenIssuer(accessToken);
+  if (!issuer) return '';
+  try {
+    const { data } = await axios.get(`${issuer}/userinfo`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    return data?.email ?? '';
+  } catch {
+    return '';
+  }
+};
 
 /**
  * Entry point for the mobile app's WebView. The app signs the patient in against Auth0
@@ -45,10 +61,16 @@ const MobileLogin = () => {
           return;
         }
 
+        const email = result.Email || (await fetchEmail(result.access_token));
+        if (!email) {
+          setError('Unable to load your account email. Please try again.');
+          return;
+        }
+
         localStorage.clear();
         setToken(
           result.access_token,
-          result.Email,
+          email,
           result.FirstName,
           result.LastName,
           result.UserAccessType,
@@ -63,8 +85,16 @@ const MobileLogin = () => {
 
         // Relative route -> stays on the host the WebView loaded, never localhost.
         await Router.replace('/patientportal/dashboard');
-      } catch {
-        setError('Unable to sign in. Please try again.');
+      } catch (err: any) {
+        const status = err?.response?.status;
+        console.error('[auth/mobile] AuthenticateUserWithToken failed', status, err);
+        setError(
+          status === 401
+            ? 'Sign-in token was rejected (401). Check the token audience/issuer.'
+            : status
+            ? `Unable to sign in (HTTP ${status}).`
+            : 'Unable to reach the server. Check the API URL and certificate.'
+        );
       }
     };
     run();

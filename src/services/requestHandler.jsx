@@ -1,4 +1,4 @@
-import { get, getWithoutToken, post, postWithoutToken, put, del } from './HttpProvider';
+import { get, getWithoutToken, post, postWithoutToken, put, del, instance } from './HttpProvider';
 import featureConstants from './features-constants';
 import { SERVICE_URLSV2 } from './ServiceUrl';
 import { getPatientId } from '../utils/functions';
@@ -154,9 +154,11 @@ const GetToken = (data) =>
     }
   );
 
+// The endpoint is [Authorize]d (Auth0PatientApp scheme), so the token being exchanged must also
+// be sent as the Bearer header - postWithoutToken would send none and get a 401.
 const AuthenticateUserWithToken = (data) =>
-  postWithoutToken(SERVICE_URLSV2.AuthenticateUserWithToken, data, {
-    feature: featureConstants.static
+  instance.post(SERVICE_URLSV2.AuthenticateUserWithToken, data, {
+    headers: { Authorization: `Bearer ${data?.JwtToken}` }
   });
 
 const GetSharingModulesData = (data, flag) =>
