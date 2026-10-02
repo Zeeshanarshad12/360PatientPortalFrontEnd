@@ -7,7 +7,9 @@ import {
   Step,
   StepLabel,
   IconButton,
-  Typography
+  Typography,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import Step1SelectLocation from './steps/Step1SelectLocation';
@@ -27,7 +29,7 @@ interface SchedulerModalProps {
 
 const steps = [
   'Select Location',
-  'Reason for your visit',
+  'Select Reason for Visit',
   'Select Provider',
   'Choose Date & Time',
   'Confirm & Book'
@@ -41,6 +43,11 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
   initialAppointmentData
 }) => {
   const isEditMode = !!appointmentId;
+  const theme = useTheme();
+  // Bug 432589: a fixed 520px content height left a lot of unused screen
+  // space on large monitors and forced scrolling on short ones. The dialog
+  // now scales with the viewport and goes full-screen on small devices.
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const [currentStep, setCurrentStep] = useState(0);
   const [appointmentData, setAppointmentData] = useState<AppointmentData>({});
   const [wasOpen, setWasOpen] = useState(false);
@@ -140,11 +147,14 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
       // Bug 432589: "sm" (600px) was too cramped for the appointment
       // details and date/time slot grid, especially now that a full week
       // can show up to 7 day columns.
-      maxWidth="md"
+      maxWidth="lg"
       fullWidth
+      fullScreen={fullScreen}
       PaperProps={{
         sx: {
-          borderRadius: 2
+          borderRadius: fullScreen ? 0 : 2,
+          height: fullScreen ? '100%' : '85vh',
+          maxHeight: fullScreen ? '100%' : 760
         }
       }}
     >
@@ -189,11 +199,14 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
       </Box>
 
       {/* Content */}
-      {/* Bug 432480: fixed height + flex column so each step's footer buttons
-          render in a stable position instead of drifting with content length. */}
+      {/* Bug 432480: flex column with minHeight: 0 so each step's footer
+          buttons render in a stable position instead of drifting with
+          content length, while the dialog itself sizes off the viewport
+          (see PaperProps above) instead of a fixed pixel height. */}
       <DialogContent
         sx={{
-          height: 520,
+          flex: 1,
+          minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
           px: 3,

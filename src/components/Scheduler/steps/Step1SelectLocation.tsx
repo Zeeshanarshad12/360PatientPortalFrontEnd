@@ -6,13 +6,10 @@ import {
   Stack,
   Paper,
   CircularProgress,
-  Alert,
-  TextField,
-  InputAdornment
+  Alert
 } from '@mui/material';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
 import PhoneIcon from '@mui/icons-material/Phone';
-import SearchIcon from '@mui/icons-material/Search';
 import { useDispatch, useSelector } from '@/store/index';
 import {
   GetPracticeLocationForPatient,
@@ -21,6 +18,7 @@ import {
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { Facility, AppointmentData } from '../types';
 import StepLayout from './StepLayout';
+import StepSectionHeader from './StepSectionHeader';
 
 interface Step1Props {
   onNext: (data: AppointmentData) => void;
@@ -225,6 +223,17 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
 
   return (
     <StepLayout
+      header={
+        <StepSectionHeader
+          title="Select Location"
+          searchValue={locationSearchTerm}
+          onSearchChange={setLocationSearchTerm}
+          searchPlaceholder="Search Location"
+          showSearch={
+            !locationsLoading && !selectedFacility && facilities.length > 0
+          }
+        />
+      }
       footer={
         <>
           {onBack && (
@@ -243,10 +252,6 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
         </>
       }
     >
-      <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-        Please select the facility
-      </Typography>
-
       {locationsError && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {locationsError}
@@ -277,23 +282,6 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
       ) : (
         !locationsLoading && (
           <>
-            {facilities.length > 0 && (
-              <TextField
-                fullWidth
-                label="Search Location"
-                placeholder="Search location by name..."
-                value={locationSearchTerm}
-                onChange={(e) => setLocationSearchTerm(e.target.value)}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" color="action" />
-                    </InputAdornment>
-                  )
-                }}
-                sx={{ mb: 2 }}
-              />
-            )}
             <Stack spacing={2}>
               {facilities.length === 0 ? (
                 <Typography

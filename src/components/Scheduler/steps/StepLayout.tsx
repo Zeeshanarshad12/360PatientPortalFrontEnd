@@ -6,6 +6,10 @@ interface StepLayoutProps {
   footer: React.ReactNode;
   stepNumber?: number;
   stepLabel?: string;
+  // Rendered above the scroll area so section labels/search stay visible.
+  header?: React.ReactNode;
+  // When false the step manages its own inner scroll regions.
+  scrollContent?: boolean;
 }
 
 // Bug 432480: Cancel/Continue must stay pinned at the bottom of the modal
@@ -16,10 +20,25 @@ const StepLayout: React.FC<StepLayoutProps> = ({
   children,
   footer,
   stepNumber,
-  stepLabel
+  stepLabel,
+  header,
+  scrollContent = true
 }) => (
   <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-    <Box sx={{ flex: 1, overflowY: 'auto', pr: 0.5 }}>
+    {header && <Box sx={{ flexShrink: 0, pb: 1 }}>{header}</Box>}
+    <Box
+      sx={
+        scrollContent
+          ? { flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.5 }
+          : {
+              flex: 1,
+              minHeight: 0,
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column'
+            }
+      }
+    >
       {stepNumber != null && stepLabel && (
         <Box
           sx={{

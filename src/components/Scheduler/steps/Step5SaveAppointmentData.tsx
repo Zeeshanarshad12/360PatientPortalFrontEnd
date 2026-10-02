@@ -4,7 +4,6 @@ import {
   Button,
   Paper,
   Typography,
-  Stack,
   Alert,
   CircularProgress,
   Avatar
@@ -135,7 +134,7 @@ const Step5SaveAppointmentData: React.FC<Step5Props> = ({
           sx={{ fontSize: 80, color: 'success.main', mb: 2 }}
         />
         <Typography variant="h5" fontWeight="bold" sx={{ mb: 1 }}>
-          {isReschedule ? 'Appointment Rescheduled!' : 'Appointment Confirmed!'}
+          {isReschedule ? 'Appointment Rescheduled!' : 'Appointment Booked!'}
         </Typography>
         <Typography color="text.secondary">
           {isReschedule
@@ -155,6 +154,11 @@ const Step5SaveAppointmentData: React.FC<Step5Props> = ({
 
   return (
     <StepLayout
+      header={
+        <Typography variant="h6" fontWeight="bold">
+          {isReschedule ? 'Confirm Reschedule' : 'Confirm Booking'}
+        </Typography>
+      }
       footer={
         <>
           <Button variant="outlined" onClick={onBack} disabled={submitLoading}>
@@ -180,95 +184,98 @@ const Step5SaveAppointmentData: React.FC<Step5Props> = ({
         </>
       }
     >
-      <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-        {isReschedule ? 'Confirm Reschedule' : 'Confirm Booking'}
-      </Typography>
-
       {/* Summary Card */}
       <Paper
         sx={{
-          p: 3,
-          mb: 3,
+          p: 2,
+          mb: 1.5,
           bgcolor: 'primary.lighter',
           border: '1px solid',
           borderColor: 'primary.light'
         }}
       >
-        <Stack spacing={3}>
-          {/* Provider Info */}
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-            <Avatar
-              sx={{
-                bgcolor: 'primary.main',
-                color: 'white',
-                width: 56,
-                height: 56
-              }}
-            >
-              {getInitials(currentData?.provider?.providerFullName || 'Dr')}
-            </Avatar>
-            <Box>
-              <Typography fontWeight="bold">
-                {currentData?.provider?.providerFullName}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {currentData?.provider?.providerSpecialty}
-              </Typography>
-            </Box>
+        {/* Provider Info */}
+        <Box sx={{ display: 'flex', gap: 1.5, alignItems: 'center' }}>
+          <Avatar
+            sx={{
+              bgcolor: 'primary.main',
+              color: 'white',
+              width: 44,
+              height: 44
+            }}
+          >
+            {getInitials(currentData?.provider?.providerFullName || 'Dr')}
+          </Avatar>
+          <Box>
+            <Typography fontWeight="bold">
+              {currentData?.provider?.providerFullName}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              {currentData?.provider?.providerSpecialty}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Appointment Details */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+            columnGap: 3,
+            rowGap: 1,
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            mt: 1.5,
+            pt: 1.5
+          }}
+        >
+          <Box>
+            <Typography variant="caption" color="text.secondary">
+              Appointment Type
+            </Typography>
+            <Typography fontWeight="bold" variant="body2">
+              {currentData?.appointmentType?.text}
+            </Typography>
           </Box>
 
-          <Box sx={{ borderTop: '1px solid', borderColor: 'divider', pt: 2 }}>
-            {/* Appointment Details */}
-            <Stack spacing={1.5}>
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Appointment Type
-                </Typography>
-                <Typography fontWeight="bold">
-                  {currentData?.appointmentType?.text}
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Reason for Visit
-                </Typography>
-                <Typography fontWeight="bold">
-                  {currentData?.reasonForVisit?.appReason}
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Date & Time
-                </Typography>
-                <Typography fontWeight="bold">
-                  {moment(currentData?.date).format('MMMM D, YYYY')} at{' '}
-                  {currentData?.time}
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  Location
-                </Typography>
-                <Typography fontWeight="bold">
-                  {currentData?.facility?.name}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {currentData?.facility?.address}
-                </Typography>
-              </Box>
-            </Stack>
+          <Box>
+            <Typography variant="caption" color="text.secondary">
+              Reason for Visit
+            </Typography>
+            <Typography fontWeight="bold" variant="body2">
+              {currentData?.reasonForVisit?.appReason}
+            </Typography>
           </Box>
-        </Stack>
+
+          <Box>
+            <Typography variant="caption" color="text.secondary">
+              Date & Time
+            </Typography>
+            <Typography fontWeight="bold" variant="body2">
+              {moment(currentData?.date).format('MMMM D, YYYY')} at{' '}
+              {currentData?.time}
+            </Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="caption" color="text.secondary">
+              Location
+            </Typography>
+            <Typography fontWeight="bold" variant="body2">
+              {currentData?.facility?.name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {currentData?.facility?.address}
+            </Typography>
+          </Box>
+        </Box>
       </Paper>
 
       {/* Notification Banner */}
       <Alert
         icon={<NotificationsIcon />}
         severity="info"
-        sx={{ mb: 3, bgcolor: 'info.lighter' }}
+        sx={{ mb: 1.5, py: 0, bgcolor: 'info.lighter' }}
       >
         <Typography variant="body2">
           You will receive a confirmation notification once the provider accepts your
@@ -278,7 +285,7 @@ const Step5SaveAppointmentData: React.FC<Step5Props> = ({
 
       {/* Error Alert */}
       {bookingStatus === 'error' && (
-        <Alert severity="error" sx={{ mb: 3 }}>
+        <Alert severity="error" sx={{ mb: 1.5 }}>
           {submitError ||
             (isReschedule
               ? 'Failed to reschedule appointment. Please try again.'

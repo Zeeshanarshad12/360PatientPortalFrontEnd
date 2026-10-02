@@ -13,7 +13,7 @@ import { widgetContent } from '@/components/Dashboard/contexts/widgetData';
 import { useDispatch, useSelector } from '@/store/index';
 import { GetPatientActiveMedications } from '@/slices/patientprofileslice';
 import { useState, useEffect, useMemo } from 'react';
-import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
+import WidgetLoadingRows from '@/components/Dashboard/components/WidgetLoadingRows';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { isNull } from '@/utils/functions';
 
@@ -57,7 +57,7 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
     <>
       {loading ? (
         <Card sx={{ borderRadius: 3 }}>
-          <CardContent sx={{ pb: 1 }}>
+          <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
             <Box
               display="flex"
               alignItems="center"
@@ -80,13 +80,13 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
               alignItems="center"
               height="100%"
             >
-              <CircularProgressLoader />
+              <WidgetLoadingRows />
             </Box>
           </CardContent>
         </Card>
       ) : (
         <Card sx={{ minHeight: 250, borderRadius: 3 }}>
-          <CardContent sx={{ pb: 1 }}>
+          <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
             {/* Header with Count */}
             <Box
               display="flex"
@@ -129,7 +129,7 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
                   sx={{
                     border: '1px solid #e0e0e0',
                     borderRadius: 2,
-                    p: 2,
+                    p: 1.5,
                     mb: 1,
                     position: 'relative',
                     bgcolor: '#fafafa'

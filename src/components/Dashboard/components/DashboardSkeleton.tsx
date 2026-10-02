@@ -19,8 +19,8 @@ const DEFAULT_SKELETON_LAYOUT: string[][] = [
 ];
 
 const WidgetSkeleton: React.FC<{ id: string }> = ({ id }) => (
-  <Card sx={{ minHeight: 250, borderRadius: 3, mb: 2 }}>
-    <CardContent sx={{ pb: 1 }}>
+  <Card sx={{ minHeight: 250, borderRadius: 3, mb: 1 }}>
+    <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
       <Box mb={2}>
         <Typography variant="h4" fontWeight="bold" sx={{ fontSize: '1.25rem' }}>
           {widgetContent[id]?.title ?? <Skeleton width={160} />}
@@ -53,7 +53,7 @@ const DashboardSkeleton: React.FC = () => {
         sx={{
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
-          gap: isMobile ? '16px' : '25px',
+          gap: '8px',
           paddingRight: isMobile ? 0 : '10px'
         }}
       >

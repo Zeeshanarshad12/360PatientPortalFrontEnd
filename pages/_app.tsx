@@ -12,14 +12,13 @@ import createEmotionCache from 'src/createEmotionCache';
 import { appWithTranslation } from 'next-i18next';
 import { SidebarProvider } from 'src/contexts/SidebarContext';
 import { Provider as ReduxProvider } from 'react-redux';
-import { store } from 'src/store';
+import { store, persistor } from 'src/store';
 import AdapterDateFns from '@mui/lab/AdapterDateFns';
 import LocalizationProvider from '@mui/lab/LocalizationProvider';
 import useScrollTop from 'src/hooks/useScrollTop';
 import { SnackbarProvider } from 'notistack';
 import '../styles/globals.css';
 import { SnackbarUtilsConfigurator } from '@/content/snackbar';
-import { persistStore } from 'redux-persist';
 import { PersistGate } from 'redux-persist/integration/react';
 import SnackbarCloseButton from '@/content/snackbarclosebtn';
 import AuthProvider from '@/components/AuthProvider';
@@ -30,6 +29,7 @@ import { CurrentPatientProvider } from '@/contexts/CurrentPatientContext';
 import PracticeChangeRefresher from './_PracticeChangeRefresher';
 import ConsentFormCountLoader from '@/components/ConsentForms/components/ConsentFormCountLoader';
 import SessionTokenRefresher from '@/components/SessionTokenRefresher';
+import AppShellSkeleton from '@/components/AppShellSkeleton';
 const clientSideEmotionCache = createEmotionCache();
 
 type NextPageWithLayout = NextPage & {
@@ -42,7 +42,6 @@ interface MyAppProps extends AppProps {
 }
 
 function MyApp(props: MyAppProps) {
-  let persistor = persistStore(store);
 
   const { Component, emotionCache = clientSideEmotionCache, pageProps } = props;
   const router = useRouter();
@@ -63,6 +62,7 @@ function MyApp(props: MyAppProps) {
     '/auth/signup',
     '/auth/signin',
     '/auth/forgotpassword',
+    '/auth/mobile',
     '/'
   ];
   const isAuthPage = authPages.includes(router.pathname);
@@ -90,7 +90,21 @@ function MyApp(props: MyAppProps) {
           </ThemeProvider>
         ) : (
           // Main app: full provider tree, wrapped in PersistGate
-          <PersistGate loading={null} persistor={persistor}>
+          <PersistGate
+            // While the session is restored, show the portal frame with the empty
+            // dashboard's skeletons rather than a blank page. PersistGate renders this
+            // outside the providers below, so it gets its own theme.
+            loading={
+              <ThemeProvider>
+                <CssBaseline />
+                <AppShellSkeleton />
+              </ThemeProvider>
+            }
+            // The store's single persistor (src/store) — this used to call persistStore(store) on
+            // every render, so each re-render restarted the gate (blank screen) and it wasn't
+            // the persistor logout purges.
+            persistor={persistor}
+          >
             <SidebarProvider>
               <ThemeProvider>
                 <LocalizationProvider dateAdapter={AdapterDateFns}>

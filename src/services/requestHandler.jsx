@@ -154,6 +154,11 @@ const GetToken = (data) =>
     }
   );
 
+const AuthenticateUserWithToken = (data) =>
+  postWithoutToken(SERVICE_URLSV2.AuthenticateUserWithToken, data, {
+    feature: featureConstants.static
+  });
+
 const GetSharingModulesData = (data, flag) =>
   get(
     `${SERVICE_URLSV2.GetSharingModulesData}?PatientId=${data}`,
@@ -555,6 +560,20 @@ const UpdateExistingAppointmentStatus = (data, flag) =>
     ApiVersion2Req: flag
   });
 
+// Smart Intake — PatientPortalController (api/v2), so the v2 instance like the other patientportal/* calls.
+// The backend checks the link token belongs to the signed-in portal user.
+const SmartIntakeGetForm = (data) =>
+  post(SERVICE_URLSV2.SmartIntakeGetForm, data, { feature: featureConstants.static, ApiVersion2Req: true });
+
+const SmartIntakeSubmitSection = (data) =>
+  post(SERVICE_URLSV2.SmartIntakeSubmitSection, data, { feature: featureConstants.static, ApiVersion2Req: true });
+
+const SmartIntakeSearchDrugs = (data) =>
+  post(SERVICE_URLSV2.SmartIntakeSearchDrugs, data, { feature: featureConstants.static, ApiVersion2Req: true });
+
+const SmartIntakeSearchPayers = (data) =>
+  post(SERVICE_URLSV2.SmartIntakeSearchPayers, data, { feature: featureConstants.static, ApiVersion2Req: true });
+
 
 const apiServicesV2 = {
   GetGeneralLookup,
@@ -576,6 +595,7 @@ const apiServicesV2 = {
   AddPatientUser,
   AddExistingUser,
   GetToken,
+  AuthenticateUserWithToken,
   GetSharingModulesData,
   UpdateSharingModulesData,
   saveConsentForm,
@@ -622,7 +642,11 @@ const apiServicesV2 = {
   FilterAppointments,
   GetAllAppointmentType,
   DeleteAppointmentById,
-  UpdateExistingAppointmentStatus
+  UpdateExistingAppointmentStatus,
+  SmartIntakeGetForm,
+  SmartIntakeSubmitSection,
+  SmartIntakeSearchDrugs,
+  SmartIntakeSearchPayers
 };
 
 export default apiServicesV2;

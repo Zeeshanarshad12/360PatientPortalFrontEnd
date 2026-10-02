@@ -18,7 +18,7 @@ import { widgetContent } from '@/components/Dashboard/contexts/widgetData';
 import { useDispatch, useSelector } from '@/store/index';
 import { useState, useEffect, useMemo } from 'react';
 import { getpatientappointments } from '@/slices/patientprofileslice';
-import CircularProgressLoader from '@/components/ProgressLoaders/components/Circular';
+import WidgetLoadingRows from '@/components/Dashboard/components/WidgetLoadingRows';
 import moment from 'moment';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { isNull } from '@/utils/functions';
@@ -38,12 +38,10 @@ interface Props {
   dragHandleProps?: React.HTMLAttributes<HTMLElement>;
 }
 
-// Mirrors the appointment status colors configured in the EHR Scheduler's
-// status dropdown so a status reads the same way in both apps. TODO:
-// confirm these hex values with design/TPM against the EHR scheduler's
-// actual palette - it isn't defined anywhere in this frontend, so this is a
-// best-effort mapping covering every status the scheduler exposes rather
-// than only the two this widget originally knew.
+// Bug 432553: the EHR now sends the actual SummitEHR Scheduler status
+// color as appt.colorHex on every appointment, so that's the source of
+// truth (see resolveStatusColor). This guessed palette is now only a
+// fallback for older data or if colorHex is ever missing.
 const STATUS_COLORS: Record<string, { bgcolor: string; textColor: string }> = {
   scheduled: { bgcolor: '#e3f2fd', textColor: '#1565c0' },
   confirmed: { bgcolor: '#e8f5e9', textColor: '#2e7d32' },
@@ -73,6 +71,38 @@ const getStatusColor = (appointmentStatus: string) =>
     bgcolor: '#e0e0e0',
     textColor: '#666'
   };
+
+const isValidHexColor = (value?: string) =>
+  !!value && /^#([0-9a-f]{3}){1,2}$/i.test(value);
+
+// Picks readable black/white text against an arbitrary background color,
+// since the EHR only sends a background hex, not a matching text color.
+const getContrastTextColor = (hex: string) => {
+  const clean = hex.replace('#', '');
+  const full =
+    clean.length === 3
+      ? clean
+          .split('')
+          .map((c) => c + c)
+          .join('')
+      : clean;
+  const num = parseInt(full, 16);
+  const r = (num >> 16) & 255;
+  const g = (num >> 8) & 255;
+  const b = num & 255;
+  const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return brightness > 0.6 ? '#000000' : '#ffffff';
+};
+
+const resolveStatusColor = (appt: any) => {
+  if (isValidHexColor(appt?.colorHex)) {
+    return {
+      bgcolor: appt.colorHex,
+      textColor: getContrastTextColor(appt.colorHex)
+    };
+  }
+  return getStatusColor(appt?.appointmentStatus);
+};
 
 // Bug 432581: once the patient has physically checked in at the practice,
 // the Patient Portal must not let them cancel the appointment anymore.
@@ -278,7 +308,7 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
     <>
       {loading ? (
         <Card sx={{ borderRadius: 3 }}>
-          <CardContent sx={{ pb: 1 }}>
+          <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
             <Box
               display="flex"
               alignItems="center"
@@ -301,13 +331,13 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
               alignItems="center"
               height="100%"
             >
-              <CircularProgressLoader />
+              <WidgetLoadingRows />
             </Box>
           </CardContent>
         </Card>
       ) : (
         <Card sx={{ minHeight: 250, borderRadius: 3 }}>
-          <CardContent sx={{ pb: 1 }}>
+          <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
             {/* Header with Schedule Link */}
             <Box
               display="flex"
@@ -344,14 +374,14 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
             {/* Appointments List */}
             <Box sx={{ maxHeight: 350, overflowY: 'auto', pr: 1 }}>
               {appointments.map((appt: any, index: number) => {
-                const statusColors = getStatusColor(appt.appointmentStatus);
+                const statusColors = resolveStatusColor(appt);
                 return (
                   <Box
                     key={index}
                     sx={{
                       border: '1px solid #e0e0e0',
                       borderRadius: 2,
-                      p: 2,
+                      p: 1.5,
                       mb: 1.5,
                       position: 'relative',
                       bgcolor: '#fff'

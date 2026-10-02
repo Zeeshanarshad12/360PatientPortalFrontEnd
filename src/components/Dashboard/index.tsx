@@ -222,7 +222,7 @@ const PatientDashboard = () => {
               style={{
                 display: 'flex',
                 flexDirection: isMobile ? 'column' : 'row',
-                gap: isMobile ? '16px' : '25px',
+                gap: '8px',
                 paddingRight: isMobile ? '0' : '10px',
                 paddingBottom: isMobile ? '20px' : '0'
               }}

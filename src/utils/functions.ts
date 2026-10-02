@@ -34,7 +34,7 @@ export const Check_Authentication = async (response) => {
     localStorage.setItem('isAuthenticated', 'false');
   } else if (response?.status === 401) {
     localStorage.clear();
-    Router.push(process.env.NEXT_PUBLIC_ORIGIN_URI);
+    Router.push('/');
   } else if (response?.status === 400) {
     const resp = response;
     if (resp?.data?.responseException) {

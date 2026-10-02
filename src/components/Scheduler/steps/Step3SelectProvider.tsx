@@ -9,18 +9,16 @@ import {
   Avatar,
   Tabs,
   Tab,
-  TextField,
-  InputAdornment,
   CircularProgress,
   Alert,
   Pagination
 } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
 import { useDispatch, useSelector } from '@/store/index';
 import { GetProvidersbyPracticeID } from '@/slices/ScheduleSlice';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { Provider, AppointmentData } from '../types';
 import StepLayout from './StepLayout';
+import StepSectionHeader from './StepSectionHeader';
 
 interface Step3Props {
   onNext: (data: AppointmentData) => void;
@@ -85,6 +83,13 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
       // Commented out per backend dev request: GetProvidersbyPracticeID now
       // receives locationId, so scheduling-eligibility filtering may be
       // handled server-side. Not deleted - may be reinstated.
+      //
+      // Bug 432754 ("Cancelled Appointments" showing as a selectable
+      // provider): tried reinstating this filter, but live API data shows
+      // isSchedulingProvider: false on real, active providers too (e.g.
+      // providerIsActive: true clinicians with a valid NPI/phone/license),
+      // so it does not reliably distinguish real providers from junk
+      // entries. Reverted - this needs a backend-side fix instead.
       // if (p.isSchedulingProvider === false) return false;
       if (
         selectedFacilityId != null &&
@@ -223,9 +228,16 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
           <Box>
             <Typography fontWeight="bold">
               {provider.providerFullName}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              {provider.providerSpecialty}
+              {provider.providerSpecialty && (
+                <Typography
+                  component="span"
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ fontWeight: 'normal', ml: 1 }}
+                >
+                  ({provider.providerSpecialty})
+                </Typography>
+              )}
             </Typography>
             {provider.nextAvailable && (
               <Typography variant="caption" color="text.secondary">
@@ -246,6 +258,20 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
 
   return (
     <StepLayout
+      header={
+        <StepSectionHeader
+          title={`Select a Provider for ${
+            currentData?.appointmentType?.text ||
+            currentData?.reasonForVisit?.appReason ||
+            ''
+          }`.trim()}
+          searchValue={providerSearchTerm}
+          onSearchChange={setProviderSearchTerm}
+          searchPlaceholder="Search Provider"
+          searchDisabled={providersLoading}
+          showSearch={!selectedProvider}
+        />
+      }
       footer={
         <>
           <Button variant="outlined" onClick={onBack}>
@@ -262,10 +288,6 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
         </>
       }
     >
-      <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-        Please select a provider for {currentData?.reasonForVisit?.appReason}
-      </Typography>
-
       {/* Error Alert */}
       {providersError && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -287,28 +309,6 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
         </Box>
       ) : (
         <>
-          {/* Filters the provider cards below in place; no
-              separate results dropdown. */}
-          <TextField
-            fullWidth
-            label="Select Provider"
-            placeholder="Search provider by name..."
-            value={providerSearchTerm}
-            onChange={(e) => setProviderSearchTerm(e.target.value)}
-            disabled={providersLoading}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" color="action" />
-                </InputAdornment>
-              ),
-              endAdornment: providersLoading ? (
-                <CircularProgress color="inherit" size={18} />
-              ) : undefined
-            }}
-            sx={{ mb: 3 }}
-          />
-
           {/* Specialty Tabs */}
           <Box sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
             <Tabs

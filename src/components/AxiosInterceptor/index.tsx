@@ -25,7 +25,8 @@ const performLogout = () => {
   store.dispatch({ type: 'RESET_ALL_STATE' });
   persistor.purge();
   clearPatientSession();
-  window.location.href = process.env.NEXT_PUBLIC_ORIGIN_URI;
+  // Relative: the build-time NEXT_PUBLIC_ORIGIN_URI can be localhost (wrong in the mobile WebView).
+  window.location.href = '/';
 };
 
 const AxiosInterceptor = ({ children }) => {

@@ -9,6 +9,7 @@ export const SERVICE_URLSV2 = {
   AddPatientUser: 'patientuser/addpatientuser',
   AddExistingUser: 'patientuser/addexistinguser',
   GetToken: 'patientuser/gettoken',
+  AuthenticateUserWithToken: 'patientuser/authenticateuserwithtoken',
   DownloadDocument: 'ccda/download',
   Share: '/ccda/share',
   GetPatientByEmail: 'patientportal/getpatientbyemail',
@@ -65,5 +66,11 @@ export const SERVICE_URLSV2 = {
   FilterAppointments: 'patientportal/filterappointment',
   GetAllAppointmentType: 'patientportal/GetAllAppointmentType',
   DeleteAppointmentById: 'patientportal/DeleteAppointmentById',
-  UpdateExistingAppointmentStatus: 'patientportal/updateexistingappointmentstatus'
+  UpdateExistingAppointmentStatus: 'patientportal/updateexistingappointmentstatus',
+  // Smart Intake (PatientPortalController, api/v2 like the other patientportal/* calls).
+  // Signed-in portal user + the link token from /patientportal/intake/[token].
+  SmartIntakeGetForm: 'patientportal/GetForm',
+  SmartIntakeSubmitSection: 'patientportal/SubmitSection',
+  SmartIntakeSearchDrugs: 'patientportal/SearchDrugs',
+  SmartIntakeSearchPayers: 'patientportal/SearchPayers'
 };
