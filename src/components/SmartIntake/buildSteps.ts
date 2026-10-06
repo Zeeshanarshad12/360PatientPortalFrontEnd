@@ -14,6 +14,16 @@ function demographicsDefaults(form: IntakeForm): Record<string, string> {
   };
 }
 
+/** "Label: answer" texts the backend sends as what's on the chart -> answer by lower-cased label. */
+function chartAnswers(previous: string[]): Map<string, string> {
+  const answers = new Map<string, string>();
+  for (const text of previous) {
+    const at = text.indexOf(': ');
+    if (at > 0) answers.set(text.slice(0, at).trim().toLowerCase(), text.slice(at + 2).trim());
+  }
+  return answers;
+}
+
 function buildStep(section: IntakeSection, form: IntakeForm, searches: IntakeSearches): WizardStep {
   const { code, label } = section;
   const names = section.catalog.map((o) => o.name);
@@ -40,11 +50,14 @@ function buildStep(section: IntakeSection, form: IntakeForm, searches: IntakeSea
     default: {
       // Demographics / Insurance: the practice's own fields, labels and order.
       const defaults = code === 'Demographics' ? demographicsDefaults(form) : {};
+      // Insurance: the primary policy already on the chart, to confirm or correct. Demographics
+      // pre-fills from the patient record above.
+      const onChart = code === 'Insurance' ? chartAnswers(section.previous) : new Map<string, string>();
       return {
         kind: 'form',
         code,
         label,
-        fields: section.fields.map((f) => ({ key: `${code}-${f.code}`, code: f.code, label: f.label, type: f.type, options: f.options, value: defaults[f.code] ?? '' })),
+        fields: section.fields.map((f) => ({ key: `${code}-${f.code}`, code: f.code, label: f.label, type: f.type, options: f.options, value: defaults[f.code] ?? onChart.get(f.label.trim().toLowerCase()) ?? '' })),
         searchPayers: searches.payers
       };
     }

@@ -33,6 +33,8 @@ export type IntakeSection = {
   fields: IntakeField[];
   /** What's on the chart already, in the wizard's value format. */
   previous: string[];
+  /** Insurance: the payer of the policy already on the chart, when there is one. */
+  chartPayer?: IntakePayer;
   catalog: CatalogOption[];
   submittedStatus: string | null;
 };

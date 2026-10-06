@@ -17,6 +17,19 @@ function rows(row: Row, key: string): Row[] {
 }
 const texts = (values: Row[]) => values.map((v) => str(v, 'Text') ?? '').filter(Boolean);
 
+/** The payer of the policy on the chart ("Label: plan" with its plan/payer ids), so keeping it
+ * submits the same pick a search would have. */
+function chartPayer(values: Row[]): IntakePayer | undefined {
+  for (const v of values) {
+    const text = str(v, 'Text') ?? '';
+    const at = text.indexOf(': ');
+    const planId = str(v, 'SourceId');
+    const payerId = str(v, 'PayerId');
+    if (at > 0 && planId && payerId) return { insurancePlanId: planId, payerId, name: text.slice(at + 2).trim() };
+  }
+  return undefined;
+}
+
 const SECTION_CODES: SectionCode[] = ['Demographics', 'Insurance', 'MedicalHistory', 'FamilyHistory', 'SocialHistory', 'SurgicalHistory', 'CurrentMedications'];
 const FIELD_TYPES: FieldType[] = ['text', 'date', 'phone', 'email', 'select', 'payer'];
 
@@ -72,6 +85,7 @@ function mapForm(row: Row): IntakeForm {
       routing: pick(s, 'Routing') === 'auto' ? 'auto' : 'review',
       fields: rows(s, 'Fields').map(mapField).filter((f) => f.code && f.label),
       previous: texts(rows(s, 'Previous')),
+      chartPayer: code === 'Insurance' ? chartPayer(rows(s, 'Previous')) : undefined,
       catalog: rows(s, 'Catalog').map(mapOption).filter((o) => o.name),
       submittedStatus: str(s, 'SubmittedStatus') ?? null
     });

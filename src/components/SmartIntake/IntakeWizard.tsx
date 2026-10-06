@@ -74,7 +74,12 @@ export function IntakeWizard({ token }: { token: string }) {
     setError(null);
     intakeApi
       .getForm(token)
-      .then((f) => !cancelled && setForm(f))
+      .then((f) => {
+        if (cancelled) return;
+        // The payer already on the chart counts as picked, so confirming it submits its plan.
+        f.sections.forEach((s) => s.chartPayer && pickedPayers.current.set(s.chartPayer.name.toLowerCase(), s.chartPayer));
+        setForm(f);
+      })
       .catch((e: IntakeApiError) => !cancelled && setError(e));
     return () => {
       cancelled = true;
