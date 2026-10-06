@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import { Box, Button, Typography } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
-import type { SectionSubmission, WizardStep } from './types';
+import type { SectionStep, SectionSubmission, WizardStep } from './types';
 import { WizardStepper } from './WizardStepper';
 import { FormStep } from './FormStep';
 import { ChecklistStep, FamilyHistoryStep, SocialHistoryStep } from './ChecklistSteps';
 import { MedicationStep } from './MedicationStep';
+import { ConsentStep } from './ConsentStep';
 
 function sameValues(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false;
@@ -15,19 +16,21 @@ function sameValues(a: string[], b: string[]): boolean {
 }
 
 const initialValues = (steps: WizardStep[]): Record<number, string[]> =>
-  Object.fromEntries(steps.map((s, i) => [i, s.kind === 'form' ? s.fields.map((f) => f.value) : [...s.baseline]]));
+  Object.fromEntries(steps.map((s, i) => [i, s.kind === 'form' ? s.fields.map((f) => f.value) : s.kind === 'consent' ? [] : [...s.baseline]]));
 
 /**
  * One step at a time; Save & Next saves the step. A checklist-type step left exactly as it was
  * on the chart is sent as "still accurate" (attest) instead of a new submission. A failed save
  * keeps the patient on the step with their answers intact — `onSubmitSection` tells them why.
+ * Consent steps save themselves when signed (the portal's consent signing); Next waits for it.
  */
-export function WizardBody({ steps, onSubmitSection }: { steps: WizardStep[]; onSubmitSection: (step: WizardStep, submission: SectionSubmission) => Promise<void> }) {
+export function WizardBody({ steps, onSubmitSection }: { steps: WizardStep[]; onSubmitSection: (step: SectionStep, submission: SectionSubmission) => Promise<void> }) {
   const [current, setCurrent] = useState(0);
   const [completed, setCompleted] = useState<boolean[]>(() => steps.map(() => false));
   const [values, setValues] = useState<Record<number, string[]>>(() => initialValues(steps));
   const [busy, setBusy] = useState(false);
   const [finished, setFinished] = useState(false);
+  const [signed, setSigned] = useState<Record<number, boolean>>({});
 
   if (finished) {
     return (
@@ -47,13 +50,16 @@ export function WizardBody({ steps, onSubmitSection }: { steps: WizardStep[]; on
   const isLast = current === steps.length - 1;
   const stepValues = values[current] ?? [];
   const setStepValues = (next: string[]) => setValues((prev) => ({ ...prev, [current]: next }));
+  const needsSignature = step.kind === 'consent' && !signed[current];
 
   async function goNext() {
-    if (busy) return;
+    if (busy || needsSignature) return;
     setBusy(true);
     try {
-      const submission: SectionSubmission = step.kind !== 'form' && sameValues(stepValues, step.baseline) ? { type: 'attest' } : { type: 'submit', values: stepValues };
-      await onSubmitSection(step, submission);
+      if (step.kind !== 'consent') {
+        const submission: SectionSubmission = step.kind !== 'form' && sameValues(stepValues, step.baseline) ? { type: 'attest' } : { type: 'submit', values: stepValues };
+        await onSubmitSection(step, submission);
+      }
       setCompleted((c) => c.map((v, i) => (i === current ? true : v)));
       if (isLast) setFinished(true);
       else setCurrent((c) => c + 1);
@@ -69,7 +75,7 @@ export function WizardBody({ steps, onSubmitSection }: { steps: WizardStep[]; on
       <WizardStepper labels={steps.map((s) => s.label)} current={current} completed={completed} onSelect={setCurrent} />
       <Box sx={{ p: { xs: 2, sm: 3 } }}>
         <Typography variant="overline" color="text.secondary">
-          Section {current + 1} of {steps.length}
+          Step {current + 1} of {steps.length}
         </Typography>
         <Typography variant="h4" sx={{ mb: 2 }}>
           {step.label}
@@ -90,6 +96,17 @@ export function WizardBody({ steps, onSubmitSection }: { steps: WizardStep[]; on
         )}
         {step.kind === 'social-history' && <SocialHistoryStep key={current} groups={step.groups} values={stepValues} onChange={setStepValues} />}
         {step.kind === 'medications' && <MedicationStep key={current} values={stepValues} onChange={setStepValues} search={step.search} />}
+        {step.kind === 'consent' && (
+          <ConsentStep
+            key={current}
+            consent={step.consent}
+            patientId={step.patientId}
+            onSignedChange={(isSigned) => {
+              const at = current;
+              setSigned((prev) => ({ ...prev, [at]: isSigned }));
+            }}
+          />
+        )}
       </Box>
 
       <Box
@@ -111,8 +128,8 @@ export function WizardBody({ steps, onSubmitSection }: { steps: WizardStep[]; on
         <Button variant="outlined" disabled={current === 0 || busy} onClick={() => setCurrent((c) => Math.max(0, c - 1))}>
           Previous
         </Button>
-        <Button variant="contained" disabled={busy} onClick={goNext}>
-          {busy ? 'Saving…' : isLast ? 'Save & Finish' : 'Save & Next'}
+        <Button variant="contained" disabled={busy || needsSignature} onClick={goNext}>
+          {busy ? 'Saving…' : needsSignature ? 'Sign to continue' : step.kind === 'consent' ? (isLast ? 'Finish' : 'Next') : isLast ? 'Save & Finish' : 'Save & Next'}
         </Button>
       </Box>
     </Box>

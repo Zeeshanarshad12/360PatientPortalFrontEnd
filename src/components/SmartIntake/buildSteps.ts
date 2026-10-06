@@ -64,8 +64,10 @@ function buildStep(section: IntakeSection, form: IntakeForm, searches: IntakeSea
   }
 }
 
-/** The wizard's steps, in the practice's section order. Consent forms aren't part of this
- * wizard yet — signatures here aren't recorded anywhere real. */
+/** The wizard's steps: the practice's sections in its order, then the consent forms the visit
+ * type requires — signed with the portal's own consent signing (dbo.SignedConsentForms), the
+ * same as the Consent Forms page. */
 export function buildSteps(form: IntakeForm, searches: IntakeSearches): WizardStep[] {
-  return form.sections.map((section) => buildStep(section, form, searches));
+  const consentSteps: WizardStep[] = form.consents.map((consent) => ({ kind: 'consent', label: consent.name, consent, patientId: form.patientId }));
+  return [...form.sections.map((section) => buildStep(section, form, searches)), ...consentSteps];
 }

@@ -4,7 +4,7 @@ import { Box, Card, CircularProgress, Divider, Typography } from '@mui/material'
 import SnackbarUtils from '@/content/snackbar';
 import { intakeApi, IntakeApiError } from './api';
 import { buildSteps, type IntakeSearches } from './buildSteps';
-import type { IntakeDrug, IntakeForm, IntakePayer, IntakeValue, SectionSubmission, WizardStep } from './types';
+import type { IntakeDrug, IntakeForm, IntakePayer, IntakeValue, SectionStep, SectionSubmission } from './types';
 import { WizardBody } from './WizardBody';
 
 /** The page frame — the same white card + heading as the portal's Profile page. The portal
@@ -132,7 +132,7 @@ export function IntakeWizard({ token }: { token: string }) {
   /** Form fields keep their label ("Label: value") and drop blanks; a payer answer carries the
    * picked plan; a medication carries the picked drug (matched on the drug part of
    * "Drug — how you take it" — one kept from the chart has no pick and is matched server-side). */
-  function toValues(step: WizardStep, values: string[]): (string | IntakeValue)[] {
+  function toValues(step: SectionStep, values: string[]): (string | IntakeValue)[] {
     if (step.kind === 'form') {
       return values.flatMap((raw, i) => {
         const value = raw.trim();
@@ -152,7 +152,7 @@ export function IntakeWizard({ token }: { token: string }) {
     return values;
   }
 
-  async function submit(step: WizardStep, submission: SectionSubmission) {
+  async function submit(step: SectionStep, submission: SectionSubmission) {
     try {
       await intakeApi.submitSection(token, step.code, submission.type === 'attest' ? { attest: true } : { values: toValues(step, submission.values) });
     } catch (err) {

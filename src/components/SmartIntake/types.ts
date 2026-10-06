@@ -39,11 +39,17 @@ export type IntakeSection = {
   submittedStatus: string | null;
 };
 
+/** A consent form the visit type requires, signed through the portal's own consent signing. */
+export type IntakeConsent = { consentFormId: string; name: string; version?: number; expiryMonths: number };
+
 export type IntakeForm = {
+  /** The link's patient — the signed-in user, or one they have access to. */
+  patientId: string;
   patient: { firstName: string; lastName: string; preferredName?: string; dateOfBirth: string; phone?: string };
   appointment: { visitType?: string; start?: string; providerName?: string };
   expiresAt: string;
   sections: IntakeSection[];
+  consents: IntakeConsent[];
   familyRelations: string[];
 };
 
@@ -78,6 +84,10 @@ export type WizardStep =
   | { kind: 'checklist'; code: SectionCode; label: string; catalog: string[]; baseline: string[] }
   | { kind: 'family-history'; code: SectionCode; label: string; relatives: string[]; conditions: string[]; baseline: string[] }
   | { kind: 'social-history'; code: SectionCode; label: string; groups: SocialGroup[]; baseline: string[] }
-  | { kind: 'medications'; code: SectionCode; label: string; baseline: string[]; search: IntakeSearch };
+  | { kind: 'medications'; code: SectionCode; label: string; baseline: string[]; search: IntakeSearch }
+  | { kind: 'consent'; label: string; consent: IntakeConsent; patientId: string };
+
+/** The steps that save answers through SubmitSection (every kind but consent). */
+export type SectionStep = Exclude<WizardStep, { kind: 'consent' }>;
 
 export type SectionSubmission = { type: 'attest' } | { type: 'submit'; values: string[] };

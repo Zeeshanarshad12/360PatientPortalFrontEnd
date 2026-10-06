@@ -1,5 +1,5 @@
 import apiServicesV2 from '@/services/requestHandler';
-import type { CatalogOption, FieldType, IntakeDrug, IntakeField, IntakeForm, IntakePayer, IntakeSection, IntakeValue, SectionCode } from './types';
+import type { CatalogOption, FieldType, IntakeConsent, IntakeDrug, IntakeField, IntakeForm, IntakePayer, IntakeSection, IntakeValue, SectionCode } from './types';
 
 type Row = Record<string, unknown>;
 
@@ -90,7 +90,14 @@ function mapForm(row: Row): IntakeForm {
       submittedStatus: str(s, 'SubmittedStatus') ?? null
     });
   }
+  const consents: IntakeConsent[] = rows(row, 'Consents').flatMap((c) => {
+    const consentFormId = str(c, 'ConsentFormId');
+    if (!consentFormId || consentFormId === '0') return [];
+    const version = Number(pick(c, 'Version'));
+    return [{ consentFormId, name: str(c, 'Name') ?? 'Consent form', version: Number.isFinite(version) && version > 0 ? version : undefined, expiryMonths: Number(pick(c, 'ExpiryMonths')) || 0 }];
+  });
   return {
+    patientId: str(row, 'PatientId') ?? '',
     patient: {
       firstName: str(patient, 'FirstName') ?? '',
       lastName: str(patient, 'LastName') ?? '',
@@ -101,6 +108,7 @@ function mapForm(row: Row): IntakeForm {
     appointment: { visitType: str(appointment, 'VisitType'), start: str(appointment, 'Start'), providerName: str(appointment, 'ProviderName') },
     expiresAt: str(row, 'ExpiresAt') ?? '',
     sections,
+    consents,
     familyRelations: rows(row, 'FamilyRelations').map((r) => str(r, 'Name') ?? '').filter(Boolean)
   };
 }
