@@ -59,6 +59,8 @@ export const SERVICE_URLSV2 = {
   GetFamilyRelations: 'patientportal/getfamilyrelation',
   searchappointmentreason: 'patientportal/searchappointmentreason',
   GetProvidersbyPracticeID: 'patientportal/GetProvidersbyPracticeID',
+  GetProviderTaxonomiesByPracticeId:
+    'patientportal/getprovidertaxonomiesbypracticeid',
   GetPracticeLocationForPatient:'patientportal/GetPracticeLocationForPatient',
   GetProviderLocationScheduleInfo: 'patientportal/GetProviderLocationScheduleInfo',
   CreatePatientAppointment: 'patientportal/CreatePatientAppointment',

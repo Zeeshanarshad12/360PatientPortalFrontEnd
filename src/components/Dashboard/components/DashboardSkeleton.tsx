@@ -43,6 +43,8 @@ const DashboardSkeleton: React.FC = () => {
       sx={{
         flexGrow: 1,
         padding: 1,
+        pl: { xs: 1, md: '12px' },
+        ml: { xs: 0, md: '-10px' },
         overflowY: 'auto',
         height: 'calc(98vh - 60px)',
         backgroundColor: '#f5f5f5'
@@ -53,8 +55,7 @@ const DashboardSkeleton: React.FC = () => {
         sx={{
           display: 'flex',
           flexDirection: isMobile ? 'column' : 'row',
-          gap: '8px',
-          paddingRight: isMobile ? 0 : '10px'
+          gap: '8px'
         }}
       >
         {DEFAULT_SKELETON_LAYOUT.map((column, index) => (

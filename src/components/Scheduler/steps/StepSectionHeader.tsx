@@ -49,7 +49,10 @@ const StepSectionHeader: React.FC<StepSectionHeaderProps> = ({
             </InputAdornment>
           )
         }}
-        sx={{ width: { xs: '100%', sm: 300 } }}
+        sx={{
+          width: { xs: '100%', sm: 300 },
+          '& .MuiInputBase-input': { py: 0.75 }
+        }}
       />
     )}
   </Box>

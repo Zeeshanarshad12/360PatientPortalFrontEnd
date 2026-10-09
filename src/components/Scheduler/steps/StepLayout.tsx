@@ -8,6 +8,8 @@ interface StepLayoutProps {
   stepLabel?: string;
   // Rendered above the scroll area so section labels/search stay visible.
   header?: React.ReactNode;
+  // Pinned row under the header (e.g. filter tabs).
+  subHeader?: React.ReactNode;
   // When false the step manages its own inner scroll regions.
   scrollContent?: boolean;
 }
@@ -22,17 +24,36 @@ const StepLayout: React.FC<StepLayoutProps> = ({
   stepNumber,
   stepLabel,
   header,
+  subHeader,
   scrollContent = true
 }) => (
-  <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+  <Box
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      minWidth: 0
+    }}
+  >
     {header && <Box sx={{ flexShrink: 0, pb: 1 }}>{header}</Box>}
+    {subHeader && (
+      <Box sx={{ flexShrink: 0, pb: 1, minWidth: 0 }}>{subHeader}</Box>
+    )}
     <Box
       sx={
         scrollContent
-          ? { flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.5 }
+          ? {
+              flex: 1,
+              minHeight: 0,
+              minWidth: 0,
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              pr: 0.5
+            }
           : {
               flex: 1,
               minHeight: 0,
+              minWidth: 0,
               overflow: 'hidden',
               display: 'flex',
               flexDirection: 'column'
@@ -80,7 +101,7 @@ const StepLayout: React.FC<StepLayoutProps> = ({
       sx={{
         display: 'flex',
         gap: 2,
-        pt: 2,
+        pt: 1.5,
         mt: 1,
         borderTop: '1px solid #e0e0e0',
         flexShrink: 0

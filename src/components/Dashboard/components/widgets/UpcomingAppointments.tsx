@@ -8,7 +8,8 @@ import {
   IconButton,
   Link,
   Button,
-  Stack
+  Stack,
+  Alert
 } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
@@ -94,7 +95,16 @@ const getContrastTextColor = (hex: string) => {
   return brightness > 0.6 ? '#000000' : '#ffffff';
 };
 
+// Statuses whose EHR color doesn't fit the portal: "Cancelled by Patient"
+// comes through as black, so render it with the same red as "Cancelled".
+const STATUS_COLOR_OVERRIDES: Record<string, { bgcolor: string; textColor: string }> = {
+  'cancelled by patient': { bgcolor: '#ff0000', textColor: '#ffffff' }
+};
+
 const resolveStatusColor = (appt: any) => {
+  const override =
+    STATUS_COLOR_OVERRIDES[appt?.appointmentStatus?.trim().toLowerCase()];
+  if (override) return override;
   if (isValidHexColor(appt?.colorHex)) {
     return {
       bgcolor: appt.colorHex,
@@ -104,34 +114,74 @@ const resolveStatusColor = (appt: any) => {
   return getStatusColor(appt?.appointmentStatus);
 };
 
-// Bug 432581: once the patient has physically checked in at the practice,
-// the Patient Portal must not let them cancel the appointment anymore.
-const CANCEL_BLOCKED_STATUSES = new Set(['check-in', 'in lobby', 'in room']);
-
-const isCancelBlocked = (appointmentStatus: string) =>
-  CANCEL_BLOCKED_STATUSES.has(appointmentStatus?.toLowerCase());
-
-// Bug 432755: an appointment already cancelled - by the patient here or
-// from SummitEHR - must not offer Reschedule/Cancel actions anymore.
-const CANCELLED_STATUSES = new Set([
-  'cancelled',
-  'cancelled by patient',
-  'doctor cancelled',
-  'deleted',
-  'deny',
-  'denied'
+// Bug 432905: Cancel/Reschedule must only be offered for statuses that are
+// still an active, future, self-service-eligible appointment (HL7 FHIR
+// Appointment.status: proposed/pending/booked). This supersedes Bug 432581
+// and Bug 432755's narrower blocklists - everything not explicitly listed
+// here (cancelled/rescheduled/denied/deleted/no-show/arrived/completed, in
+// any of their spelling variants) is hidden by default rather than only
+// the handful of statuses previously enumerated.
+const ACTIONABLE_APPOINTMENT_STATUSES = new Set([
+  // Requested / Booked
+  'requested',
+  'patient request',
+  'scheduled',
+  'pending',
+  'pending paperwork',
+  // Confirmed / Outreach
+  'confirmed',
+  'patient confirmed',
+  'conf phone',
+  'conf sms',
+  'text conf',
+  'vm to conf',
+  'lvm for confirmation',
+  'left voice message',
+  'no answer',
+  'failed msg',
+  'sent email message',
+  'sent text message',
+  'patient was called',
+  'patient called',
+  // Visit type / Other
+  'initial',
+  'initial 40 minutes',
+  'follow up',
+  'follow up 20 minutes',
+  'telehealth',
+  'lab',
+  'prescription only',
+  'referrals',
+  'other'
 ]);
 
-const isAppointmentCancelled = (appointmentStatus: string) =>
-  CANCELLED_STATUSES.has(appointmentStatus?.toLowerCase());
+const isActionableStatus = (appointmentStatus: string) =>
+  ACTIONABLE_APPOINTMENT_STATUSES.has(
+    (appointmentStatus || '').trim().toLowerCase()
+  );
+
+// Bug 432905: "stay visible (for future-dated appointments only)" - an
+// actionable status on a past appointment (e.g. status never got updated)
+// must not offer Cancel/Reschedule either.
+const isFutureAppointment = (appt: any) =>
+  !!appt?.startTime && moment(appt.startTime).isAfter(moment());
+
+const canManageAppointment = (appt: any) =>
+  isActionableStatus(appt?.appointmentStatus) && isFutureAppointment(appt);
 
 // Bug 432545: the "Cancelled" status ID in SummitEHR's appointment status list.
 const CANCELLED_STATUS_ID = 2;
+const CANCELLED_STATUS_NAME = 'Cancelled by Patient';
 
 const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
   const dispatch = useDispatch();
   const [appointments, setappointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  // Bug 432903: a failed fetch must surface an error, not an unexplained
+  // blank widget.
+  const [appointmentsError, setAppointmentsError] = useState<string | null>(
+    null
+  );
   const { patientId, practiceId } = useCurrentPatient();
   const [schedulerOpen, setSchedulerOpen] = useState(false);
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<
@@ -203,9 +253,13 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
         const response = await dispatch(getpatientappointments(Obj)).unwrap();
         const data = response.result;
         setappointments(data);
+        setAppointmentsError(null);
       }
     } catch (error) {
-      console.error('Error fetching medications:', error);
+      console.error('Error fetching appointments:', error);
+      setAppointmentsError(
+        'Unable to load appointments. Please try again later.'
+      );
     } finally {
       setLoading(false);
     }
@@ -278,6 +332,8 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
         UpdateExistingAppointmentStatus({
           appointmentId: appointmentToCancel,
           statusId: CANCELLED_STATUS_ID,
+          statusName: CANCELLED_STATUS_NAME,
+          practiceId,
           updatedBy: patientId || ''
         })
       ).unwrap();
@@ -343,28 +399,44 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
               display="flex"
               alignItems="center"
               justifyContent="space-between"
-              flexWrap="wrap"
-              gap={1}
+              flexWrap="nowrap"
+              gap={0.5}
               mb={2}
             >
               <Typography
                 variant="h4"
                 fontWeight="bold"
-                sx={{ fontSize: '1.25rem' }}
+                sx={{ fontSize: '1.25rem', flexShrink: 0 }}
               >
                 {widgetContent.upcomingAppointments.title}
+                <Chip
+                  label={appointments.length}
+                  color="default"
+                  size="small"
+                  sx={{
+                    fontWeight: 'bold',
+                    bgcolor: 'black',
+                    color: 'white',
+                    ml: 1
+                  }}
+                />
               </Typography>
-              <Box display="flex" alignItems="center" gap={1}>
+              <Box
+                display="flex"
+                alignItems="center"
+                gap={0.5}
+                sx={{ flexShrink: 0 }}
+              >
                 <Button
                   variant="contained"
                   size="small"
                   onClick={handleNewAppointment}
-                  sx={{ textTransform: 'none' }}
+                  sx={{ textTransform: 'none', px: 1 }}
                 >
                   New Appointment
                 </Button>
                 <Box {...dragHandleProps}>
-                  <IconButton size="small" sx={{ cursor: 'grab' }}>
+                  <IconButton size="small" sx={{ cursor: 'grab', p: 0.5 }}>
                     <DragIndicatorIcon />
                   </IconButton>
                 </Box>
@@ -372,7 +444,22 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
             </Box>
 
             {/* Appointments List */}
+            {appointmentsError && (
+              <Alert severity="error" sx={{ mb: 1.5 }}>
+                {appointmentsError}
+              </Alert>
+            )}
             <Box sx={{ maxHeight: 350, overflowY: 'auto', pr: 1 }}>
+              {!appointmentsError && appointments.length === 0 && (
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ textAlign: 'center', py: 4 }}
+                >
+                  No upcoming appointments. Click &quot;New Appointment&quot;
+                  to request one.
+                </Typography>
+              )}
               {appointments.map((appt: any, index: number) => {
                 const statusColors = resolveStatusColor(appt);
                 return (
@@ -388,16 +475,26 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                     }}
                   >
                     {/* Appointment Type and Doctor */}
-                    <Typography fontWeight="bold" sx={{ mb: 0.5, pr: 8 }}>
-                      {appt.appointmentType}
+                    {/* Title and badge sit side by side so a long status
+                        label (e.g. "Cancelled By Patient") wraps the title
+                        instead of overlapping it. */}
+                    <Box
+                      display="flex"
+                      alignItems="flex-start"
+                      justifyContent="space-between"
+                      gap={1}
+                      sx={{ mb: 0.5 }}
+                    >
+                      <Typography fontWeight="bold" sx={{ minWidth: 0 }}>
+                        {appt.appointmentType}
+                      </Typography>
 
                       {/* Status Badge */}
                       <Chip
                         label={appt.appointmentStatus}
                         size="small"
                         sx={{
-                          position: 'absolute',
-                          right: 15,
+                          flexShrink: 0,
                           fontSize: '0.85rem',
                           borderRadius: '10px',
                           bgcolor: statusColors.bgcolor,
@@ -406,7 +503,7 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                           textTransform: 'capitalize'
                         }}
                       />
-                    </Typography>
+                    </Box>
                     <Typography
                       variant="body2"
                       color="text.primary"
@@ -452,7 +549,7 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                     </Box>
 
                     {/* Action Buttons */}
-                    {!isAppointmentCancelled(appt.appointmentStatus) && (
+                    {canManageAppointment(appt) && (
                       <Stack direction="row" gap={1} sx={{ mt: 2 }}>
                         <Button
                           variant="outlined"
@@ -462,17 +559,15 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                         >
                           Reschedule
                         </Button>
-                        {!isCancelBlocked(appt.appointmentStatus) && (
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            fullWidth
-                            color="error"
-                            onClick={() => handleCancel(resolveAppointmentId(appt))}
-                          >
-                            Cancel
-                          </Button>
-                        )}
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          fullWidth
+                          color="error"
+                          onClick={() => handleCancel(resolveAppointmentId(appt))}
+                        >
+                          Cancel
+                        </Button>
                       </Stack>
                     )}
                   </Box>

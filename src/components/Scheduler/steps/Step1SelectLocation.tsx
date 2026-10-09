@@ -3,7 +3,6 @@ import {
   Box,
   Typography,
   Button,
-  Stack,
   Paper,
   CircularProgress,
   Alert
@@ -165,7 +164,8 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
       key={facility.id}
       onClick={() => handleSelectFacility(facility)}
       sx={{
-        p: 2,
+        py: 0.75,
+        px: 1.5,
         cursor: 'pointer',
         border: '2px solid',
         borderColor: isSelected ? 'primary.main' : '#e0e0e0',
@@ -177,45 +177,43 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
         }
       }}
     >
-      <Typography fontWeight="bold" variant="subtitle1">
+      <Typography fontWeight="bold" variant="body2">
         {facility.name}
       </Typography>
 
-      {facility.address && (
+      {/* Address and phone share one line; wraps on narrow screens. */}
+      {(facility.address || facility.phone) && (
         <Box
           sx={{
             display: 'flex',
-            alignItems: 'flex-start',
-            gap: 0.5,
-            mt: 0.5
-          }}
-        >
-          <LocationOnIcon
-            fontSize="small"
-            sx={{ color: 'text.secondary', mt: '2px' }}
-          />
-          <Typography variant="body2" color="text.secondary">
-            {facility.address}
-            {facility.city ? `, ${facility.city}` : ''}
-            {facility.state ? `, ${facility.state}` : ''}
-            {facility.zip ? ` ${facility.zip}` : ''}
-          </Typography>
-        </Box>
-      )}
-
-      {facility.phone && (
-        <Box
-          sx={{
-            display: 'flex',
+            flexWrap: 'wrap',
             alignItems: 'center',
-            gap: 0.5,
-            mt: 0.5
+            columnGap: 1.5,
+            rowGap: 0.25,
+            mt: 0.25
           }}
         >
-          <PhoneIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-          <Typography variant="body2" color="text.secondary">
-            {facility.phone}
-          </Typography>
+          {facility.address && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <LocationOnIcon
+                sx={{ fontSize: 16, color: 'text.secondary' }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                {facility.address}
+                {facility.city ? `, ${facility.city}` : ''}
+                {facility.state ? `, ${facility.state}` : ''}
+                {facility.zip ? ` ${facility.zip}` : ''}
+              </Typography>
+            </Box>
+          )}
+          {facility.phone && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <PhoneIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Typography variant="body2" color="text.secondary">
+                {facility.phone}
+              </Typography>
+            </Box>
+          )}
         </Box>
       )}
     </Paper>
@@ -266,7 +264,7 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
 
       {!locationsLoading && selectedFacility ? (
         /* Selected Location Summary */
-        <Box>
+        <Box sx={{ maxWidth: { md: '50%' } }}>
           {renderFacilityCard(selectedFacility, true)}
           <Button
             size="small"
@@ -282,27 +280,33 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
       ) : (
         !locationsLoading && (
           <>
-            <Stack spacing={2}>
-              {facilities.length === 0 ? (
-                <Typography
-                  color="text.secondary"
-                  sx={{ textAlign: 'center', py: 4 }}
-                >
-                  No facilities available
-                </Typography>
-              ) : filteredFacilities.length > 0 ? (
-                filteredFacilities.map((facility: Facility) =>
+            {facilities.length === 0 ? (
+              <Typography
+                color="text.secondary"
+                sx={{ textAlign: 'center', py: 4 }}
+              >
+                No facilities available
+              </Typography>
+            ) : filteredFacilities.length > 0 ? (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                  gap: 0.75
+                }}
+              >
+                {filteredFacilities.map((facility: Facility) =>
                   renderFacilityCard(facility, false)
-                )
-              ) : (
-                <Typography
-                  color="text.secondary"
-                  sx={{ textAlign: 'center', py: 4 }}
-                >
-                  No locations found
-                </Typography>
-              )}
-            </Stack>
+                )}
+              </Box>
+            ) : (
+              <Typography
+                color="text.secondary"
+                sx={{ textAlign: 'center', py: 4 }}
+              >
+                No locations found
+              </Typography>
+            )}
           </>
         )
       )}

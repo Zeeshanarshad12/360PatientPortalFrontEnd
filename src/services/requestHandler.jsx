@@ -510,6 +510,16 @@ const GetProvidersbyPracticeID = (data, flag) =>
     }
   );
 
+const GetProviderTaxonomiesByPracticeId = (data, flag) =>
+  get(
+    `${SERVICE_URLSV2.GetProviderTaxonomiesByPracticeId}?practiceId=${data.practiceId}`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
 const GetPracticeLocationForPatient = (data, flag) =>
   get(
     `${SERVICE_URLSV2.GetPracticeLocationForPatient}?PracticeId=${data.practiceId}`,
@@ -637,6 +647,7 @@ const apiServicesV2 = {
   GetFamilyRelations,
   Searchappointmentreason,
   GetProvidersbyPracticeID,
+  GetProviderTaxonomiesByPracticeId,
   GetPracticeLocationForPatient,
   GetProviderLocationScheduleInfo,
   CreatePatientAppointment,

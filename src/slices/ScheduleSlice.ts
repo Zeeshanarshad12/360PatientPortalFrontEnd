@@ -9,6 +9,9 @@ const initialState = {
   providers: [],
   providersLoading: false,
   providersError: null,
+  providerTaxonomies: [],
+  providerTaxonomiesLoading: false,
+  providerTaxonomiesError: null,
   locations: [],
   locationsLoading: false,
   locationsError: null,
@@ -81,6 +84,31 @@ export const GetProvidersbyPracticeID: any = createAsyncThunk(
       } else {
         return thunkAPI.rejectWithValue(
           res?.data?.message || 'Failed to fetch providers'
+        );
+      }
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message || error?.message || 'An error occurred';
+      SnackbarUtils.error(errorMessage, false);
+      return thunkAPI.rejectWithValue(errorMessage);
+    }
+  }
+);
+
+// Practice-wide provider taxonomies; drive the provider tabs in Step 3.
+export const GetProviderTaxonomiesByPracticeId: any = createAsyncThunk(
+  'schedule/getProviderTaxonomiesByPracticeId',
+  async (data: { practiceId?: string | number }, thunkAPI) => {
+    try {
+      const res = await apiServicesV2.GetProviderTaxonomiesByPracticeId(
+        data,
+        'ApiVersion2Req'
+      );
+      if (res?.status === 200) {
+        return res?.data?.result;
+      } else {
+        return thunkAPI.rejectWithValue(
+          res?.data?.message || 'Failed to fetch provider taxonomies'
         );
       }
     } catch (error: any) {
@@ -287,6 +315,8 @@ export const UpdateExistingAppointmentStatus: any = createAsyncThunk(
     data: {
       appointmentId: string | number;
       statusId: number;
+      statusName: string;
+      practiceId: string | number;
       updatedBy: string;
     },
     thunkAPI
@@ -358,6 +388,20 @@ const scheduleSlice = createSlice({
       .addCase(GetProvidersbyPracticeID.rejected, (state, action) => {
         state.providersLoading = false;
         state.providersError = action.payload as string;
+      })
+      .addCase(GetProviderTaxonomiesByPracticeId.pending, (state) => {
+        state.providerTaxonomiesLoading = true;
+        state.providerTaxonomiesError = null;
+      })
+      .addCase(GetProviderTaxonomiesByPracticeId.fulfilled, (state, action) => {
+        state.providerTaxonomiesLoading = false;
+        state.providerTaxonomies = Array.isArray(action.payload)
+          ? action.payload
+          : [];
+      })
+      .addCase(GetProviderTaxonomiesByPracticeId.rejected, (state, action) => {
+        state.providerTaxonomiesLoading = false;
+        state.providerTaxonomiesError = action.payload as string;
       })
       .addCase(GetPracticeLocationForPatient.pending, (state) => {
         state.locationsLoading = true;

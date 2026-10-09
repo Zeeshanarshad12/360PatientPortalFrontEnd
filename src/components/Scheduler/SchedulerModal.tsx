@@ -154,7 +154,12 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
         sx: {
           borderRadius: fullScreen ? 0 : 2,
           height: fullScreen ? '100%' : '85vh',
-          maxHeight: fullScreen ? '100%' : 760
+          maxHeight: fullScreen ? '100%' : 760,
+          // Laptop-height screens: use more of the viewport so list steps
+          // (appointment types, providers) can show more rows.
+          '@media (max-height: 820px)': fullScreen
+            ? undefined
+            : { height: '94vh', my: 2 }
         }
       }}
     >
@@ -164,8 +169,10 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          p: 2,
-          borderBottom: '1px solid #e0e0e0'
+          px: 2,
+          py: 1.5,
+          borderBottom: '1px solid #e0e0e0',
+          '@media (max-height: 820px)': { py: 1 }
         }}
       >
         <Box>
@@ -188,7 +195,18 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
       </Box>
 
       {/* Stepper */}
-      <Box sx={{ px: 2, pt: 1.5, mb: 0.5 }}>
+      <Box
+        sx={{
+          px: 2,
+          pt: 1.5,
+          mb: 0.5,
+          '@media (max-height: 820px)': {
+            pt: 1,
+            mb: 0,
+            '& .MuiStepLabel-label.MuiStepLabel-alternativeLabel': { mt: 0.5 }
+          }
+        }}
+      >
         <Stepper activeStep={currentStep} alternativeLabel>
           {steps.map((label) => (
             <Step key={label}>
@@ -211,7 +229,7 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
           flexDirection: 'column',
           px: 3,
           pt: 1,
-          pb: 3
+          pb: 2
         }}
       >
         {renderStepContent()}
