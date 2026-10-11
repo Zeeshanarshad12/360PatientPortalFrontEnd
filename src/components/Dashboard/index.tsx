@@ -21,7 +21,7 @@ import {
 import { useInitialLayout } from './contexts/widgetData';
 import SortableItem from './components/SortableItem';
 import WidgetWrapper from './components/WidgetWrapper';
-import HeartProgressLoader from '@/components/ProgressLoaders/components/HeartLoader';
+import DashboardSkeleton from './components/DashboardSkeleton';
 import { saveDashboardConfiguration } from '@/slices/patientprofileslice';
 
 const DroppableColumn = ({
@@ -51,8 +51,7 @@ const DroppableColumn = ({
 };
 
 const PatientDashboard = () => {
-  const [heartLoading, setHeartLoading] = useState(true);
-  const layout = useInitialLayout();
+  const { layout, layoutLoading } = useInitialLayout();
   const [columns, setColumns] = useState(layout);
   const [activeId, setActiveId] = useState<string | null>('');
   const dispatch = useDispatch();
@@ -195,22 +194,22 @@ const PatientDashboard = () => {
     setActiveId(null);
   };
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setHeartLoading(false);
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <>
-      {heartLoading ? (
-        <HeartProgressLoader />
+      {layoutLoading ? (
+        // Saved layout still loading: show widget skeletons right away; each
+        // real widget then shows its own loader while its data loads.
+        <DashboardSkeleton />
       ) : (
         <Box
           sx={{
             flexGrow: 1,
-            padding: isMobile ? 1 : 1,
+            padding: 1,
+            // Cancel the layout's 10px desktop margin beside the sidebar so the
+            // dashboard grey fills the gutter without clipping the widgets'
+            // left shadow, then leave a 12px gap.
+            pl: { xs: 1, md: '12px' },
+            ml: { xs: 0, md: '-10px' },
             overflowY: 'auto',
             height: 'calc(98vh - 60px)', // Account for header height
             backgroundColor: '#f5f5f5'
@@ -228,8 +227,11 @@ const PatientDashboard = () => {
               style={{
                 display: 'flex',
                 flexDirection: isMobile ? 'column' : 'row',
-                gap: isMobile ? '16px' : '25px',
-                paddingRight: isMobile ? '0' : '10px',
+                // Trimmed from 25px/10px: these fixed gutters were eating
+                // into each column's width, leaving widget headers (e.g.
+                // Appointments' title + count badge + New Appointment
+                // button) too cramped to lay out on one line.
+                gap: '8px',
                 paddingBottom: isMobile ? '20px' : '0'
               }}
             >

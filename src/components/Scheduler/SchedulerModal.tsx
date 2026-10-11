@@ -7,7 +7,9 @@ import {
   Step,
   StepLabel,
   IconButton,
-  Typography
+  Typography,
+  useTheme,
+  useMediaQuery
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import Step1SelectLocation from './steps/Step1SelectLocation';
@@ -27,7 +29,7 @@ interface SchedulerModalProps {
 
 const steps = [
   'Select Location',
-  'Reason for your visit',
+  'Select Reason & Appointment Type',
   'Select Provider',
   'Choose Date & Time',
   'Confirm & Book'
@@ -41,6 +43,11 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
   initialAppointmentData
 }) => {
   const isEditMode = !!appointmentId;
+  const theme = useTheme();
+  // Bug 432589: a fixed 520px content height left a lot of unused screen
+  // space on large monitors and forced scrolling on short ones. The dialog
+  // now scales with the viewport and goes full-screen on small devices.
+  const fullScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const [currentStep, setCurrentStep] = useState(0);
   const [appointmentData, setAppointmentData] = useState<AppointmentData>({});
   const [wasOpen, setWasOpen] = useState(false);
@@ -137,11 +144,22 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
         if (reason === 'backdropClick') return;
         handleClose();
       }}
-      maxWidth="sm"
+      // Bug 432589: "sm" (600px) was too cramped for the appointment
+      // details and date/time slot grid, especially now that a full week
+      // can show up to 7 day columns.
+      maxWidth="lg"
       fullWidth
+      fullScreen={fullScreen}
       PaperProps={{
         sx: {
-          borderRadius: 2
+          borderRadius: fullScreen ? 0 : 2,
+          height: fullScreen ? '100%' : '85vh',
+          maxHeight: fullScreen ? '100%' : 760,
+          // Laptop-height screens: use more of the viewport so list steps
+          // (appointment types, providers) can show more rows.
+          '@media (max-height: 820px)': fullScreen
+            ? undefined
+            : { height: '94vh', my: 2 }
         }
       }}
     >
@@ -151,8 +169,10 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
-          p: 2,
-          borderBottom: '1px solid #e0e0e0'
+          px: 2,
+          py: 1.5,
+          borderBottom: '1px solid #e0e0e0',
+          '@media (max-height: 820px)': { py: 1 }
         }}
       >
         <Box>
@@ -161,6 +181,8 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Step {currentStep + 1} of {steps.length}
+            {/* Stepper is hidden on mobile, so name the current step here. */}
+            {fullScreen && ` · ${steps[currentStep]}`}
           </Typography>
         </Box>
         <IconButton
@@ -174,8 +196,21 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
         </IconButton>
       </Box>
 
-      {/* Stepper */}
-      <Box sx={{ px: 2, pt: 2, mb: 2 }}>
+      {/* Stepper - hidden on mobile (takes too much vertical space there);
+          the header subtitle shows the current step instead. */}
+      <Box
+        sx={{
+          display: { xs: 'none', sm: 'block' },
+          px: 2,
+          pt: 1.5,
+          mb: 0.5,
+          '@media (max-height: 820px)': {
+            pt: 1,
+            mb: 0,
+            '& .MuiStepLabel-label.MuiStepLabel-alternativeLabel': { mt: 0.5 }
+          }
+        }}
+      >
         <Stepper activeStep={currentStep} alternativeLabel>
           {steps.map((label) => (
             <Step key={label}>
@@ -186,7 +221,21 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
       </Box>
 
       {/* Content */}
-      <DialogContent sx={{ minHeight: 400, overflow: 'auto' }}>
+      {/* Bug 432480: flex column with minHeight: 0 so each step's footer
+          buttons render in a stable position instead of drifting with
+          content length, while the dialog itself sizes off the viewport
+          (see PaperProps above) instead of a fixed pixel height. */}
+      <DialogContent
+        sx={{
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          px: { xs: 2, sm: 3 },
+          pt: 1,
+          pb: { xs: 1.5, sm: 2 }
+        }}
+      >
         {renderStepContent()}
       </DialogContent>
     </Dialog>

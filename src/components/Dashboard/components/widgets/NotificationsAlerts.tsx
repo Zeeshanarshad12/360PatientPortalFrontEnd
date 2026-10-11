@@ -22,7 +22,7 @@ const NotificationsAlerts: React.FC<Props> = ({ dragHandleProps }) => {
 
   return (
     <Card sx={{ minHeight: 250, borderRadius: 3 }}>
-      <CardContent sx={{ pb: 1 }}>
+      <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
         {/* Header with Count */}
         <Box
           display="flex"
@@ -65,7 +65,7 @@ const NotificationsAlerts: React.FC<Props> = ({ dragHandleProps }) => {
               sx={{
                 border: '1px solid #e0e0e0',
                 borderRadius: 2,
-                p: 2,
+                p: 1.5,
                 mb: 1.5,
                 display: 'flex',
                 alignItems: 'flex-start',

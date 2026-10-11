@@ -1,4 +1,4 @@
-import { get, getWithoutToken, post, postWithoutToken, put, del } from './HttpProvider';
+import { get, getWithoutToken, post, postWithoutToken, put, del, instance } from './HttpProvider';
 import featureConstants from './features-constants';
 import { SERVICE_URLSV2 } from './ServiceUrl';
 import { getPatientId } from '../utils/functions';
@@ -153,6 +153,13 @@ const GetToken = (data) =>
       feature: featureConstants.static
     }
   );
+
+// The endpoint is [Authorize]d (Auth0PatientApp scheme), so the token being exchanged must also
+// be sent as the Bearer header - postWithoutToken would send none and get a 401.
+const AuthenticateUserWithToken = (data) =>
+  instance.post(SERVICE_URLSV2.AuthenticateUserWithToken, data, {
+    headers: { Authorization: `Bearer ${data?.JwtToken}` }
+  });
 
 const GetSharingModulesData = (data, flag) =>
   get(
@@ -493,7 +500,19 @@ const Searchappointmentreason = (data, flag) =>
 
 const GetProvidersbyPracticeID = (data, flag) =>
   get(
-    `${SERVICE_URLSV2.GetProvidersbyPracticeID}?PracticeId=${data.practiceId}`,
+    `${SERVICE_URLSV2.GetProvidersbyPracticeID}?PracticeId=${data.practiceId}${
+      data.locationId != null ? `&locationId=${data.locationId}` : ''
+    }`,
+    {},
+    {
+      feature: featureConstants.static,
+      ApiVersion2Req: flag
+    }
+  );
+
+const GetProviderTaxonomiesByPracticeId = (data, flag) =>
+  get(
+    `${SERVICE_URLSV2.GetProviderTaxonomiesByPracticeId}?practiceId=${data.practiceId}`,
     {},
     {
       feature: featureConstants.static,
@@ -547,6 +566,36 @@ const DeleteAppointmentById = (data, flag) =>
     ApiVersion2Req: flag
   });
 
+const UpdateExistingAppointmentStatus = (data, flag) =>
+  put(SERVICE_URLSV2.UpdateExistingAppointmentStatus, data, {
+    feature: featureConstants.static,
+    ApiVersion2Req: flag
+  });
+
+// Smart Intake — PatientPortalController (api/v2), so the v2 instance like the other patientportal/* calls.
+// The backend checks the link token belongs to the signed-in portal user.
+const SmartIntakeGetForm = (data) =>
+  post(SERVICE_URLSV2.SmartIntakeGetForm, data, { feature: featureConstants.static, ApiVersion2Req: true });
+
+const SmartIntakeSubmitSection = (data) =>
+  post(SERVICE_URLSV2.SmartIntakeSubmitSection, data, { feature: featureConstants.static, ApiVersion2Req: true });
+
+const SmartIntakeSignConsent = (data) =>
+  post(SERVICE_URLSV2.SmartIntakeSignConsent, data, { feature: featureConstants.static, ApiVersion2Req: true });
+
+const SmartIntakeGetIntakeLink = (data) =>
+  post(SERVICE_URLSV2.SmartIntakeGetIntakeLink, data, { feature: featureConstants.static, ApiVersion2Req: true });
+
+const SmartIntakeSearchDrugs = (data) =>
+  post(SERVICE_URLSV2.SmartIntakeSearchDrugs, data, { feature: featureConstants.static, ApiVersion2Req: true });
+
+const SmartIntakeSearchPayers = (data) =>
+  post(SERVICE_URLSV2.SmartIntakeSearchPayers, data, { feature: featureConstants.static, ApiVersion2Req: true });
+
+// ZIP -> city/state (the EHR's ZipState lookup) for the Demographics address fields.
+const SmartIntakeSearchZip = (zipCode) =>
+  get(`${SERVICE_URLSV2.SmartIntakeSearchZip}?zipCode=${encodeURIComponent(zipCode)}`, {}, { feature: featureConstants.static, ApiVersion2Req: true });
+
 
 const apiServicesV2 = {
   GetGeneralLookup,
@@ -568,6 +617,7 @@ const apiServicesV2 = {
   AddPatientUser,
   AddExistingUser,
   GetToken,
+  AuthenticateUserWithToken,
   GetSharingModulesData,
   UpdateSharingModulesData,
   saveConsentForm,
@@ -607,13 +657,22 @@ const apiServicesV2 = {
   GetFamilyRelations,
   Searchappointmentreason,
   GetProvidersbyPracticeID,
+  GetProviderTaxonomiesByPracticeId,
   GetPracticeLocationForPatient,
   GetProviderLocationScheduleInfo,
   CreatePatientAppointment,
   UpdatePatientAppointment,
   FilterAppointments,
   GetAllAppointmentType,
-  DeleteAppointmentById
+  DeleteAppointmentById,
+  UpdateExistingAppointmentStatus,
+  SmartIntakeGetForm,
+  SmartIntakeSubmitSection,
+  SmartIntakeSignConsent,
+  SmartIntakeGetIntakeLink,
+  SmartIntakeSearchDrugs,
+  SmartIntakeSearchPayers,
+  SmartIntakeSearchZip
 };
 
 export default apiServicesV2;

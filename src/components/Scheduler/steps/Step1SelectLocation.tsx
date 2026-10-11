@@ -1,9 +1,8 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Typography,
   Button,
-  Stack,
   Paper,
   CircularProgress,
   Alert
@@ -17,6 +16,8 @@ import {
 } from '@/slices/ScheduleSlice';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { Facility, AppointmentData } from '../types';
+import StepLayout from './StepLayout';
+import StepSectionHeader from './StepSectionHeader';
 
 interface Step1Props {
   onNext: (data: AppointmentData) => void;
@@ -84,6 +85,7 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
   const [selectedFacility, setSelectedFacility] = useState<Facility | null>(
     currentData?.facility || null
   );
+  const [locationSearchTerm, setLocationSearchTerm] = useState('');
 
   const { locations, locationsLoading, locationsError } = useSelector(
     (state: any) => state.schedule
@@ -93,10 +95,25 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
     dispatch(GetPracticeLocationForPatient({ practiceId }) as any);
   }, [practiceId, dispatch]);
 
+  // Bug 432658: locations must be listed A-Z by name by default.
   const facilities: Facility[] = useMemo(
-    () => (locations || []).map(mapToFacility),
+    () =>
+      (locations || [])
+        .map(mapToFacility)
+        .sort((a: Facility, b: Facility) =>
+          (a.name || '').localeCompare(b.name || '')
+        ),
     [locations]
   );
+
+  // Filters the facility cards below in place; no separate results dropdown.
+  const filteredFacilities = useMemo(() => {
+    const term = locationSearchTerm.trim().toLowerCase();
+    if (!term) return facilities;
+    return facilities.filter((facility) =>
+      (facility.name || '').toLowerCase().includes(term)
+    );
+  }, [facilities, locationSearchTerm]);
 
   useEffect(() => {
     if (!selectedFacility || facilities.length === 0) return;
@@ -107,6 +124,27 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [facilities]);
+
+  // TPM feedback: when the practice only has one location, there's nothing
+  // for the patient to choose between, so skip showing the location picker
+  // and go straight to the next step with that location pre-selected.
+  const autoAdvancedRef = useRef(false);
+  useEffect(() => {
+    if (
+      locationsLoading ||
+      selectedFacility ||
+      autoAdvancedRef.current ||
+      facilities.length !== 1
+    ) {
+      return;
+    }
+    autoAdvancedRef.current = true;
+    const onlyFacility = facilities[0];
+    setSelectedFacility(onlyFacility);
+    dispatch(setSelectedLocation(onlyFacility));
+    onNext({ ...currentData, facility: onlyFacility });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [facilities, locationsLoading, selectedFacility]);
 
   const handleSelectFacility = (facility: Facility) => {
     setSelectedFacility(facility);
@@ -126,7 +164,8 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
       key={facility.id}
       onClick={() => handleSelectFacility(facility)}
       sx={{
-        p: 2,
+        py: 0.75,
+        px: 1.5,
         cursor: 'pointer',
         border: '2px solid',
         borderColor: isSelected ? 'primary.main' : '#e0e0e0',
@@ -138,56 +177,79 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
         }
       }}
     >
-      <Typography fontWeight="bold" variant="subtitle1">
+      <Typography fontWeight="bold" variant="body2">
         {facility.name}
       </Typography>
 
-      {facility.address && (
+      {/* Address and phone share one line; wraps on narrow screens. */}
+      {(facility.address || facility.phone) && (
         <Box
           sx={{
             display: 'flex',
-            alignItems: 'flex-start',
-            gap: 0.5,
-            mt: 0.5
-          }}
-        >
-          <LocationOnIcon
-            fontSize="small"
-            sx={{ color: 'text.secondary', mt: '2px' }}
-          />
-          <Typography variant="body2" color="text.secondary">
-            {facility.address}
-            {facility.city ? `, ${facility.city}` : ''}
-            {facility.state ? `, ${facility.state}` : ''}
-            {facility.zip ? ` ${facility.zip}` : ''}
-          </Typography>
-        </Box>
-      )}
-
-      {facility.phone && (
-        <Box
-          sx={{
-            display: 'flex',
+            flexWrap: 'wrap',
             alignItems: 'center',
-            gap: 0.5,
-            mt: 0.5
+            columnGap: 1.5,
+            rowGap: 0.25,
+            mt: 0.25
           }}
         >
-          <PhoneIcon fontSize="small" sx={{ color: 'text.secondary' }} />
-          <Typography variant="body2" color="text.secondary">
-            {facility.phone}
-          </Typography>
+          {facility.address && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <LocationOnIcon
+                sx={{ fontSize: 16, color: 'text.secondary' }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                {facility.address}
+                {facility.city ? `, ${facility.city}` : ''}
+                {facility.state ? `, ${facility.state}` : ''}
+                {facility.zip ? ` ${facility.zip}` : ''}
+              </Typography>
+            </Box>
+          )}
+          {facility.phone && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <PhoneIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+              <Typography variant="body2" color="text.secondary">
+                {facility.phone}
+              </Typography>
+            </Box>
+          )}
         </Box>
       )}
     </Paper>
   );
 
   return (
-    <Box sx={{ width: '100%' }}>
-      <Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
-        Please select the facility
-      </Typography>
-
+    <StepLayout
+      header={
+        <StepSectionHeader
+          title="Select Location"
+          searchValue={locationSearchTerm}
+          onSearchChange={setLocationSearchTerm}
+          searchPlaceholder="Search Location"
+          showSearch={
+            !locationsLoading && !selectedFacility && facilities.length > 0
+          }
+        />
+      }
+      footer={
+        <>
+          {onBack && (
+            <Button variant="outlined" onClick={onBack}>
+              Cancel
+            </Button>
+          )}
+          <Button
+            variant="contained"
+            onClick={handleNext}
+            sx={{ ml: 'auto' }}
+            disabled={!selectedFacility}
+          >
+            Continue
+          </Button>
+        </>
+      }
+    >
       {locationsError && (
         <Alert severity="error" sx={{ mb: 2 }}>
           {locationsError}
@@ -202,7 +264,7 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
 
       {!locationsLoading && selectedFacility ? (
         /* Selected Location Summary */
-        <Box>
+        <Box sx={{ maxWidth: { md: '50%' } }}>
           {renderFacilityCard(selectedFacility, true)}
           <Button
             size="small"
@@ -217,39 +279,38 @@ const Step1SelectLocation: React.FC<Step1Props> = ({
         </Box>
       ) : (
         !locationsLoading && (
-          <Stack spacing={2}>
-            {facilities.length > 0 ? (
-              facilities.map((facility: Facility) =>
-                renderFacilityCard(facility, false)
-              )
-            ) : (
+          <>
+            {facilities.length === 0 ? (
               <Typography
                 color="text.secondary"
                 sx={{ textAlign: 'center', py: 4 }}
               >
                 No facilities available
               </Typography>
+            ) : filteredFacilities.length > 0 ? (
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+                  gap: 0.75
+                }}
+              >
+                {filteredFacilities.map((facility: Facility) =>
+                  renderFacilityCard(facility, false)
+                )}
+              </Box>
+            ) : (
+              <Typography
+                color="text.secondary"
+                sx={{ textAlign: 'center', py: 4 }}
+              >
+                No locations found
+              </Typography>
             )}
-          </Stack>
+          </>
         )
       )}
-
-      <Box sx={{ display: 'flex', gap: 2, mt: 4 }}>
-        {onBack && (
-          <Button variant="outlined" onClick={onBack}>
-            Cancel
-          </Button>
-        )}
-        <Button
-          variant="contained"
-          onClick={handleNext}
-          sx={{ ml: 'auto' }}
-          disabled={!selectedFacility}
-        >
-          Continue
-        </Button>
-      </Box>
-    </Box>
+    </StepLayout>
   );
 };
 

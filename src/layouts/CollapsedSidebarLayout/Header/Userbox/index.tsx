@@ -186,7 +186,12 @@ function HeaderUserbox() {
                 localStorage.clear();
                 handleLogout();
                 clearPatientSession();
-                router.push(process.env.NEXT_PUBLIC_ORIGIN_URI);
+                // Bug 432753: NEXT_PUBLIC_ORIGIN_URI is a build-time env
+                // value that isn't reliably set to this deployment's own
+                // origin in every environment (e.g. it's "localhost:3000"
+                // in the base .env). A relative path to the app's own
+                // login route always resolves correctly regardless of host.
+                router.push('/');
               }}
             >
               <span style={{ marginRight: "5px", marginTop: "5px" }}>

@@ -34,7 +34,7 @@ export const Check_Authentication = async (response) => {
     localStorage.setItem('isAuthenticated', 'false');
   } else if (response?.status === 401) {
     localStorage.clear();
-    Router.push(process.env.NEXT_PUBLIC_ORIGIN_URI);
+    Router.push('/');
   } else if (response?.status === 400) {
     const resp = response;
     if (resp?.data?.responseException) {
@@ -212,6 +212,14 @@ export const decodeJwtPayload = (token?: string | null): any | null => {
   } catch {
     return null;
   }
+};
+
+// The Auth0 user id (e.g. "auth0|abc123") is the `sub` claim of the stored
+// Auth0 access token.
+export const getAuth0UserId = (): string => {
+  if (typeof window === 'undefined') return '';
+  const decoded = decodeJwtPayload(localStorage.getItem('token'));
+  return typeof decoded?.sub === 'string' ? decoded.sub : '';
 };
 
 // Decodes the JWT's own `exp` claim so session timing is driven by the real
