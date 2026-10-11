@@ -580,11 +580,21 @@ const SmartIntakeGetForm = (data) =>
 const SmartIntakeSubmitSection = (data) =>
   post(SERVICE_URLSV2.SmartIntakeSubmitSection, data, { feature: featureConstants.static, ApiVersion2Req: true });
 
+const SmartIntakeSignConsent = (data) =>
+  post(SERVICE_URLSV2.SmartIntakeSignConsent, data, { feature: featureConstants.static, ApiVersion2Req: true });
+
+const SmartIntakeGetIntakeLink = (data) =>
+  post(SERVICE_URLSV2.SmartIntakeGetIntakeLink, data, { feature: featureConstants.static, ApiVersion2Req: true });
+
 const SmartIntakeSearchDrugs = (data) =>
   post(SERVICE_URLSV2.SmartIntakeSearchDrugs, data, { feature: featureConstants.static, ApiVersion2Req: true });
 
 const SmartIntakeSearchPayers = (data) =>
   post(SERVICE_URLSV2.SmartIntakeSearchPayers, data, { feature: featureConstants.static, ApiVersion2Req: true });
+
+// ZIP -> city/state (the EHR's ZipState lookup) for the Demographics address fields.
+const SmartIntakeSearchZip = (zipCode) =>
+  get(`${SERVICE_URLSV2.SmartIntakeSearchZip}?zipCode=${encodeURIComponent(zipCode)}`, {}, { feature: featureConstants.static, ApiVersion2Req: true });
 
 
 const apiServicesV2 = {
@@ -658,8 +668,11 @@ const apiServicesV2 = {
   UpdateExistingAppointmentStatus,
   SmartIntakeGetForm,
   SmartIntakeSubmitSection,
+  SmartIntakeSignConsent,
+  SmartIntakeGetIntakeLink,
   SmartIntakeSearchDrugs,
-  SmartIntakeSearchPayers
+  SmartIntakeSearchPayers,
+  SmartIntakeSearchZip
 };
 
 export default apiServicesV2;

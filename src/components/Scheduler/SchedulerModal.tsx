@@ -29,7 +29,7 @@ interface SchedulerModalProps {
 
 const steps = [
   'Select Location',
-  'Select Reason for Visit',
+  'Select Reason & Appointment Type',
   'Select Provider',
   'Choose Date & Time',
   'Confirm & Book'
@@ -181,6 +181,8 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Step {currentStep + 1} of {steps.length}
+            {/* Stepper is hidden on mobile, so name the current step here. */}
+            {fullScreen && ` · ${steps[currentStep]}`}
           </Typography>
         </Box>
         <IconButton
@@ -194,9 +196,11 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
         </IconButton>
       </Box>
 
-      {/* Stepper */}
+      {/* Stepper - hidden on mobile (takes too much vertical space there);
+          the header subtitle shows the current step instead. */}
       <Box
         sx={{
+          display: { xs: 'none', sm: 'block' },
           px: 2,
           pt: 1.5,
           mb: 0.5,
@@ -227,9 +231,9 @@ const SchedulerModal: React.FC<SchedulerModalProps> = ({
           minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
-          px: 3,
+          px: { xs: 2, sm: 3 },
           pt: 1,
-          pb: 2
+          pb: { xs: 1.5, sm: 2 }
         }}
       >
         {renderStepContent()}

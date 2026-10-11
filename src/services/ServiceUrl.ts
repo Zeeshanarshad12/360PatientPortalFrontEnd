@@ -62,7 +62,9 @@ export const SERVICE_URLSV2 = {
   GetProviderTaxonomiesByPracticeId:
     'patientportal/getprovidertaxonomiesbypracticeid',
   GetPracticeLocationForPatient:'patientportal/GetPracticeLocationForPatient',
-  GetProviderLocationScheduleInfo: 'patientportal/GetProviderLocationScheduleInfo',
+  // Returns the schedule plus backend-computed availableSlots/providerBusyTimes.
+  GetProviderLocationScheduleInfo:
+    'patientportal/getproviderlocationscheduleinfoportal',
   CreatePatientAppointment: 'patientportal/CreatePatientAppointment',
   UpdatePatientAppointment: 'patientportal/UpdatePatientAppointment',
   FilterAppointments: 'patientportal/filterappointment',
@@ -73,6 +75,9 @@ export const SERVICE_URLSV2 = {
   // Signed-in portal user + the link token from /patientportal/intake/[token].
   SmartIntakeGetForm: 'patientportal/GetForm',
   SmartIntakeSubmitSection: 'patientportal/SubmitSection',
+  SmartIntakeSignConsent: 'patientportal/SignConsent',
+  SmartIntakeGetIntakeLink: 'patientportal/GetIntakeLink',
   SmartIntakeSearchDrugs: 'patientportal/SearchDrugs',
-  SmartIntakeSearchPayers: 'patientportal/SearchPayers'
+  SmartIntakeSearchPayers: 'patientportal/SearchPayers',
+  SmartIntakeSearchZip: 'patientportal/SearchZip'
 };

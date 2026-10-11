@@ -14,8 +14,10 @@ import {
 import { useDispatch, useSelector } from '@/store/index';
 import {
   GetProvidersbyPracticeID,
-  GetProviderTaxonomiesByPracticeId
+  GetProviderTaxonomiesByPracticeId,
+  GetScheduledProviderIds
 } from '@/slices/ScheduleSlice';
+import { getAuth0UserId } from '@/utils/functions';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { Provider, AppointmentData } from '../types';
 import StepLayout from './StepLayout';
@@ -104,7 +106,9 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
     providersLoading,
     providersError,
     providerTaxonomies,
-    providerTaxonomiesError
+    providerTaxonomiesError,
+    scheduledProviderIds,
+    scheduledProviderIdsLoading
   } = useSelector((state: any) => state.schedule);
 
   const selectedFacilityId = currentData?.facility?.id;
@@ -130,6 +134,34 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
       }) as any
     );
   }, [practiceId, selectedFacilityId, dispatch]);
+
+  // Bug 432488 (Issue 3) / 432494 (Issue 1): ask the schedule endpoint which
+  // of the listed providers actually have a work schedule at this location,
+  // and hide the rest (TPM decision: hide rather than allow out-of-schedule
+  // booking).
+  useEffect(() => {
+    const providerIds = (providers || [])
+      .map((p: Provider) => p.providerId)
+      .filter((id: number) => id != null);
+    if (!providerIds.length || selectedFacilityId == null) return;
+    dispatch(
+      GetScheduledProviderIds({
+        providerIds,
+        locationId: Number(selectedFacilityId),
+        practiceId: Number(practiceId),
+        auth0UserId: getAuth0UserId()
+      }) as any
+    );
+  }, [providers, selectedFacilityId, practiceId, dispatch]);
+
+  // Keep the list in its loading state until the schedule check is back, so
+  // providers that are about to be hidden don't flash in.
+  const listLoading = providersLoading || scheduledProviderIdsLoading;
+
+  // TODO: remove once the schedule-based provider filter is verified on QA.
+  useEffect(() => {
+    console.log('[Step3] scheduledProviderIds:', scheduledProviderIds);
+  }, [scheduledProviderIds]);
 
   useEffect(() => {
     if (!selectedProvider || !providers || providers.length === 0) return;
@@ -173,9 +205,16 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
       ) {
         return false;
       }
+      // null = schedule check not done/failed: don't hide anyone.
+      if (
+        Array.isArray(scheduledProviderIds) &&
+        !scheduledProviderIds.includes(String(p.providerId))
+      ) {
+        return false;
+      }
       return true;
     });
-  }, [providers, selectedFacilityId]);
+  }, [providers, selectedFacilityId, scheduledProviderIds]);
 
   // Tabs come from the practice's taxonomy list (getprovidertaxonomiesbypracticeid);
   // index 0 is always "All". Providers are grouped by their own
@@ -351,7 +390,7 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
           searchValue={providerSearchTerm}
           onSearchChange={setProviderSearchTerm}
           searchPlaceholder="Search Provider"
-          searchDisabled={providersLoading}
+          searchDisabled={listLoading}
           showSearch={!selectedProvider}
         />
       }
@@ -416,7 +455,7 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
             ref={providerListRef}
             sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pr: 0.5 }}
           >
-            {providersLoading ? (
+            {listLoading ? (
               <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
                 <CircularProgress size={40} />
               </Box>
@@ -442,7 +481,7 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
               </Typography>
             )}
           </Box>
-          {!providersLoading && pageCount > 1 && (
+          {!listLoading && pageCount > 1 && (
             <Box
               sx={{
                 display: 'flex',

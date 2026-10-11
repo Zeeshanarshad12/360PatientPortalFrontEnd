@@ -101,7 +101,8 @@ export function IntakeWizard({ token }: { token: string }) {
         const payers = await intakeApi.searchPayers(token, query);
         payers.forEach((p) => pickedPayers.current.set(p.name.toLowerCase(), p));
         return [...new Set(payers.map((p) => p.name))];
-      }
+      },
+      signConsent: (consentFormId, signature) => intakeApi.signConsent(token, consentFormId, signature)
     }),
     [token]
   );

@@ -214,6 +214,14 @@ export const decodeJwtPayload = (token?: string | null): any | null => {
   }
 };
 
+// The Auth0 user id (e.g. "auth0|abc123") is the `sub` claim of the stored
+// Auth0 access token.
+export const getAuth0UserId = (): string => {
+  if (typeof window === 'undefined') return '';
+  const decoded = decodeJwtPayload(localStorage.getItem('token'));
+  return typeof decoded?.sub === 'string' ? decoded.sub : '';
+};
+
 // Decodes the JWT's own `exp` claim so session timing is driven by the real
 // server-issued expiry instead of a guessed/hardcoded duration.
 export const getTokenExpiryMs = (token?: string | null): number | null => {

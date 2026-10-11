@@ -7,6 +7,7 @@ import { FormStep } from './FormStep';
 import { ChecklistStep, FamilyHistoryStep, SocialHistoryStep } from './ChecklistSteps';
 import { MedicationStep } from './MedicationStep';
 import { ConsentStep } from './ConsentStep';
+import { validateFields } from './fieldRules';
 
 function sameValues(a: string[], b: string[]): boolean {
   if (a.length !== b.length) return false;
@@ -31,6 +32,12 @@ export function WizardBody({ steps, onSubmitSection }: { steps: WizardStep[]; on
   const [busy, setBusy] = useState(false);
   const [finished, setFinished] = useState(false);
   const [signed, setSigned] = useState<Record<number, boolean>>({});
+  // Steps the patient tried to save with errors: every error on them shows, not just touched ones.
+  const [triedSave, setTriedSave] = useState<Record<number, boolean>>({});
+  // Sections the patient chose to skip for now (nothing saved for them) - listed on the finish screen.
+  const [skipped, setSkipped] = useState<Record<number, boolean>>({});
+
+  const skippedLabels = steps.filter((_, i) => skipped[i] && !completed[i]).map((s) => s.label);
 
   if (finished) {
     return (
@@ -42,6 +49,11 @@ export function WizardBody({ steps, onSubmitSection }: { steps: WizardStep[]; on
         <Typography variant="body1" color="text.secondary">
           Your forms have been submitted. Anything that needs staff review will be added to your chart after they take a look.
         </Typography>
+        {skippedLabels.length > 0 && (
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            You skipped: {skippedLabels.join(', ')}. Open this same link any time before your visit to finish {skippedLabels.length === 1 ? 'it' : 'them'}.
+          </Typography>
+        )}
       </Box>
     );
   }
@@ -51,9 +63,15 @@ export function WizardBody({ steps, onSubmitSection }: { steps: WizardStep[]; on
   const stepValues = values[current] ?? [];
   const setStepValues = (next: string[]) => setValues((prev) => ({ ...prev, [current]: next }));
   const needsSignature = step.kind === 'consent' && !signed[current];
+  const fieldErrors = step.kind === 'form' ? validateFields(step.code, step.fields, stepValues) : [];
+  const hasErrors = fieldErrors.some(Boolean);
 
   async function goNext() {
     if (busy || needsSignature) return;
+    if (hasErrors) {
+      setTriedSave((prev) => ({ ...prev, [current]: true }));
+      return;
+    }
     setBusy(true);
     try {
       if (step.kind !== 'consent') {
@@ -61,6 +79,7 @@ export function WizardBody({ steps, onSubmitSection }: { steps: WizardStep[]; on
         await onSubmitSection(step, submission);
       }
       setCompleted((c) => c.map((v, i) => (i === current ? true : v)));
+      setSkipped((prev) => ({ ...prev, [current]: false }));
       if (isLast) setFinished(true);
       else setCurrent((c) => c + 1);
     } catch {
@@ -68,6 +87,16 @@ export function WizardBody({ steps, onSubmitSection }: { steps: WizardStep[]; on
     } finally {
       setBusy(false);
     }
+  }
+
+  // Skip: move on without saving this section (the patient can come back via the same link).
+  // Every intake section can be skipped; consent forms still need a signature to continue.
+  const canSkip = step.kind !== 'consent';
+  function skip() {
+    if (busy) return;
+    setSkipped((prev) => ({ ...prev, [current]: true }));
+    if (isLast) setFinished(true);
+    else setCurrent((c) => c + 1);
   }
 
   return (
@@ -86,7 +115,12 @@ export function WizardBody({ steps, onSubmitSection }: { steps: WizardStep[]; on
             key={current}
             fields={step.fields}
             values={stepValues}
-            onChange={(i, v) => setStepValues(stepValues.map((x, idx) => (idx === i ? v : x)))}
+            errors={fieldErrors}
+            showAllErrors={!!triedSave[current]}
+            onChange={(changes) => {
+              const at = current;
+              setValues((prev) => ({ ...prev, [at]: (prev[at] ?? []).map((x, idx) => (idx in changes ? changes[idx] : x)) }));
+            }}
             searchPayers={step.searchPayers}
           />
         )}
@@ -101,6 +135,8 @@ export function WizardBody({ steps, onSubmitSection }: { steps: WizardStep[]; on
             key={current}
             consent={step.consent}
             patientId={step.patientId}
+            documentTitle={step.documentTitle}
+            sign={step.sign}
             onSignedChange={(isSigned) => {
               const at = current;
               setSigned((prev) => ({ ...prev, [at]: isSigned }));
@@ -128,6 +164,12 @@ export function WizardBody({ steps, onSubmitSection }: { steps: WizardStep[]; on
         <Button variant="outlined" disabled={current === 0 || busy} onClick={() => setCurrent((c) => Math.max(0, c - 1))}>
           Previous
         </Button>
+        <Box sx={{ flex: 1 }} />
+        {canSkip && (
+          <Button variant="outlined" color="secondary" disabled={busy} onClick={skip} sx={{ mr: 1 }}>
+            Skip for now
+          </Button>
+        )}
         <Button variant="contained" disabled={busy || needsSignature} onClick={goNext}>
           {busy ? 'Saving…' : needsSignature ? 'Sign to continue' : step.kind === 'consent' ? (isLast ? 'Finish' : 'Next') : isLast ? 'Save & Finish' : 'Save & Next'}
         </Button>

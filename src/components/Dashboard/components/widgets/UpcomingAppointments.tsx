@@ -9,12 +9,17 @@ import {
   Link,
   Button,
   Stack,
-  Alert
+  CircularProgress
 } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import AssignmentOutlinedIcon from '@mui/icons-material/AssignmentOutlined';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import NextLink from 'next/link';
+import { intakeApi, isIntakeToken } from '@/components/SmartIntake/api';
+import { useRouter } from 'next/router';
 import { widgetContent } from '@/components/Dashboard/contexts/widgetData';
 import { useDispatch, useSelector } from '@/store/index';
 import { useState, useEffect, useMemo } from 'react';
@@ -169,6 +174,34 @@ const isFutureAppointment = (appt: any) =>
 const canManageAppointment = (appt: any) =>
   isActionableStatus(appt?.appointmentStatus) && isFutureAppointment(appt);
 
+// Smart Intake status for the visit, from PatientPortal.sp_GetPatientAppointments:
+// null/missing = no intake link was sent for this appointment, so nothing is shown.
+const INTAKE_STATUSES: Record<
+  string,
+  { label: string; bgcolor: string; textColor: string; linkText: string }
+> = {
+  pending: { label: 'Pending', bgcolor: '#fff3e0', textColor: '#e65100', linkText: 'Start Forms' },
+  partial: { label: 'Partially Done', bgcolor: '#e3f2fd', textColor: '#1565c0', linkText: 'Continue Forms' },
+  completed: { label: 'Done', bgcolor: '#e8f5e9', textColor: '#2e7d32', linkText: 'View Forms' }
+};
+
+const getIntakeStatus = (appt: any) =>
+  INTAKE_STATUSES[String(appt?.intakeStatus ?? '').toLowerCase()];
+
+// "3/7": required sections submitted + consents signed, out of all required.
+const getIntakeCount = (appt: any) =>
+  Number(appt?.intakeTotalCount) > 0
+    ? `${Number(appt.intakeCompletedCount) || 0}/${Number(appt.intakeTotalCount)}`
+    : null;
+
+// Only set while the visit's intake link still works (not revoked/expired,
+// visit not completed). With no live link the chip still starts the forms: the
+// patient opened the portal directly, so startIntake asks the backend for one.
+const getIntakeHref = (appt: any) =>
+  isIntakeToken(appt?.intakeToken)
+    ? `/patientportal/intake/${appt.intakeToken}`
+    : null;
+
 // Bug 432545: the "Cancelled" status ID in SummitEHR's appointment status list.
 const CANCELLED_STATUS_ID = 2;
 const CANCELLED_STATUS_NAME = 'Cancelled by Patient';
@@ -191,6 +224,25 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
     AppointmentData | undefined
   >(undefined);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const router = useRouter();
+  // Visit whose intake forms are being opened without a sent link, and any error for it.
+  const [startingIntakeId, setStartingIntakeId] = useState<string | number | null>(null);
+  const [intakeError, setIntakeError] = useState<{ id: string | number; message: string } | null>(null);
+
+  // The patient came to the portal directly: get (or have the backend issue) the
+  // visit's intake link, then open the wizard - same page a sent link opens.
+  const startIntake = async (appointmentId: string | number) => {
+    setStartingIntakeId(appointmentId);
+    setIntakeError(null);
+    try {
+      const token = await intakeApi.getIntakeLink(appointmentId);
+      await router.push(`/patientportal/intake/${token}`);
+    } catch (err) {
+      setIntakeError({ id: appointmentId, message: err instanceof Error ? err.message : "Your forms aren't available right now." });
+    } finally {
+      setStartingIntakeId(null);
+    }
+  };
   const [appointmentToCancel, setAppointmentToCancel] = useState<
     string | number | null
   >(null);
@@ -444,24 +496,26 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
             </Box>
 
             {/* Appointments List */}
-            {appointmentsError && (
-              <Alert severity="error" sx={{ mb: 1.5 }}>
-                {appointmentsError}
-              </Alert>
-            )}
             <Box sx={{ maxHeight: 350, overflowY: 'auto', pr: 1 }}>
-              {!appointmentsError && appointments.length === 0 && (
+              {/* QA: both "no appointments" and a failed load show the same
+                  plain grey message, not a red error alert. */}
+              {(appointmentsError || !appointments?.length) && (
                 <Typography
                   variant="body2"
                   color="text.secondary"
                   sx={{ textAlign: 'center', py: 4 }}
                 >
-                  No upcoming appointments. Click &quot;New Appointment&quot;
-                  to request one.
+                  No Appointments Found
                 </Typography>
               )}
-              {appointments.map((appt: any, index: number) => {
+              {!appointmentsError && appointments?.map((appt: any, index: number) => {
                 const statusColors = resolveStatusColor(appt);
+                const intakeStatus = getIntakeStatus(appt);
+                const intakeHref = getIntakeHref(appt);
+                const intakeCount = getIntakeCount(appt);
+                // Clickable with a live link, or - for a visit that isn't cancelled - by asking for one.
+                const apptId = resolveAppointmentId(appt);
+                const canOpenIntake = Boolean(intakeHref) || (!isAppointmentCancelled(appt.appointmentStatus) && apptId != null);
                 return (
                   <Box
                     key={index}
@@ -547,6 +601,71 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                         {appt.address}
                       </Typography>
                     </Box>
+                    {intakeStatus && (
+                      <Box display="flex" alignItems="center" sx={{ mt: 0.5 }}>
+                        <AssignmentOutlinedIcon
+                          sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }}
+                        />
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mr: 1 }}
+                        >
+                          Intake Forms:
+                        </Typography>
+                        <Chip
+                          label={
+                            <Box
+                              component="span"
+                              sx={{ display: 'inline-flex', alignItems: 'center' }}
+                            >
+                              {intakeStatus.label}
+                              {intakeCount && ` (${intakeCount})`}
+                              {canOpenIntake && (
+                                startingIntakeId === apptId ? (
+                                  <CircularProgress size={12} sx={{ ml: 0.75, color: 'inherit' }} />
+                                ) : (
+                                  <ChevronRightIcon sx={{ fontSize: 16, ml: 0.25, mr: -0.5 }} />
+                                )
+                              )}
+                            </Box>
+                          }
+                          size="small"
+                          {...(intakeHref
+                            ? {
+                                component: NextLink,
+                                href: intakeHref,
+                                clickable: true,
+                                title: intakeStatus.linkText,
+                                'aria-label': `${intakeStatus.label} - ${intakeStatus.linkText}`
+                              }
+                            : canOpenIntake
+                              ? {
+                                  // No live link yet (the patient came to the portal directly).
+                                  clickable: true,
+                                  disabled: startingIntakeId === apptId,
+                                  onClick: () => startIntake(apptId),
+                                  title: intakeStatus.linkText,
+                                  'aria-label': `${intakeStatus.label} - ${intakeStatus.linkText}`
+                                }
+                              : {})}
+                          sx={{
+                            height: 22,
+                            fontSize: '0.75rem',
+                            borderRadius: '10px',
+                            bgcolor: intakeStatus.bgcolor,
+                            color: intakeStatus.textColor,
+                            fontWeight: 'bold',
+                            '&:hover': { bgcolor: intakeStatus.bgcolor, filter: 'brightness(0.95)' }
+                          }}
+                        />
+                      </Box>
+                    )}
+                    {intakeError && intakeError.id === apptId && (
+                      <Typography variant="caption" color="error" sx={{ display: 'block', mt: 0.5 }}>
+                        {intakeError.message}
+                      </Typography>
+                    )}
 
                     {/* Action Buttons */}
                     {canManageAppointment(appt) && (

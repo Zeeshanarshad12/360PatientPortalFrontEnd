@@ -1,7 +1,9 @@
 import { format } from 'date-fns';
 import type { IntakeForm, IntakeSearch, IntakeSection, WizardStep } from './types';
+import { fieldKind, formatValue } from './fieldRules';
 
-export type IntakeSearches = { drugs: IntakeSearch; payers: IntakeSearch };
+/** Token-bound calls the steps make. `signConsent` records a consent signed for the link's visit. */
+export type IntakeSearches = { drugs: IntakeSearch; payers: IntakeSearch; signConsent: (consentFormId: string, signature: string) => Promise<void> };
 
 /** Demographics fields the chart can pre-fill, keyed by field code (labels are the practice's). */
 function demographicsDefaults(form: IntakeForm): Record<string, string> {
@@ -48,16 +50,19 @@ function buildStep(section: IntakeSection, form: IntakeForm, searches: IntakeSea
       // is the patient's active medication list, so keeping it as-is attests.
       return { kind: 'medications', code, label, baseline: section.previous, search: searches.drugs };
     default: {
-      // Demographics / Insurance: the practice's own fields, labels and order.
+      // Demographics / Insurance: the practice's own fields, labels and order, pre-filled with
+      // what the chart has (contact details, pharmacy, emergency contact; the primary policy) to
+      // confirm or correct. Demographics falls back to the link's patient record.
       const defaults = code === 'Demographics' ? demographicsDefaults(form) : {};
-      // Insurance: the primary policy already on the chart, to confirm or correct. Demographics
-      // pre-fills from the patient record above.
-      const onChart = code === 'Insurance' ? chartAnswers(section.previous) : new Map<string, string>();
+      const onChart = chartAnswers(section.previous);
       return {
         kind: 'form',
         code,
         label,
-        fields: section.fields.map((f) => ({ key: `${code}-${f.code}`, code: f.code, label: f.label, type: f.type, options: f.options, value: defaults[f.code] ?? onChart.get(f.label.trim().toLowerCase()) ?? '' })),
+        fields: section.fields.map((f) => {
+          const value = onChart.get(f.label.trim().toLowerCase()) || defaults[f.code] || '';
+          return { key: `${code}-${f.code}`, code: f.code, label: f.label, type: f.type, options: f.options, value: formatValue(fieldKind(f), value) };
+        }),
         searchPayers: searches.payers
       };
     }
@@ -66,8 +71,19 @@ function buildStep(section: IntakeSection, form: IntakeForm, searches: IntakeSea
 
 /** The wizard's steps: the practice's sections in its order, then the consent forms the visit
  * type requires — signed with the portal's own consent signing (dbo.SignedConsentForms), the
- * same as the Consent Forms page. */
+ * same as the Consent Forms page. A form already signed for THIS visit isn't shown again (nothing
+ * left to do); a signature from another visit doesn't count, so that form is still asked for. */
 export function buildSteps(form: IntakeForm, searches: IntakeSearches): WizardStep[] {
-  const consentSteps: WizardStep[] = form.consents.map((consent) => ({ kind: 'consent', label: consent.name, consent, patientId: form.patientId }));
+  const visitDate = form.appointment.start ? new Date(form.appointment.start) : null;
+  const consentSteps: WizardStep[] = form.consents.filter((consent) => !consent.signed).map((consent) => ({
+    kind: 'consent',
+    label: consent.name,
+    consent,
+    patientId: form.patientId,
+    // The signed PDF is filed under this title - one per visit (the portal skips a same-titled
+    // upload), and the console matches it back to the visit's consent by the form-name prefix.
+    documentTitle: visitDate && !Number.isNaN(visitDate.getTime()) ? `${consent.name} - visit ${visitDate.toLocaleDateString('en-US')}` : consent.name,
+    sign: (signature: string) => searches.signConsent(consent.consentFormId, signature)
+  }));
   return [...form.sections.map((section) => buildStep(section, form, searches)), ...consentSteps];
 }

@@ -94,7 +94,16 @@ function mapForm(row: Row): IntakeForm {
     const consentFormId = str(c, 'ConsentFormId');
     if (!consentFormId || consentFormId === '0') return [];
     const version = Number(pick(c, 'Version'));
-    return [{ consentFormId, name: str(c, 'Name') ?? 'Consent form', version: Number.isFinite(version) && version > 0 ? version : undefined, expiryMonths: Number(pick(c, 'ExpiryMonths')) || 0 }];
+    return [
+      {
+        consentFormId,
+        name: str(c, 'Name') ?? 'Consent form',
+        version: Number.isFinite(version) && version > 0 ? version : undefined,
+        expiryMonths: Number(pick(c, 'ExpiryMonths')) || 0,
+        // Signed FOR THIS VISIT (consent is signed per appointment).
+        signed: pick(c, 'Signed') === true
+      }
+    ];
   });
   return {
     patientId: str(row, 'PatientId') ?? '',
@@ -180,12 +189,43 @@ export const intakeApi = {
     }
   },
 
+  /** For a patient who opened the portal directly: the intake token for one of their appointments
+   * (reuses the visit's live link, else the backend issues one). 404 = not available to this account. */
+  async getIntakeLink(appointmentId: string | number): Promise<string> {
+    try {
+      const token = str(unwrap(await apiServicesV2.SmartIntakeGetIntakeLink({ AppointmentId: Number(appointmentId) })) as Row, 'Token');
+      if (!isIntakeToken(token)) throw new Error("Your forms aren't available right now.");
+      return token;
+    } catch (err) {
+      throw toError(err, "Your forms aren't available right now. Please contact your practice.");
+    }
+  },
+
+  /** Marks a consent the patient just signed as signed for this link's appointment. */
+  async signConsent(token: string, consentFormId: string, signature: string): Promise<void> {
+    try {
+      await apiServicesV2.SmartIntakeSignConsent({ Token: token, ConsentFormId: Number(consentFormId), Signature: signature });
+    } catch (err) {
+      throw toError(err, "Your signature couldn't be saved for this visit. Please try again.");
+    }
+  },
+
   async searchDrugs(token: string, query: string): Promise<IntakeDrug[]> {
     try {
       const result = unwrap(await apiServicesV2.SmartIntakeSearchDrugs({ Token: token, Query: query }));
       return (Array.isArray(result) ? (result as Row[]) : []).map(mapDrug).filter((d) => d.description);
     } catch (err) {
       throw toError(err, "Search isn't available right now. Please try again.");
+    }
+  },
+
+  /** City/state pairs for a 5-digit ZIP (the EHR's ZipState lookup); empty when it's unknown. */
+  async searchZip(zip: string): Promise<{ city: string; state: string }[]> {
+    try {
+      const result = unwrap(await apiServicesV2.SmartIntakeSearchZip(zip));
+      return (Array.isArray(result) ? (result as Row[]) : []).map((r) => ({ city: str(r, 'City') ?? '', state: str(r, 'State') ?? '' })).filter((r) => r.city && r.state);
+    } catch (err) {
+      throw toError(err, "ZIP lookup isn't available right now.");
     }
   },
 

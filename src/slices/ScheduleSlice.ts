@@ -19,6 +19,10 @@ const initialState = {
   providerScheduleInfo: null,
   providerScheduleInfoLoading: false,
   providerScheduleInfoError: null,
+  // Provider ids that have a work schedule at the selected location (Step 3).
+  // null = not checked (or the check failed), so no provider is hidden.
+  scheduledProviderIds: null as Array<string> | null,
+  scheduledProviderIdsLoading: false,
   createAppointmentLoading: false,
   createAppointmentError: null,
   createdAppointment: null,
@@ -147,7 +151,12 @@ export const GetPracticeLocationForPatient: any = createAsyncThunk(
 export const GetProviderLocationScheduleInfo: any = createAsyncThunk(
   'schedule/getProviderLocationScheduleInfo',
   async (
-    data: { providerIds: Array<string | number>; locationId?: string | number;PracticeId?: string | number },
+    data: {
+      providerIds: Array<string | number>;
+      locationId?: string | number;
+      practiceId?: string | number;
+      auth0UserId?: string;
+    },
     thunkAPI
   ) => {
     try {
@@ -167,6 +176,51 @@ export const GetProviderLocationScheduleInfo: any = createAsyncThunk(
         error?.response?.data?.message || error?.message || 'An error occurred';
       SnackbarUtils.error(errorMessage, false);
       return thunkAPI.rejectWithValue(errorMessage);
+    }
+  }
+);
+
+export const GetScheduledProviderIds: any = createAsyncThunk(
+  'schedule/getScheduledProviderIds',
+  async (
+    data: {
+      providerIds: Array<string | number>;
+      locationId?: string | number;
+      practiceId?: string | number;
+      auth0UserId?: string;
+    },
+    thunkAPI
+  ) => {
+    try {
+      // Same endpoint as Step 4, asked for every listed provider at once;
+      // only the providers' schedule rows at this location matter here.
+      const res = await apiServicesV2.GetProviderLocationScheduleInfo(
+        data,
+        'ApiVersion2Req'
+      );
+      if (res?.status === 200) {
+        const items = res?.data?.result?.providerLocationSchedulerItems || [];
+        return Array.from(
+          new Set<string>(
+            items
+              .filter(
+                (item: any) =>
+                  item?.locationId == null ||
+                  String(item.locationId) === String(data.locationId)
+              )
+              .map((item: any) => String(item.providerId))
+          )
+        );
+      }
+      return thunkAPI.rejectWithValue(
+        res?.data?.message || 'Failed to fetch provider schedules'
+      );
+    } catch (error: any) {
+      // Not shown to the patient: without this check the provider list
+      // just isn't narrowed down.
+      return thunkAPI.rejectWithValue(
+        error?.response?.data?.message || error?.message || 'An error occurred'
+      );
     }
   }
 );
@@ -426,6 +480,18 @@ const scheduleSlice = createSlice({
       .addCase(GetProviderLocationScheduleInfo.rejected, (state, action) => {
         state.providerScheduleInfoLoading = false;
         state.providerScheduleInfoError = action.payload as string;
+      })
+      .addCase(GetScheduledProviderIds.pending, (state) => {
+        state.scheduledProviderIdsLoading = true;
+        state.scheduledProviderIds = null;
+      })
+      .addCase(GetScheduledProviderIds.fulfilled, (state, action) => {
+        state.scheduledProviderIdsLoading = false;
+        state.scheduledProviderIds = action.payload;
+      })
+      .addCase(GetScheduledProviderIds.rejected, (state) => {
+        state.scheduledProviderIdsLoading = false;
+        state.scheduledProviderIds = null;
       })
       .addCase(CreatePatientAppointment.pending, (state) => {
         state.createAppointmentLoading = true;

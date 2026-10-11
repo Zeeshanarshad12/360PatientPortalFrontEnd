@@ -25,12 +25,28 @@ function toHtml(raw: unknown): string {
  * One consent form the visit type requires. Shown and signed with the portal's own consent
  * viewer and signature dialog, so it saves exactly like the Consent Forms page does
  * (PatientPortal/SubmitConsentForm → dbo.SignedConsentForms, plus the signed PDF filed to the
- * patient's documents). A form the patient already signed shows as signed.
+ * patient's documents), then `sign` records it for THIS appointment (PatientPortal/SignConsent).
+ * Consent is signed per appointment: a form shows as signed only when it was signed for this
+ * visit (`consent.signed`) — a signature from an earlier visit doesn't carry over.
  */
-export function ConsentStep({ consent, patientId, onSignedChange }: { consent: IntakeConsent; patientId: string; onSignedChange: (signed: boolean) => void }) {
+export function ConsentStep({
+  consent,
+  patientId,
+  documentTitle,
+  sign,
+  onSignedChange
+}: {
+  consent: IntakeConsent;
+  patientId: string;
+  /** Title the signed PDF is filed under (per visit). */
+  documentTitle: string;
+  sign: (signature: string) => Promise<void>;
+  onSignedChange: (signed: boolean) => void;
+}) {
   const dispatch = useDispatch();
   const [form, setForm] = useState<ConsentForm | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -41,22 +57,26 @@ export function ConsentStep({ consent, patientId, onSignedChange }: { consent: I
         const response = await dispatch(GetConsentFormContent({ PatientId: patientId, FormID: consent.consentFormId })).unwrap();
         const detail = ((response?.result as Row[] | undefined) ?? [])[0];
         if (cancelled) return;
-        const content = toHtml(detail?.content);
+        // `content` is the patient's last signed copy (signature baked in) from any visit; a form
+        // not yet signed for THIS visit gets the blank template instead.
+        const content = toHtml(consent.signed ? detail?.content : detail?.templateContent ?? detail?.content);
         if (!content) {
           setError("This form's text isn't available. Please contact your practice before signing.");
           return;
         }
-        const signature = typeof detail?.signature === 'string' && detail.signature ? detail.signature : undefined;
+        // Only a signature made for this visit counts; otherwise the patient signs again here.
+        const prior = typeof detail?.signature === 'string' && detail.signature ? detail.signature : undefined;
+        const signature = consent.signed ? prior : undefined;
         setForm({
           PatientID: Number(patientId),
           FormID: consent.consentFormId,
-          Title: consent.name,
+          Title: documentTitle,
           Content: content,
-          Status: signature ? 'Signed' : 'Pending',
+          Status: consent.signed ? 'Signed' : 'Pending',
           Signature: signature,
           SignedByName: (detail?.signedByName as string | null | undefined) ?? null
         });
-        onSignedChange(Boolean(signature));
+        onSignedChange(consent.signed);
       } catch {
         if (!cancelled) setError("We couldn't load this form. Please try again in a few minutes.");
       }
@@ -66,7 +86,7 @@ export function ConsentStep({ consent, patientId, onSignedChange }: { consent: I
     };
     // onSignedChange is a fresh closure each render; reloading only matters when the form changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dispatch, consent.consentFormId, patientId]);
+  }, [dispatch, consent.consentFormId, consent.signed, documentTitle, patientId]);
 
   if (error) return <Alert severity="warning">{error}</Alert>;
   if (!form) {
@@ -79,9 +99,15 @@ export function ConsentStep({ consent, patientId, onSignedChange }: { consent: I
 
   return (
     <Box>
+      {saveError && (
+        <Alert severity="error" sx={{ mb: 1.5 }}>
+          {saveError}
+        </Alert>
+      )}
       <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
         {consent.version && <Chip size="small" label={`Version ${consent.version}`} />}
-        <Chip size="small" label={consent.expiryMonths ? `Valid ${consent.expiryMonths} months from signature` : 'No expiry'} />
+        {/* Signed per visit: a signature never carries over to the next appointment. */}
+        <Chip size="small" label="Signed for this visit" />
         {form.Status === 'Signed' && <Chip size="small" color="success" label="Signed" />}
       </Stack>
       {/* The viewer fills its parent's height and scrolls its own body. */}
@@ -93,7 +119,16 @@ export function ConsentStep({ consent, patientId, onSignedChange }: { consent: I
           triggerRefresh={() => undefined}
           onFormSigned={(_formId, signature, renderedHTML) => {
             setForm((f) => (f ? { ...f, Status: 'Signed', Signature: signature, SignedDate: new Date().toISOString(), Content: renderedHTML } : f));
-            onSignedChange(true);
+            setSaveError(null);
+            // Saved by the portal's consent signing; now record it for this visit before Next allows on.
+            sign(signature).then(
+              () => onSignedChange(true),
+              (err: unknown) => {
+                setSaveError(err instanceof Error ? err.message : "Your signature couldn't be saved for this visit. Please try again.");
+                setForm((f) => (f ? { ...f, Status: 'Pending', Signature: undefined } : f));
+                onSignedChange(false);
+              }
+            );
           }}
         />
       </Box>

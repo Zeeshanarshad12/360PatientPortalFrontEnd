@@ -23,6 +23,7 @@ import { AppointmentData } from '../types';
 import moment from 'moment';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import StepLayout from './StepLayout';
+import { getAuth0UserId } from '@/utils/functions';
 
 interface Step4Props {
   onNext: (data: AppointmentData) => void;
@@ -38,8 +39,27 @@ const SLOTS_PER_DAY = 5;
 // confirm with backend/product whether an actual cap should replace it.
 const MAX_WEEKS_AHEAD = 52;
 
-const minutesToTime = (minutes: number) =>
-  moment().startOf('day').add(minutes, 'minutes').format('hh:mm A');
+interface AvailableSlot {
+  dateStr: string; // YYYY-MM-DD, wall-clock date of the slot
+  time: string; // hh:mm A, wall-clock start time
+  startMs: number;
+  endMs: number;
+}
+
+// availableSlots come with the practice's UTC offset (e.g. +05:00) and a
+// pre-formatted startTime; parseZone keeps that wall-clock date/time instead
+// of shifting it into the browser's timezone.
+const toAvailableSlot = (slot: any): AvailableSlot | null => {
+  const start = moment.parseZone(slot?.startDate);
+  const end = moment.parseZone(slot?.endDate);
+  if (!start.isValid() || !end.isValid() || !end.isAfter(start)) return null;
+  return {
+    dateStr: start.format('YYYY-MM-DD'),
+    time: slot?.startTime || start.format('hh:mm A'),
+    startMs: start.valueOf(),
+    endMs: end.valueOf()
+  };
+};
 
 const getInitials = (name?: string) =>
   (name || '')
@@ -79,28 +99,82 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
       dispatch(
         GetProviderLocationScheduleInfo({
           providerIds: [providerId],
-          locationId: location.id,
-          PracticeId: practiceId
+          locationId: Number(location.id),
+          practiceId: Number(practiceId),
+          auth0UserId: getAuth0UserId()
         }) as any
       );
     }
-  }, [providerId, location?.id, dispatch]);
+  }, [providerId, location?.id, practiceId, dispatch]);
 
-  const scheduleByDay = useMemo(() => {
-    const items = providerScheduleInfo?.providerLocationSchedulerItems || [];
-    const map: Record<number, any> = {};
-    items.forEach((item: any) => {
-      map[item.dayOfWeek] = item;
+  // TODO: remove once the new schedule endpoint's data is verified on QA.
+  useEffect(() => {
+    console.log('[Step4] providerScheduleInfo response:', providerScheduleInfo);
+  }, [providerScheduleInfo]);
+
+  const isForThisProviderLocation = (item: any) =>
+    String(item?.providerId) === String(providerId) &&
+    (item?.locationId == null || String(item.locationId) === String(location?.id));
+
+  const scheduleItems = useMemo(
+    () =>
+      (providerScheduleInfo?.providerLocationSchedulerItems || []).filter(
+        isForThisProviderLocation
+      ),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [providerScheduleInfo, providerId, location?.id]
+  );
+
+  // Bug 432488 (Issue 3) / 432494 (Issue 1): a provider with no work schedule
+  // at this location can't be booked here, so say so instead of showing
+  // an empty "no times" state.
+  const hasNoSchedule =
+    !!providerScheduleInfo &&
+    !providerScheduleInfoLoading &&
+    scheduleItems.length === 0;
+
+  // Bug 432488 (Issue 2) / 432502: slots now come from the backend, which
+  // already applies the provider's own slot size, breaks, holidays and
+  // existing appointments (providerBusyTimes). A slot is only offered as a
+  // start time when the selected appointment type's *full duration* fits in
+  // consecutive free slots from there, so a 40-minute visit is never offered
+  // where it would run into another appointment, a break or closing time.
+  const slotsByDate = useMemo(() => {
+    const slots: AvailableSlot[] = (providerScheduleInfo?.availableSlots || [])
+      .filter(isForThisProviderLocation)
+      .map(toAvailableSlot)
+      .filter((slot: AvailableSlot | null): slot is AvailableSlot => !!slot)
+      .sort((a: AvailableSlot, b: AvailableSlot) => a.startMs - b.startMs);
+
+    // Drop duplicate starts so each slot is counted once.
+    const unique = slots.filter(
+      (slot, i) => i === 0 || slot.startMs !== slots[i - 1].startMs
+    );
+
+    const durationMs = (selectedAppointmentType?.slotDuration || 0) * 60000;
+    const nowMs = Date.now();
+    const map: Record<string, string[]> = {};
+    unique.forEach((slot, i) => {
+      if (slot.startMs < nowMs) return;
+      // Extend through back-to-back free slots until the duration is covered.
+      let freeUntil = slot.endMs;
+      for (
+        let j = i + 1;
+        j < unique.length &&
+        freeUntil - slot.startMs < durationMs &&
+        unique[j].startMs === freeUntil;
+        j++
+      ) {
+        freeUntil = unique[j].endMs;
+      }
+      if (freeUntil - slot.startMs < durationMs) return;
+      (map[slot.dateStr] = map[slot.dateStr] || []).push(slot.time);
     });
     return map;
-  }, [providerScheduleInfo]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [providerScheduleInfo, providerId, location?.id, selectedAppointmentType]);
 
-  const holidayDates = useMemo(() => {
-    const holidays = providerScheduleInfo?.providerHolidays || [];
-    return new Set(
-      holidays.map((holiday: any) => moment(holiday.offDate).format('YYYY-MM-DD'))
-    );
-  }, [providerScheduleInfo]);
+  const hasAnyAvailableSlot = Object.keys(slotsByDate).length > 0;
 
   // Bug 432588 (Issue 1): weeks must follow a real Monday-Sunday boundary.
   // The current week starts from today and runs through that week's Sunday
@@ -124,57 +198,20 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
 
   const maxWeeks = MAX_WEEKS_AHEAD;
 
-  // A slot must only be offered when the *selected appointment
-  // type's full duration* fits before close and doesn't run into a break —
-  // not just the practice's base grid interval. Candidate start times still
-  // step by the schedule's configured grid size (appointmentSlotSizeInMinutes),
-  // but each candidate is validated against the real appointment duration.
-  // NOTE: this still can't detect a conflict with another patient's already
-  // booked appointment — the schedule info this screen receives only
-  // contains working hours/breaks/holidays, not existing bookings, so a
-  // slot that overlaps another appointment can still be shown here. See the
-  // backend fix needed for double-booking prevention.
-  const getTimesForDate = (dateStr: string) => {
-    if (!dateStr || holidayDates.has(dateStr)) return [];
-    const item = scheduleByDay[moment(dateStr).isoWeekday()];
-    if (!item || item.workTimeStartMinute == null || item.workTimeEndMinute == null) {
-      return [];
-    }
-    const gridSize = item.appointmentSlotSizeInMinutes || 30;
-    const duration =
-      selectedAppointmentType?.slotDuration || item.appointmentSlotSizeInMinutes || 30;
-    const times: string[] = [];
-    for (
-      let minute = item.workTimeStartMinute;
-      minute + duration <= item.workTimeEndMinute;
-      minute += gridSize
-    ) {
-      const overlapsBreak =
-        item.breakTimeStartMinute != null &&
-        item.breakTimeEndMinute != null &&
-        minute < item.breakTimeEndMinute &&
-        minute + duration > item.breakTimeStartMinute;
-      if (!overlapsBreak) {
-        times.push(minutesToTime(minute));
-      }
-    }
-    return times;
-  };
-
   const todayStr = moment().format('YYYY-MM-DD');
 
   const todayTimes = useMemo(
-    () => getTimesForDate(todayStr).slice(0, SLOTS_PER_DAY),
-    [todayStr, scheduleByDay, holidayDates, selectedAppointmentType]
+    () => (slotsByDate[todayStr] || []).slice(0, SLOTS_PER_DAY),
+    [slotsByDate, todayStr]
   );
 
   const weekTimesByDate = useMemo(() => {
     const map: Record<string, string[]> = {};
     weekDates.forEach((dateStr) => {
-      map[dateStr] = getTimesForDate(dateStr).slice(0, SLOTS_PER_DAY);
+      map[dateStr] = (slotsByDate[dateStr] || []).slice(0, SLOTS_PER_DAY);
     });
     return map;
-  }, [weekDates, scheduleByDay, holidayDates, selectedAppointmentType]);
+  }, [weekDates, slotsByDate]);
 
   const handleSelectSlot = (dateStr: string, time: string) => {
     setSelectedDate(dateStr);
@@ -186,7 +223,9 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
       alert('Please complete all fields');
       return;
     }
-    const scheduleItem = scheduleByDay[moment(selectedDate).isoWeekday()];
+    const scheduleItem = scheduleItems.find(
+      (item: any) => item.dayOfWeek === moment(selectedDate).day()
+    );
     onNext({
       ...currentData,
       facility: location,
@@ -311,6 +350,12 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
           <CircularProgress size={40} />
         </Box>
+      ) : hasNoSchedule ? (
+        <Alert severity="info">
+          {provider?.providerFullName || 'This provider'} has no schedule at
+          this location, so appointments can&apos;t be booked online. Please go
+          back and choose another provider.
+        </Alert>
       ) : !showFullSchedule ? (
         /* Compact view: today's next available times */
         <Box>
@@ -326,32 +371,32 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
             }}
           >
             {todayTimes.length > 0 ? (
-              <>
-                {todayTimes.map((time) => (
-                  <Button
-                    key={time}
-                    variant={
-                      selectedDate === todayStr && selectedTime === time
-                        ? 'contained'
-                        : 'outlined'
-                    }
-                    onClick={() => handleSelectSlot(todayStr, time)}
-                  >
-                    {time}
-                  </Button>
-                ))}
-                {/* Only offer "More" when today actually has
-                    times to expand from. */}
-                <Button variant="text" onClick={() => setShowFullSchedule(true)}>
-                  More
+              todayTimes.map((time) => (
+                <Button
+                  key={time}
+                  variant={
+                    selectedDate === todayStr && selectedTime === time
+                      ? 'contained'
+                      : 'outlined'
+                  }
+                  onClick={() => handleSelectSlot(todayStr, time)}
+                >
+                  {time}
                 </Button>
-              </>
+              ))
             ) : (
               // No-availability message needs distinct styling
               // from the "Next available..." label above it.
               <Typography variant="body2" color="warning.main" fontWeight={600}>
                 No available times today
               </Typography>
+            )}
+            {/* Bug 432494 (Issue 3): "More" only when there are times to
+                show — today or on a later day the backend returned. */}
+            {hasAnyAvailableSlot && (
+              <Button variant="text" onClick={() => setShowFullSchedule(true)}>
+                More
+              </Button>
             )}
           </Box>
         </Box>
@@ -363,6 +408,8 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
+              flexWrap: { xs: 'wrap', sm: 'nowrap' },
+              gap: { xs: 1, sm: 0 },
               mb: 2
             }}
           >
@@ -399,7 +446,14 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
             </Box>
           </Box>
 
-          <Grid container spacing={1}>
+          {/* Mobile: up to 7 day columns don't fit, so scroll sideways
+              instead of squashing the time buttons. */}
+          <Box sx={{ overflowX: { xs: 'auto', sm: 'visible' }, pb: { xs: 0.5, sm: 0 } }}>
+          <Grid
+            container
+            spacing={1}
+            sx={{ minWidth: { xs: weekDates.length * 84, sm: 0 } }}
+          >
             {weekDates.map((dateStr) => (
               <Grid item xs={12 / weekDates.length} key={dateStr}>
                 <Typography
@@ -449,6 +503,7 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
               </Grid>
             ))}
           </Grid>
+          </Box>
         </Box>
       )}
     </StepLayout>

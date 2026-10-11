@@ -39,8 +39,9 @@ export type IntakeSection = {
   submittedStatus: string | null;
 };
 
-/** A consent form the visit type requires, signed through the portal's own consent signing. */
-export type IntakeConsent = { consentFormId: string; name: string; version?: number; expiryMonths: number };
+/** A consent form the visit type requires, signed through the portal's own consent signing.
+ * `signed` = already signed for THIS appointment (consent is signed per appointment). */
+export type IntakeConsent = { consentFormId: string; name: string; version?: number; expiryMonths: number; signed: boolean };
 
 export type IntakeForm = {
   /** The link's patient — the signed-in user, or one they have access to. */
@@ -85,7 +86,7 @@ export type WizardStep =
   | { kind: 'family-history'; code: SectionCode; label: string; relatives: string[]; conditions: string[]; baseline: string[] }
   | { kind: 'social-history'; code: SectionCode; label: string; groups: SocialGroup[]; baseline: string[] }
   | { kind: 'medications'; code: SectionCode; label: string; baseline: string[]; search: IntakeSearch }
-  | { kind: 'consent'; label: string; consent: IntakeConsent; patientId: string };
+  | { kind: 'consent'; label: string; consent: IntakeConsent; patientId: string; documentTitle: string; sign: (signature: string) => Promise<void> };
 
 /** The steps that save answers through SubmitSection (every kind but consent). */
 export type SectionStep = Exclude<WizardStep, { kind: 'consent' }>;
