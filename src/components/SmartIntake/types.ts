@@ -86,7 +86,16 @@ export type WizardStep =
   | { kind: 'family-history'; code: SectionCode; label: string; relatives: string[]; conditions: string[]; baseline: string[] }
   | { kind: 'social-history'; code: SectionCode; label: string; groups: SocialGroup[]; baseline: string[] }
   | { kind: 'medications'; code: SectionCode; label: string; baseline: string[]; search: IntakeSearch }
-  | { kind: 'consent'; label: string; consent: IntakeConsent; patientId: string; documentTitle: string; sign: (signature: string) => Promise<void> };
+  | {
+      kind: 'consent';
+      label: string;
+      consent: IntakeConsent;
+      patientId: string;
+      /** The visit's patient, to pre-fill the form's name / date-of-birth blanks. */
+      prefill: { name: string; dateOfBirth: string };
+      documentTitle: string;
+      sign: (signature: string) => Promise<void>;
+    };
 
 /** The steps that save answers through SubmitSection (every kind but consent). */
 export type SectionStep = Exclude<WizardStep, { kind: 'consent' }>;

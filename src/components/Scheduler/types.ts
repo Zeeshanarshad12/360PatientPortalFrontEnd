@@ -61,6 +61,9 @@ export interface AppointmentData {
   appointmentType?: AppointmentTypeOption;
   date?: string;
   time?: string;
+  // Exact slot start from the schedule API, with the clinic's UTC offset
+  // (e.g. "2026-10-12T09:40:00+05:00").
+  startDateTime?: string;
   slotDurationMinutes?: number;
 }
 

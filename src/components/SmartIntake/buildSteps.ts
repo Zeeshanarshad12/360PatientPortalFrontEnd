@@ -80,6 +80,7 @@ export function buildSteps(form: IntakeForm, searches: IntakeSearches): WizardSt
     label: consent.name,
     consent,
     patientId: form.patientId,
+    prefill: { name: `${form.patient.firstName} ${form.patient.lastName}`.trim(), dateOfBirth: form.patient.dateOfBirth },
     // The signed PDF is filed under this title - one per visit (the portal skips a same-titled
     // upload), and the console matches it back to the visit's consent by the form-name prefix.
     documentTitle: visitDate && !Number.isNaN(visitDate.getTime()) ? `${consent.name} - visit ${visitDate.toLocaleDateString('en-US')}` : consent.name,

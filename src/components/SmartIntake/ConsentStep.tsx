@@ -32,12 +32,15 @@ function toHtml(raw: unknown): string {
 export function ConsentStep({
   consent,
   patientId,
+  prefill,
   documentTitle,
   sign,
   onSignedChange
 }: {
   consent: IntakeConsent;
   patientId: string;
+  /** The visit's patient - pre-fills the form's name / date-of-birth blanks. */
+  prefill: { name: string; dateOfBirth: string };
   /** Title the signed PDF is filed under (per visit). */
   documentTitle: string;
   sign: (signature: string) => Promise<void>;
@@ -114,6 +117,7 @@ export function ConsentStep({
       <Box sx={{ height: { xs: '60vh', md: '62vh' }, border: 1, borderColor: 'divider', borderRadius: 1, overflow: 'hidden' }}>
         <ConsentFormViewer
           form={form}
+          prefill={prefill}
           pendingForms={[]}
           onSelectForm={() => undefined}
           triggerRefresh={() => undefined}

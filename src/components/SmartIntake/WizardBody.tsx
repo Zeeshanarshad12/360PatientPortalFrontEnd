@@ -135,6 +135,7 @@ export function WizardBody({ steps, onSubmitSection }: { steps: WizardStep[]; on
             key={current}
             consent={step.consent}
             patientId={step.patientId}
+            prefill={step.prefill}
             documentTitle={step.documentTitle}
             sign={step.sign}
             onSignedChange={(isSigned) => {

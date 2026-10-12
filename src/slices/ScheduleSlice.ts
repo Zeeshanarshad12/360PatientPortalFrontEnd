@@ -19,6 +19,7 @@ const initialState = {
   providerScheduleInfo: null,
   providerScheduleInfoLoading: false,
   providerScheduleInfoError: null,
+  providerScheduleInfoRequestId: null as string | null,
   // Provider ids that have a work schedule at the selected location (Step 3).
   // null = not checked (or the check failed), so no provider is hidden.
   scheduledProviderIds: null as Array<string> | null,
@@ -152,10 +153,13 @@ export const GetProviderLocationScheduleInfo: any = createAsyncThunk(
   'schedule/getProviderLocationScheduleInfo',
   async (
     data: {
+      appointmentDurationMinutes?: number;
       providerIds: Array<string | number>;
       locationId?: string | number;
       practiceId?: string | number;
       auth0UserId?: string;
+      fromDate?: string;
+      toDate?: string;
     },
     thunkAPI
   ) => {
@@ -469,15 +473,20 @@ const scheduleSlice = createSlice({
         state.locationsLoading = false;
         state.locationsError = action.payload as string;
       })
-      .addCase(GetProviderLocationScheduleInfo.pending, (state) => {
+      // Step 4 refetches per week; only the latest request may update state,
+      // so a slow response for a week the user already left is ignored.
+      .addCase(GetProviderLocationScheduleInfo.pending, (state, action) => {
+        state.providerScheduleInfoRequestId = action.meta.requestId;
         state.providerScheduleInfoLoading = true;
         state.providerScheduleInfoError = null;
       })
       .addCase(GetProviderLocationScheduleInfo.fulfilled, (state, action) => {
+        if (action.meta.requestId !== state.providerScheduleInfoRequestId) return;
         state.providerScheduleInfoLoading = false;
         state.providerScheduleInfo = action.payload || null;
       })
       .addCase(GetProviderLocationScheduleInfo.rejected, (state, action) => {
+        if (action.meta.requestId !== state.providerScheduleInfoRequestId) return;
         state.providerScheduleInfoLoading = false;
         state.providerScheduleInfoError = action.payload as string;
       })
