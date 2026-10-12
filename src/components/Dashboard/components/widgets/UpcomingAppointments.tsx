@@ -202,6 +202,11 @@ const getIntakeHref = (appt: any) =>
     ? `/patientportal/intake/${appt.intakeToken}`
     : null;
 
+// A cancelled visit (any spelling: "Cancelled", "Doctor Cancelled", "Cancelled by Patient") can't
+// start its intake forms - the backend won't issue a link for it.
+const isAppointmentCancelled = (appointmentStatus: string) =>
+  (appointmentStatus || '').toLowerCase().includes('cancel');
+
 // Bug 432545: the "Cancelled" status ID in SummitEHR's appointment status list.
 const CANCELLED_STATUS_ID = 2;
 const CANCELLED_STATUS_NAME = 'Cancelled by Patient';
