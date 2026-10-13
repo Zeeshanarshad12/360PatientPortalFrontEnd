@@ -512,7 +512,9 @@ const GetProvidersbyPracticeID = (data, flag) =>
 
 const GetProviderTaxonomiesByPracticeId = (data, flag) =>
   get(
-    `${SERVICE_URLSV2.GetProviderTaxonomiesByPracticeId}?practiceId=${data.practiceId}`,
+    `${SERVICE_URLSV2.GetProviderTaxonomiesByPracticeId}?practiceId=${data.practiceId}${
+      data.locationId != null ? `&locationId=${data.locationId}` : ''
+    }`,
     {},
     {
       feature: featureConstants.static,

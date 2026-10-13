@@ -29,7 +29,6 @@ interface Step4Props {
   currentData?: AppointmentData;
 }
 
-const SLOTS_PER_DAY = 5;
 // Bug 432588 (Issue 2): the old code only ever generated 14 days of dates
 // total, which blocked "Next" after ~2 weeks out. There's no real
 // business/product rule in this codebase for a max advance-booking window,
@@ -38,55 +37,37 @@ const SLOTS_PER_DAY = 5;
 const MAX_WEEKS_AHEAD = 52;
 
 interface AvailableSlot {
-  dateStr: string; // YYYY-MM-DD, clinic wall-clock date of the slot
+  dateStr: string; // YYYY-MM-DD, as sent in strStartDate
   dayName: string; // e.g. "Tue", from the API's dateText
-  time: string; // hh:mm A, clinic wall-clock start time
-  startIso: string; // exact start instant as sent by the API
-  startMs: number;
+  time: string; // hh:mm A, the API's startTime
+  startMs: number; // only for ordering / back-to-back checks
   endMs: number;
-  utcOffset: number; // clinic's UTC offset in minutes (e.g. 300 = +05:00)
 }
 
-// Time zones: the clinic's schedule is what matters, not the patient's
-// browser. Each slot has two views of the same time:
-// - startDate/endDate: the exact instant, but written in the *server's*
-//   zone (e.g. "2026-10-12T22:30:00-05:00"), so its date/hour aren't the
-//   clinic's.
-// - strStartDate/strEndDate (+ startTime, dateText): the clinic's own wall
-//   clock, no offset (e.g. "2026-10-13T08:30:00" = Tue 08:30 AM).
-// Display and day grouping use the clinic wall clock; the instant is only
-// used for "already past?" checks and for booking. Their difference is the
-// clinic's UTC offset.
+// Backend owns all time-zone handling: slots are shown exactly as the API
+// sends them. strStartDate/strEndDate, startTime and dateText are used as-is
+// (no offset, no conversion to the browser's zone); the plain date/time
+// values are read as UTC only so they compare consistently.
+const readPlainDateTime = (value?: string, fallback?: string) => {
+  const plain = value ? moment.utc(value, moment.ISO_8601) : null;
+  if (plain && plain.isValid()) return plain;
+  // Older responses without str* fields: keep startDate's own date/time.
+  const zoned = fallback ? moment.parseZone(fallback) : null;
+  return zoned && zoned.isValid() ? moment.utc(zoned.format('YYYY-MM-DDTHH:mm:ss')) : null;
+};
+
 const toAvailableSlot = (slot: any): AvailableSlot | null => {
-  const startInstant = moment.parseZone(slot?.startDate);
-  const endInstant = moment.parseZone(slot?.endDate);
-  if (
-    !startInstant.isValid() ||
-    !endInstant.isValid() ||
-    !endInstant.isAfter(startInstant)
-  ) {
-    return null;
-  }
-  // Read the offset-free wall clock as if it were UTC to compare with the
-  // instant; falls back to startDate's own wall clock for older responses.
-  const wallStart = slot?.strStartDate
-    ? moment.utc(slot.strStartDate, moment.ISO_8601)
-    : null;
-  const hasWallClock = !!wallStart && wallStart.isValid();
-  const clinicStart = hasWallClock ? (wallStart as moment.Moment) : startInstant;
-  const dateStr = clinicStart.format('YYYY-MM-DD');
+  const start = readPlainDateTime(slot?.strStartDate, slot?.startDate);
+  const end = readPlainDateTime(slot?.strEndDate, slot?.endDate);
+  if (!start || !end || !end.isAfter(start)) return null;
   return {
-    dateStr,
+    dateStr: start.format('YYYY-MM-DD'),
     dayName:
       (typeof slot?.dateText === 'string' && slot.dateText.split(',')[0].trim()) ||
-      clinicStart.format('ddd'),
-    time: slot?.startTime || clinicStart.format('hh:mm A'),
-    startIso: slot.startDate,
-    startMs: startInstant.valueOf(),
-    endMs: endInstant.valueOf(),
-    utcOffset: hasWallClock
-      ? Math.round(((wallStart as moment.Moment).valueOf() - startInstant.valueOf()) / 60000)
-      : startInstant.utcOffset()
+      start.format('ddd'),
+    time: slot?.startTime || start.format('hh:mm A'),
+    startMs: start.valueOf(),
+    endMs: end.valueOf()
   };
 };
 
@@ -125,25 +106,12 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
 
   const appointmentDurationMinutes = selectedAppointmentType?.slotDuration || 0;
 
-  // The clinic's UTC offset, learned from the slots the API returns. Until
-  // the first response arrives, the browser's own offset is the best guess.
-  const [clinicUtcOffset, setClinicUtcOffset] = useState<number | null>(null);
-  const browserUtcOffset = moment().utcOffset();
-  const rangeUtcOffset = clinicUtcOffset ?? browserUtcOffset;
-
-  // "Now" on the clinic's clock: decides which day is "today" and where the
-  // clinic's Monday-Sunday week starts and ends.
-  const clinicNow = () => moment().utcOffset(rangeUtcOffset);
-
   // Slots are fetched one week at a time: Monday 12:00 AM through Sunday
-  // 11:59:59 PM of the week shown, on the clinic's clock. Opening the step
-  // loads the current week; the < / > arrows (currentWeekStart) load the
-  // previous/next week. If the first response reveals the clinic is in a
-  // different zone than the browser, the week is refetched once with the
-  // clinic's boundaries.
+  // 11:59:59 PM of the week shown. Opening the step loads the current week;
+  // the < / > arrows (currentWeekStart) load the previous/next week.
   useEffect(() => {
     if (providerId && location?.id) {
-      const weekStart = clinicNow()
+      const weekStart = moment()
         .add(currentWeekStart, 'weeks')
         .startOf('isoWeek');
       const weekEnd = weekStart.clone().endOf('isoWeek');
@@ -154,21 +122,19 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
           locationId: Number(location.id),
           practiceId: Number(practiceId),
           auth0UserId: getAuth0UserId(),
-          // Clinic wall-clock time with its UTC offset, e.g.
+          // Local wall-clock time with its UTC offset, e.g.
           // 2026-10-12T00:00:00.000+05:00, so "Monday 12 AM" stays Monday.
           fromDate: weekStart.format('YYYY-MM-DDTHH:mm:ss.SSSZ'),
           toDate: weekEnd.format('YYYY-MM-DDTHH:mm:ss.SSSZ')
         }) as any
       );
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     providerId,
     location?.id,
     practiceId,
     appointmentDurationMinutes,
     currentWeekStart,
-    rangeUtcOffset,
     dispatch
   ]);
 
@@ -215,24 +181,6 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
     [providerScheduleInfo, providerId, location?.id]
   );
 
-  // Remember the clinic's offset (also follows DST changes week to week).
-  useEffect(() => {
-    if (parsedSlots.length && parsedSlots[0].utcOffset !== clinicUtcOffset) {
-      setClinicUtcOffset(parsedSlots[0].utcOffset);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [parsedSlots]);
-
-  // "date time" -> exact slot start (with offset), handed to booking so the
-  // appointment is saved at the clinic's time, not the browser's.
-  const slotStartByKey = useMemo(() => {
-    const map: Record<string, string> = {};
-    parsedSlots.forEach((slot) => {
-      map[`${slot.dateStr} ${slot.time}`] = slot.startIso;
-    });
-    return map;
-  }, [parsedSlots]);
-
   const slotsByDate = useMemo(() => {
     const slots = parsedSlots;
 
@@ -242,10 +190,8 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
     );
 
     const durationMs = (selectedAppointmentType?.slotDuration || 0) * 60000;
-    const nowMs = Date.now();
     const map: Record<string, string[]> = {};
     unique.forEach((slot, i) => {
-      if (slot.startMs < nowMs) return;
       // Extend through back-to-back free slots until the duration is covered.
       let freeUntil = slot.endMs;
       for (
@@ -265,14 +211,12 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
 
   const hasAnyAvailableSlot = Object.keys(slotsByDate).length > 0;
 
-  // Bug 432588 (Issue 1): weeks follow a real Monday-Sunday boundary (on the
-  // clinic's clock). Only days that actually have bookable times are shown
-  // as columns — e.g. if the provider isn't available Monday, the week
-  // starts at Tuesday.
+  // Bug 432588 (Issue 1): weeks follow a real Monday-Sunday boundary. Only
+  // days that actually have bookable times are shown as columns — e.g. if
+  // the provider isn't available Monday, the week starts at Tuesday.
   const weekMonday = useMemo(
-    () => clinicNow().add(currentWeekStart, 'weeks').startOf('isoWeek'),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentWeekStart, rangeUtcOffset]
+    () => moment().add(currentWeekStart, 'weeks').startOf('isoWeek'),
+    [currentWeekStart]
   );
 
   const weekDates = useMemo(() => {
@@ -294,18 +238,18 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
 
   const maxWeeks = MAX_WEEKS_AHEAD;
 
-  const todayStr = clinicNow().format('YYYY-MM-DD');
+  const todayStr = moment().format('YYYY-MM-DD');
 
+  // Today's row and the week view both show every available time for the
+  // day; the buttons wrap and the step scrolls.
   const todayTimes = useMemo(
-    () => (slotsByDate[todayStr] || []).slice(0, SLOTS_PER_DAY),
+    () => slotsByDate[todayStr] || [],
     [slotsByDate, todayStr]
   );
 
   const weekTimesByDate = useMemo(() => {
     const map: Record<string, string[]> = {};
     weekDates.forEach((dateStr) => {
-      // Week view shows every bookable time for the day (the step scrolls);
-      // only the compact "today" row is capped at SLOTS_PER_DAY.
       map[dateStr] = slotsByDate[dateStr] || [];
     });
     return map;
@@ -329,9 +273,6 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
       facility: location,
       date: selectedDate,
       time: selectedTime,
-      // Exact start with the clinic's offset; undefined if the chosen time
-      // didn't come from the loaded slots (Step 5 then falls back).
-      startDateTime: slotStartByKey[`${selectedDate} ${selectedTime}`],
       slotDurationMinutes:
         selectedAppointmentType?.slotDuration ??
         scheduleItem?.appointmentSlotSizeInMinutes

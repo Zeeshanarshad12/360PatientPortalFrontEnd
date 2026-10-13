@@ -75,15 +75,10 @@ const Step5SaveAppointmentData: React.FC<Step5Props> = ({
   }, [submitResult, submitError, submitted]);
 
   const buildAppointmentPayload = () => {
-    // Use the slot's exact start (clinic offset included) so a patient in a
-    // different time zone than the clinic books the clinic's time. Rebuilding
-    // it from date + time would read "09:40 AM" in the browser's zone instead.
-    const startMoment = currentData?.startDateTime
-      ? moment.parseZone(currentData.startDateTime)
-      : moment(
-          `${currentData?.date} ${currentData?.time}`,
-          'YYYY-MM-DD hh:mm A'
-        );
+    const startMoment = moment(
+      `${currentData?.date} ${currentData?.time}`,
+      'YYYY-MM-DD hh:mm A'
+    );
     const durationMinutes =
       currentData?.slotDurationMinutes || DEFAULT_SLOT_DURATION_MINUTES;
     const endMoment = startMoment.clone().add(durationMinutes, 'minutes');

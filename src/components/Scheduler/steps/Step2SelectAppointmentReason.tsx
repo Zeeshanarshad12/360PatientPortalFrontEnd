@@ -106,6 +106,23 @@ const Step2SelectAppointmentReason: React.FC<Step2Props> = ({
     [appointmentReasons]
   );
 
+  // Bug 432977: Reschedule only knows the existing reason's text, so it
+  // arrives with id 0 (the custom-reason marker) and showed as "Custom: X"
+  // next to the real "X" chip. Once the list loads, swap it for the matching
+  // standard reason; reasons that really were typed in stay custom.
+  useEffect(() => {
+    if (selectedReason?.id !== 0 || !selectedReason?.appReason) return;
+    if (!reasons.length) return;
+    const targetText = normalizeText(selectedReason.appReason);
+    const match = reasons.find(
+      (reason: any) => normalizeText(reason.appReason) === targetText
+    );
+    if (match) {
+      setSelectedReason(match);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reasons]);
+
   // Filters the reason chips below in place.
   const filteredReasons = useMemo(() => {
     const term = reasonSearchTerm.trim().toLowerCase();

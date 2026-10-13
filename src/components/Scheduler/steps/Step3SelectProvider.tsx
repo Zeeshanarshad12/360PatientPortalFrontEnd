@@ -14,10 +14,8 @@ import {
 import { useDispatch, useSelector } from '@/store/index';
 import {
   GetProvidersbyPracticeID,
-  GetProviderTaxonomiesByPracticeId,
-  GetScheduledProviderIds
+  GetProviderTaxonomiesByPracticeId
 } from '@/slices/ScheduleSlice';
-import { getAuth0UserId } from '@/utils/functions';
 import { useCurrentPatient } from '@/contexts/CurrentPatientContext';
 import { Provider, AppointmentData } from '../types';
 import StepLayout from './StepLayout';
@@ -106,16 +104,20 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
     providersLoading,
     providersError,
     providerTaxonomies,
-    providerTaxonomiesError,
-    scheduledProviderIds,
-    scheduledProviderIdsLoading
+    providerTaxonomiesError
   } = useSelector((state: any) => state.schedule);
 
   const selectedFacilityId = currentData?.facility?.id;
 
+  // Specialty tabs only for the selected location's providers.
   useEffect(() => {
-    dispatch(GetProviderTaxonomiesByPracticeId({ practiceId }) as any);
-  }, [practiceId, dispatch]);
+    dispatch(
+      GetProviderTaxonomiesByPracticeId({
+        practiceId,
+        locationId: selectedFacilityId
+      }) as any
+    );
+  }, [practiceId, selectedFacilityId, dispatch]);
 
   // TODO: remove once the taxonomy/provider data flow is verified on QA.
   useEffect(() => {
@@ -135,33 +137,12 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
     );
   }, [practiceId, selectedFacilityId, dispatch]);
 
-  // Bug 432488 (Issue 3) / 432494 (Issue 1): ask the schedule endpoint which
-  // of the listed providers actually have a work schedule at this location,
-  // and hide the rest (TPM decision: hide rather than allow out-of-schedule
-  // booking).
-  useEffect(() => {
-    const providerIds = (providers || [])
-      .map((p: Provider) => p.providerId)
-      .filter((id: number) => id != null);
-    if (!providerIds.length || selectedFacilityId == null) return;
-    dispatch(
-      GetScheduledProviderIds({
-        providerIds,
-        locationId: Number(selectedFacilityId),
-        practiceId: Number(practiceId),
-        auth0UserId: getAuth0UserId()
-      }) as any
-    );
-  }, [providers, selectedFacilityId, practiceId, dispatch]);
-
-  // Keep the list in its loading state until the schedule check is back, so
-  // providers that are about to be hidden don't flash in.
-  const listLoading = providersLoading || scheduledProviderIdsLoading;
-
-  // TODO: remove once the schedule-based provider filter is verified on QA.
-  useEffect(() => {
-    console.log('[Step3] scheduledProviderIds:', scheduledProviderIds);
-  }, [scheduledProviderIds]);
+  // Bugs 432978 / 432975: Step 3 no longer calls the schedule endpoint for
+  // every listed provider (duplicate, very slow, very large request). The
+  // schedule is fetched only in Step 4, for the one provider the patient
+  // picked; a provider with no schedule at this location gets a clear
+  // "choose another provider" message there.
+  const listLoading = providersLoading;
 
   useEffect(() => {
     if (!selectedProvider || !providers || providers.length === 0) return;
@@ -205,16 +186,9 @@ const Step3SelectProvider: React.FC<Step3Props> = ({
       ) {
         return false;
       }
-      // null = schedule check not done/failed: don't hide anyone.
-      if (
-        Array.isArray(scheduledProviderIds) &&
-        !scheduledProviderIds.includes(String(p.providerId))
-      ) {
-        return false;
-      }
       return true;
     });
-  }, [providers, selectedFacilityId, scheduledProviderIds]);
+  }, [providers, selectedFacilityId]);
 
   // Tabs come from the practice's taxonomy list (getprovidertaxonomiesbypracticeid);
   // index 0 is always "All". Providers are grouped by their own

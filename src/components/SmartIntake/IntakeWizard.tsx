@@ -1,16 +1,36 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { format } from 'date-fns';
-import { Box, Card, CircularProgress, Divider, Typography } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardContent,
+  CircularProgress,
+  Typography
+} from '@mui/material';
 import SnackbarUtils from '@/content/snackbar';
 import { intakeApi, IntakeApiError } from './api';
 import { buildSteps, type IntakeSearches } from './buildSteps';
-import type { IntakeDrug, IntakeForm, IntakePayer, IntakeValue, SectionStep, SectionSubmission } from './types';
+import type {
+  IntakeDrug,
+  IntakeForm,
+  IntakePayer,
+  IntakeValue,
+  SectionStep,
+  SectionSubmission
+} from './types';
 import { WizardBody } from './WizardBody';
 
-/** The page frame — the same white card + heading as the portal's Profile page. The portal
- * layout is a fixed 100vh frame with overflow hidden, so (like the Documents / Consent Forms
- * pages) this page scrolls itself: the viewport minus the theme's header height. */
-function PageCard({ subtitle, children }: { subtitle?: React.ReactNode; children: React.ReactNode }) {
+/** The page frame — a compact header card (title + the visit it's for) over the content card,
+ * like the portal's Documents page. The portal layout is a fixed 100vh frame with overflow
+ * hidden, so (like the Documents / Consent Forms pages) this page scrolls itself: the viewport
+ * minus the theme's header height. */
+function PageCard({
+  subtitle,
+  children
+}: {
+  subtitle?: React.ReactNode;
+  children: React.ReactNode;
+}) {
   return (
     <Box
       sx={{
@@ -22,30 +42,53 @@ function PageCard({ subtitle, children }: { subtitle?: React.ReactNode; children
         pb: 1,
         width: '100%',
         flex: 1,
-        height: (theme) => `calc(100vh - ${(theme as unknown as { header?: { height?: string } }).header?.height ?? '75px'})`,
+        height: (theme) =>
+          `calc(100vh - ${
+            (theme as unknown as { header?: { height?: string } }).header
+              ?.height ?? '75px'
+          })`,
         overflowY: 'auto'
       }}
     >
-      <Card>
-        <Box sx={{ px: { xs: 2, sm: 3 }, pt: 3, pb: 2 }}>
-          <Typography variant="h3">Visit Intake</Typography>
+      <Card sx={{ mb: 1 }}>
+        <CardContent
+          sx={{ px: { xs: 2, sm: 3 }, py: 1.5, '&:last-child': { pb: 1.5 } }}
+        >
+          <Typography
+            variant="h4"
+            component="h1"
+            sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' }, lineHeight: 1.3 }}
+          >
+            Visit Intake
+          </Typography>
           {subtitle && (
-            <Typography variant="body1" color="text.secondary" sx={{ mt: 0.75 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 0.25 }}
+            >
               {subtitle}
             </Typography>
           )}
-        </Box>
-        <Divider />
-        {children}
+        </CardContent>
       </Card>
+      <Card>{children}</Card>
     </Box>
   );
 }
 
-function Message({ title, children }: { title: string; children: React.ReactNode }) {
+function Message({
+  title,
+  children
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <PageCard>
-      <Box sx={{ maxWidth: 640, mx: 'auto', px: 3, py: 8, textAlign: 'center' }}>
+      <Box
+        sx={{ maxWidth: 640, mx: 'auto', px: 3, py: 8, textAlign: 'center' }}
+      >
         <Typography variant="h4" sx={{ mb: 1 }}>
           {title}
         </Typography>
@@ -77,7 +120,14 @@ export function IntakeWizard({ token }: { token: string }) {
       .then((f) => {
         if (cancelled) return;
         // The payer already on the chart counts as picked, so confirming it submits its plan.
-        f.sections.forEach((s) => s.chartPayer && pickedPayers.current.set(s.chartPayer.name.toLowerCase(), s.chartPayer));
+        f.sections.forEach(
+          (s) =>
+            s.chartPayer &&
+            pickedPayers.current.set(
+              s.chartPayer.name.toLowerCase(),
+              s.chartPayer
+            )
+        );
         setForm(f);
       })
       .catch((e: IntakeApiError) => !cancelled && setError(e));
@@ -94,24 +144,33 @@ export function IntakeWizard({ token }: { token: string }) {
     () => ({
       async drugs(query) {
         const drugs = await intakeApi.searchDrugs(token, query);
-        drugs.forEach((d) => pickedDrugs.current.set(d.description.toLowerCase(), d));
+        drugs.forEach((d) =>
+          pickedDrugs.current.set(d.description.toLowerCase(), d)
+        );
         return drugs.map((d) => d.description);
       },
       async payers(query) {
         const payers = await intakeApi.searchPayers(token, query);
-        payers.forEach((p) => pickedPayers.current.set(p.name.toLowerCase(), p));
+        payers.forEach((p) =>
+          pickedPayers.current.set(p.name.toLowerCase(), p)
+        );
         return [...new Set(payers.map((p) => p.name))];
       },
-      signConsent: (consentFormId, signature) => intakeApi.signConsent(token, consentFormId, signature)
+      signConsent: (consentFormId, signature) =>
+        intakeApi.signConsent(token, consentFormId, signature)
     }),
     [token]
   );
-  const steps = useMemo(() => (form ? buildSteps(form, searches) : []), [form, searches]);
+  const steps = useMemo(
+    () => (form ? buildSteps(form, searches) : []),
+    [form, searches]
+  );
 
   if (error) {
     return error.status === 404 ? (
       <Message title="This form isn't available">
-        The link may have expired, been replaced by a newer one, or been sent to a different account. Please contact your practice for a new link.
+        The link may have expired, been replaced by a newer one, or been sent to
+        a different account. Please contact your practice for a new link.
       </Message>
     ) : (
       <Message title="Something went wrong">{error.message}</Message>
@@ -126,27 +185,46 @@ export function IntakeWizard({ token }: { token: string }) {
       </PageCard>
     );
   }
-  if (!steps.length) return <Message title="Nothing needed right now">There&apos;s nothing for you to fill in for this visit.</Message>;
+  if (!steps.length)
+    return (
+      <Message title="Nothing needed right now">
+        There&apos;s nothing for you to fill in for this visit.
+      </Message>
+    );
 
-  const start = form.appointment.start ? new Date(form.appointment.start) : null;
+  const start = form.appointment.start
+    ? new Date(form.appointment.start)
+    : null;
 
   /** Form fields keep their label ("Label: value") and drop blanks; a payer answer carries the
    * picked plan; a medication carries the picked drug (matched on the drug part of
    * "Drug — how you take it" — one kept from the chart has no pick and is matched server-side). */
-  function toValues(step: SectionStep, values: string[]): (string | IntakeValue)[] {
+  function toValues(
+    step: SectionStep,
+    values: string[]
+  ): (string | IntakeValue)[] {
     if (step.kind === 'form') {
       return values.flatMap((raw, i) => {
         const value = raw.trim();
         const field = step.fields[i];
         if (!value || !field) return [];
         const text = `${field.label}: ${value}`;
-        const payer = field.type === 'payer' ? pickedPayers.current.get(value.toLowerCase()) : undefined;
-        return [payer ? { text, sourceId: payer.insurancePlanId, payerId: payer.payerId } : text];
+        const payer =
+          field.type === 'payer'
+            ? pickedPayers.current.get(value.toLowerCase())
+            : undefined;
+        return [
+          payer
+            ? { text, sourceId: payer.insurancePlanId, payerId: payer.payerId }
+            : text
+        ];
       });
     }
     if (step.kind === 'medications') {
       return values.map((text) => {
-        const drug = pickedDrugs.current.get(text.split(' — ')[0].trim().toLowerCase());
+        const drug = pickedDrugs.current.get(
+          text.split(' — ')[0].trim().toLowerCase()
+        );
         return drug ? { text, medication: drug } : text;
       });
     }
@@ -155,10 +233,21 @@ export function IntakeWizard({ token }: { token: string }) {
 
   async function submit(step: SectionStep, submission: SectionSubmission) {
     try {
-      await intakeApi.submitSection(token, step.code, submission.type === 'attest' ? { attest: true } : { values: toValues(step, submission.values) });
+      await intakeApi.submitSection(
+        token,
+        step.code,
+        submission.type === 'attest'
+          ? { attest: true }
+          : { values: toValues(step, submission.values) }
+      );
     } catch (err) {
       const e = err as IntakeApiError;
-      SnackbarUtils.error(e.status === 404 ? "This form isn't available any more. Please contact your practice." : e.message, false);
+      SnackbarUtils.error(
+        e.status === 404
+          ? "This form isn't available any more. Please contact your practice."
+          : e.message,
+        false
+      );
       throw err;
     }
   }
@@ -167,10 +256,20 @@ export function IntakeWizard({ token }: { token: string }) {
     <PageCard
       subtitle={
         <>
-          Hi {form.patient.preferredName || form.patient.firstName} — please complete these forms for your{' '}
-          {form.appointment.visitType ? <b>{form.appointment.visitType}</b> : 'visit'}
-          {form.appointment.providerName && <> with {form.appointment.providerName}</>}
-          {start && !Number.isNaN(start.getTime()) && <> on {format(start, "EEEE, MMM d 'at' h:mm a")}</>}.
+          Hi {form.patient.preferredName || form.patient.firstName} — please
+          complete these forms for your{' '}
+          {form.appointment.visitType ? (
+            <b>{form.appointment.visitType}</b>
+          ) : (
+            'visit'
+          )}
+          {form.appointment.providerName && (
+            <> with {form.appointment.providerName}</>
+          )}
+          {start && !Number.isNaN(start.getTime()) && (
+            <> on {format(start, "EEEE, MMM d 'at' h:mm a")}</>
+          )}
+          .
         </>
       }
     >
