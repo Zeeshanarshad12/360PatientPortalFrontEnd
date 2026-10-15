@@ -190,8 +190,13 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
     );
 
     const durationMs = (selectedAppointmentType?.slotDuration || 0) * 60000;
+    // Bugs 432983 / 432987: never offer past dates, or times earlier today
+    // that have already started. "Now" is the device's own date/time, read
+    // the same plain way as the slot's strStartDate (no time-zone math).
+    const nowMs = moment.utc(moment().format('YYYY-MM-DDTHH:mm:ss')).valueOf();
     const map: Record<string, string[]> = {};
     unique.forEach((slot, i) => {
+      if (slot.startMs < nowMs) return;
       // Extend through back-to-back free slots until the duration is covered.
       let freeUntil = slot.endMs;
       for (

@@ -9,9 +9,11 @@ import {
   Link,
   Button,
   Stack,
-  CircularProgress
+  CircularProgress,
+  Tooltip
 } from '@mui/material';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
@@ -515,6 +517,10 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
               )}
               {!appointmentsError && appointments?.map((appt: any, index: number) => {
                 const statusColors = resolveStatusColor(appt);
+                // Backend field DenyReason (camelCase in JSON as denyReason).
+                const denyReasonRaw = appt?.denyReason ?? appt?.DenyReason;
+                const denyReason =
+                  typeof denyReasonRaw === 'string' ? denyReasonRaw.trim() : '';
                 const intakeStatus = getIntakeStatus(appt);
                 const intakeHref = getIntakeHref(appt);
                 const intakeCount = getIntakeCount(appt);
@@ -548,20 +554,60 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                         {appt.appointmentType}
                       </Typography>
 
-                      {/* Status Badge */}
-                      <Chip
-                        label={appt.appointmentStatus}
-                        size="small"
+                      <Box
                         sx={{
-                          flexShrink: 0,
-                          fontSize: '0.85rem',
-                          borderRadius: '10px',
-                          bgcolor: statusColors.bgcolor,
-                          color: statusColors.textColor,
-                          fontWeight: 'bold',
-                          textTransform: 'capitalize'
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 0.25,
+                          flexShrink: 0
                         }}
-                      />
+                      >
+                        {/* Bug 432989: staff's reason for denying the request,
+                            shown on hover / keyboard focus / tap. Only when a
+                            reason was entered. */}
+                        {denyReason && (
+                          <Tooltip
+                            title={denyReason}
+                            arrow
+                            // Opens up and to the left of the icon (the
+                            // widget is often at the screen's right edge),
+                            // and stays 16px clear of the viewport edges.
+                            placement="top-end"
+                            enterTouchDelay={0}
+                            PopperProps={{
+                              modifiers: [
+                                {
+                                  name: 'preventOverflow',
+                                  options: { padding: 16 }
+                                }
+                              ]
+                            }}
+                          >
+                            <IconButton
+                              size="small"
+                              aria-label={`Denial reason: ${denyReason}`}
+                              sx={{ p: 0.25, color: 'text.secondary' }}
+                            >
+                              <InfoOutlinedIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+
+                        {/* Status Badge */}
+                        <Chip
+                          label={appt.appointmentStatus}
+                          size="small"
+                          sx={{
+                            flexShrink: 0,
+                            fontSize: '0.85rem',
+                            borderRadius: '10px',
+                            bgcolor: statusColors.bgcolor,
+                            color: statusColors.textColor,
+                            fontWeight: 'bold',
+                            textTransform: 'capitalize'
+                          }}
+                        />
+                      </Box>
                     </Box>
                     <Typography
                       variant="body2"
