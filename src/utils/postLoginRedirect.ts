@@ -35,3 +35,16 @@ export function takePostLoginRedirect(): string | null {
     return null;
   }
 }
+
+/** True when a portal link (e.g. an intake link) sent the patient here to sign in. Doesn't consume it. */
+export function hasPendingPostLoginRedirect(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    const raw = sessionStorage.getItem(KEY);
+    if (!raw) return false;
+    const { path, at } = JSON.parse(raw) as { path?: unknown; at?: number };
+    return isSafePortalPath(path) && typeof at === 'number' && Date.now() - at < MAX_AGE_MS;
+  } catch {
+    return false;
+  }
+}

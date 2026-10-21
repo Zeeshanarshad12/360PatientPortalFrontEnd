@@ -1,4 +1,7 @@
+import axios from 'axios';
 import apiServicesV2 from '@/services/requestHandler';
+import { SERVICE_URLSV2 } from '@/services/ServiceUrl';
+import { clearIntakeSession, currentIntakeSession, getIntakeSession, hasPortalSession } from './intakeSession';
 import type { CatalogOption, FieldType, IntakeConsent, IntakeDrug, IntakeField, IntakeForm, IntakePayer, IntakeSection, IntakeValue, SectionCode } from './types';
 
 type Row = Record<string, unknown>;
@@ -165,12 +168,60 @@ export function isIntakeToken(token: string | undefined): token is string {
   return typeof token === 'string' && /^[A-Za-z0-9_-]{43}$/.test(token);
 }
 
+
+// ---- transport -------------------------------------------------------------------------------
+// A signed-in portal user goes through the portal's shared client (apiServicesV2). A patient who is
+// NOT registered on the portal has no portal token: they authenticate with the intake session they
+// got from a one-time code, sent as a Bearer token on a private axios instance. Like the OTP login
+// client it has no interceptors, so a 401 here can't clear the portal's storage or raise snackbars.
+const withSlash = (url?: string) => (url ? (url.endsWith('/') ? url : `${url}/`) : url);
+const sessionClient = axios.create({
+  baseURL: withSlash(process.env.NEXT_PUBLIC_APP_API_PATH_V2),
+  timeout: 60000,
+  headers: { Accept: 'application/json', 'Content-Type': 'application/json' }
+});
+
+/** The intake session to use for this call, or null when the portal sign-in should be used. */
+function intakeSessionFor(linkToken?: string): string | null {
+  if (hasPortalSession()) return null;
+  return linkToken ? getIntakeSession(linkToken) : currentIntakeSession();
+}
+
+/** Runs a call as the intake session; throws the response like HttpProvider's request() does. An
+ * expired/invalid session (401) is dropped and the page reloaded, which shows the code screen again. */
+async function viaSession<T>(call: (auth: { Authorization: string }) => Promise<T>, session: string): Promise<T> {
+  try {
+    return await call({ Authorization: `Bearer ${session}` });
+  } catch (err) {
+    const response = (err as { response?: { status?: number } })?.response;
+    if (response?.status === 401) {
+      clearIntakeSession();
+      if (typeof window !== 'undefined') window.location.reload();
+    }
+    throw response ?? err;
+  }
+}
+
+function postIntake(linkToken: string, url: string, data: object, portalCall: (d: object) => Promise<unknown>): Promise<{ data?: unknown }> {
+  const session = intakeSessionFor(linkToken);
+  return (session
+    ? viaSession((headers) => sessionClient.post(url, data, { headers }), session)
+    : portalCall(data)) as Promise<{ data?: unknown }>;
+}
+
+function getZip(zip: string): Promise<{ data?: unknown }> {
+  const session = intakeSessionFor();
+  return (session
+    ? viaSession((headers) => sessionClient.get(`${SERVICE_URLSV2.SmartIntakeSearchZip}?zipCode=${encodeURIComponent(zip)}`, { headers }), session)
+    : apiServicesV2.SmartIntakeSearchZip(zip)) as Promise<{ data?: unknown }>;
+}
+
 export const intakeApi = {
   /** 404 (IntakeApiError.status) = not available to this account: unknown, expired or revoked
    * link, or one sent to a different patient — deliberately indistinguishable. */
   async getForm(token: string): Promise<IntakeForm> {
     try {
-      return mapForm(unwrap(await apiServicesV2.SmartIntakeGetForm({ Token: token })) as Row);
+      return mapForm(unwrap(await postIntake(token, SERVICE_URLSV2.SmartIntakeGetForm, { Token: token }, apiServicesV2.SmartIntakeGetForm)) as Row);
     } catch (err) {
       throw toError(err, "We couldn't load your forms right now. Please try again in a few minutes.");
     }
@@ -178,12 +229,12 @@ export const intakeApi = {
 
   async submitSection(token: string, code: SectionCode, submission: { attest: true } | { values: (string | IntakeValue)[] }): Promise<void> {
     try {
-      await apiServicesV2.SmartIntakeSubmitSection({
+      await postIntake(token, SERVICE_URLSV2.SmartIntakeSubmitSection, {
         Token: token,
         SectionCode: code,
         Attest: 'attest' in submission,
         Values: 'values' in submission ? submission.values.map(toBackendValue) : []
-      });
+      }, apiServicesV2.SmartIntakeSubmitSection);
     } catch (err) {
       throw toError(err, "Couldn't save your answers. Please try again.");
     }
@@ -204,7 +255,7 @@ export const intakeApi = {
   /** Marks a consent the patient just signed as signed for this link's appointment. */
   async signConsent(token: string, consentFormId: string, signature: string): Promise<void> {
     try {
-      await apiServicesV2.SmartIntakeSignConsent({ Token: token, ConsentFormId: Number(consentFormId), Signature: signature });
+      await postIntake(token, SERVICE_URLSV2.SmartIntakeSignConsent, { Token: token, ConsentFormId: Number(consentFormId), Signature: signature }, apiServicesV2.SmartIntakeSignConsent);
     } catch (err) {
       throw toError(err, "Your signature couldn't be saved for this visit. Please try again.");
     }
@@ -212,7 +263,7 @@ export const intakeApi = {
 
   async searchDrugs(token: string, query: string): Promise<IntakeDrug[]> {
     try {
-      const result = unwrap(await apiServicesV2.SmartIntakeSearchDrugs({ Token: token, Query: query }));
+      const result = unwrap(await postIntake(token, SERVICE_URLSV2.SmartIntakeSearchDrugs, { Token: token, Query: query }, apiServicesV2.SmartIntakeSearchDrugs));
       return (Array.isArray(result) ? (result as Row[]) : []).map(mapDrug).filter((d) => d.description);
     } catch (err) {
       throw toError(err, "Search isn't available right now. Please try again.");
@@ -222,7 +273,7 @@ export const intakeApi = {
   /** City/state pairs for a 5-digit ZIP (the EHR's ZipState lookup); empty when it's unknown. */
   async searchZip(zip: string): Promise<{ city: string; state: string }[]> {
     try {
-      const result = unwrap(await apiServicesV2.SmartIntakeSearchZip(zip));
+      const result = unwrap(await getZip(zip));
       return (Array.isArray(result) ? (result as Row[]) : []).map((r) => ({ city: str(r, 'City') ?? '', state: str(r, 'State') ?? '' })).filter((r) => r.city && r.state);
     } catch (err) {
       throw toError(err, "ZIP lookup isn't available right now.");
@@ -231,7 +282,7 @@ export const intakeApi = {
 
   async searchPayers(token: string, query: string): Promise<IntakePayer[]> {
     try {
-      const result = unwrap(await apiServicesV2.SmartIntakeSearchPayers({ Token: token, Query: query }));
+      const result = unwrap(await postIntake(token, SERVICE_URLSV2.SmartIntakeSearchPayers, { Token: token, Query: query }, apiServicesV2.SmartIntakeSearchPayers));
       return (Array.isArray(result) ? (result as Row[]) : []).map(mapPayer).filter((p) => p.name);
     } catch (err) {
       throw toError(err, "Search isn't available right now. Please try again.");

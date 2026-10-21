@@ -81,3 +81,14 @@ export const SERVICE_URLSV2 = {
   SmartIntakeSearchPayers: 'patientportal/SearchPayers',
   SmartIntakeSearchZip: 'patientportal/SearchZip'
 };
+
+// One-time-code (passwordless) sign-in. Anonymous, POST-body only, served from the newest API
+// version (base URL in otpLoginService). See src/services/otpLoginService.ts for the contract.
+export const SERVICE_URLS_OTP_LOGIN = {
+  Start: 'patientportal/loginotp/start',
+  Send: 'patientportal/loginotp/send',
+  Verify: 'patientportal/loginotp/verify',
+  // Patient not registered on the portal, opening a Smart Intake link (token in the POST body).
+  IntakeStart: 'patientportal/loginotp/intake/start',
+  IntakeVerify: 'patientportal/loginotp/intake/verify'
+};

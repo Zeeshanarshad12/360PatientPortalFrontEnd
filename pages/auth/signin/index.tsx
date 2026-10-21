@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { hasPendingPostLoginRedirect } from '@/utils/postLoginRedirect';
 import {
   Container,
   TextField,
@@ -10,7 +11,8 @@ import {
   CircularProgress,
   useTheme,
   useMediaQuery,
-  Link
+  Link,
+  Divider
 } from '@mui/material';
 import Image from 'next/image';
 import { Visibility, VisibilityOff } from '@mui/icons-material';
@@ -28,6 +30,11 @@ const Login = () => {
   const togglePasswordVisibility = () => setShowPassword((prev) => !prev);
   const { GetTokenData } = useSelector((state) => state.patientprofileslice);
   const [loading, setLoading] = useState(false);
+  // The one-time-code option only appears when a portal link (e.g. an intake link) sent the patient here.
+  const [cameFromLink, setCameFromLink] = useState(false);
+  useEffect(() => {
+    setCameFromLink(hasPendingPostLoginRedirect());
+  }, []);
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -379,6 +386,37 @@ const Login = () => {
                   'Login'
                 )}
               </Button>
+
+              {cameFromLink && (
+                <>
+                {/* Passwordless alternative — additive; the password flow above is unchanged. */}
+              <Divider sx={{ my: 2 }}>
+                <Typography variant="body2" component="span">
+                  or
+                </Typography>
+              </Divider>
+              <Button
+                fullWidth
+                variant="outlined"
+                color="primary"
+                sx={{
+                  borderRadius: '5px',
+                  '&:focus': {
+                    outline: '2px solid #1976d2',
+                    outlineOffset: '2px'
+                  },
+                  '&:focus-visible': {
+                    outline: '2px solid #1976d2',
+                    outlineOffset: '2px'
+                  }
+                }}
+                onClick={() => router.push('/auth/otp')}
+                disabled={loading}
+              >
+                Sign in with a one-time code
+              </Button>
+              </>
+              )}
 
               <Typography
                 variant="subtitle2"

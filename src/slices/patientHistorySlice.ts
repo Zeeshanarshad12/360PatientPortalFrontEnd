@@ -459,10 +459,14 @@ export const saveFamilyHistory = createAsyncThunk<
         message: 'Save failed'
       }) as any;
     } catch (error: any) {
-      SnackbarUtils.error(
-        error?.response?.data?.message ?? 'Failed to save family history',
-        false
-      );
+      // The API answers a validation failure (400) with its message in the AutoWrapper
+      // envelope (responseException.exceptionMessage, or result as a plain string).
+      const data = error?.response?.data;
+      const apiMessage =
+        data?.responseException?.exceptionMessage ??
+        (typeof data?.result === 'string' ? data.result : undefined) ??
+        data?.message;
+      SnackbarUtils.error(apiMessage ?? 'Failed to save family history', false);
       return thunkAPI.rejectWithValue({
         sectionId: 3,
         message: 'Failed'

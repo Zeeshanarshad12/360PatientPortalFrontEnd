@@ -1,4 +1,4 @@
-import { ReactElement, ReactNode } from 'react';
+import { ReactElement, ReactNode, useEffect, useState } from 'react';
 import type { NextPage } from 'next';
 import type { AppProps } from 'next/app';
 import Head from 'next/head';
@@ -63,9 +63,21 @@ function MyApp(props: MyAppProps) {
     '/auth/signin',
     '/auth/forgotpassword',
     '/auth/mobile',
+    '/auth/otp',
     '/'
   ];
   const isAuthPage = authPages.includes(router.pathname);
+
+  // The intake link page (/patientportal/intake/[token]) is part of the portal for a signed-in patient,
+  // but a patient who is NOT registered on the portal opens it with a one-time code and has no portal
+  // session - the portal shell (sidebar, profile and consent-count loaders, session refresher) would
+  // only fail for them. So without a portal token it renders like an auth page.
+  const isIntakePage = router.pathname === '/patientportal/intake/[token]';
+  const [portalSession, setPortalSession] = useState<boolean | null>(null);
+  useEffect(() => {
+    setPortalSession(!!localStorage.getItem('token'));
+  }, [router.asPath]);
+  const standalone = isAuthPage || (isIntakePage && portalSession === false);
 
   return (
     <CacheProvider value={emotionCache}>
@@ -82,7 +94,7 @@ function MyApp(props: MyAppProps) {
         />
       </Head>
       <ReduxProvider store={store}>
-        {isAuthPage ? (
+        {standalone ? (
           // Auth pages: no PersistGate, minimal providers
           <ThemeProvider>
             <CssBaseline />
