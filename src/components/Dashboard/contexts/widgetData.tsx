@@ -8,6 +8,7 @@ export const useInitialLayout = () => {
     column2: [],
     column3: []
   });
+  const [layoutLoading, setLayoutLoading] = useState(true);
 
   const dispatch = useDispatch();
 
@@ -52,13 +53,15 @@ export const useInitialLayout = () => {
         setLayout(finalLayout);
       } catch (error) {
         console.error('Error fetching Layout:', error);
+      } finally {
+        setLayoutLoading(false);
       }
     };
 
     fetchData();
   }, [dispatch]);
 
-  return layout;
+  return { layout, layoutLoading };
 };
 
 export const widgetContent: Record<string, any> = {

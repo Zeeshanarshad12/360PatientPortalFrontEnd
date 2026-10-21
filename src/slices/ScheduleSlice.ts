@@ -9,6 +9,9 @@ const initialState = {
   providers: [],
   providersLoading: false,
   providersError: null,
+  providerTaxonomies: [],
+  providerTaxonomiesLoading: false,
+  providerTaxonomiesError: null,
   locations: [],
   locationsLoading: false,
   locationsError: null,
@@ -16,6 +19,7 @@ const initialState = {
   providerScheduleInfo: null,
   providerScheduleInfoLoading: false,
   providerScheduleInfoError: null,
+  providerScheduleInfoRequestId: null as string | null,
   createAppointmentLoading: false,
   createAppointmentError: null,
   createdAppointment: null,
@@ -29,7 +33,9 @@ const initialState = {
   appointmentTypesLoading: false,
   appointmentTypesError: null,
   deleteAppointmentLoading: false,
-  deleteAppointmentError: null
+  deleteAppointmentError: null,
+  updateAppointmentStatusLoading: false,
+  updateAppointmentStatusError: null
 };
 
 export const Searchappointmentreason: any = createAsyncThunk(
@@ -65,7 +71,10 @@ export const Searchappointmentreason: any = createAsyncThunk(
 
 export const GetProvidersbyPracticeID: any = createAsyncThunk(
   'schedule/getProvidersbyPracticeID',
-  async (data: { practiceId?: string | number }, thunkAPI) => {
+  async (
+    data: { practiceId?: string | number; locationId?: string | number },
+    thunkAPI
+  ) => {
     try {
       const res = await apiServicesV2.GetProvidersbyPracticeID(
         data,
@@ -76,6 +85,34 @@ export const GetProvidersbyPracticeID: any = createAsyncThunk(
       } else {
         return thunkAPI.rejectWithValue(
           res?.data?.message || 'Failed to fetch providers'
+        );
+      }
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message || error?.message || 'An error occurred';
+      SnackbarUtils.error(errorMessage, false);
+      return thunkAPI.rejectWithValue(errorMessage);
+    }
+  }
+);
+
+// Practice-wide provider taxonomies; drive the provider tabs in Step 3.
+export const GetProviderTaxonomiesByPracticeId: any = createAsyncThunk(
+  'schedule/getProviderTaxonomiesByPracticeId',
+  async (
+    data: { practiceId?: string | number; locationId?: string | number },
+    thunkAPI
+  ) => {
+    try {
+      const res = await apiServicesV2.GetProviderTaxonomiesByPracticeId(
+        data,
+        'ApiVersion2Req'
+      );
+      if (res?.status === 200) {
+        return res?.data?.result;
+      } else {
+        return thunkAPI.rejectWithValue(
+          res?.data?.message || 'Failed to fetch provider taxonomies'
         );
       }
     } catch (error: any) {
@@ -114,7 +151,15 @@ export const GetPracticeLocationForPatient: any = createAsyncThunk(
 export const GetProviderLocationScheduleInfo: any = createAsyncThunk(
   'schedule/getProviderLocationScheduleInfo',
   async (
-    data: { providerIds: Array<string | number>; locationId?: string | number;PracticeId?: string | number },
+    data: {
+      appointmentDurationMinutes?: number;
+      providerIds: Array<string | number>;
+      locationId?: string | number;
+      practiceId?: string | number;
+      auth0UserId?: string;
+      fromDate?: string;
+      toDate?: string;
+    },
     thunkAPI
   ) => {
     try {
@@ -166,7 +211,6 @@ export const UpdatePatientAppointment: any = createAsyncThunk(
   'schedule/updatePatientAppointment',
   async (data: Record<string, any>, thunkAPI) => {
     try {
-      debugger;
       const res = await apiServicesV2.UpdatePatientAppointment(
         data,
         'ApiVersion2Req'
@@ -272,6 +316,44 @@ export const DeleteAppointmentById: any = createAsyncThunk(
   }
 );
 
+// Bug 432545: cancelling from the Patient Portal must update the
+// appointment's Status field instead of soft-deleting the record
+// (DeleteAppointmentById flips IsDeleted, which loses the audit trail).
+// DeleteAppointmentById is left in place since it may still be used
+// elsewhere.
+export const UpdateExistingAppointmentStatus: any = createAsyncThunk(
+  'schedule/updateExistingAppointmentStatus',
+  async (
+    data: {
+      appointmentId: string | number;
+      statusId: number;
+      statusName: string;
+      practiceId: string | number;
+      updatedBy: string;
+    },
+    thunkAPI
+  ) => {
+    try {
+      const res = await apiServicesV2.UpdateExistingAppointmentStatus(
+        data,
+        'ApiVersion2Req'
+      );
+      if (res?.status === 200) {
+        return res?.data?.result;
+      } else {
+        return thunkAPI.rejectWithValue(
+          res?.data?.message || 'Failed to cancel appointment'
+        );
+      }
+    } catch (error: any) {
+      const errorMessage =
+        error?.response?.data?.message || error?.message || 'An error occurred';
+      SnackbarUtils.error(errorMessage, false);
+      return thunkAPI.rejectWithValue(errorMessage);
+    }
+  }
+);
+
 const scheduleSlice = createSlice({
   name: 'schedule',
   initialState,
@@ -285,6 +367,9 @@ const scheduleSlice = createSlice({
     },
     resetDeleteAppointmentError: (state) => {
       state.deleteAppointmentError = null;
+    },
+    resetUpdateAppointmentStatusError: (state) => {
+      state.updateAppointmentStatusError = null;
     },
     setSelectedLocation: (state, action) => {
       state.selectedLocation = action.payload;
@@ -316,6 +401,20 @@ const scheduleSlice = createSlice({
         state.providersLoading = false;
         state.providersError = action.payload as string;
       })
+      .addCase(GetProviderTaxonomiesByPracticeId.pending, (state) => {
+        state.providerTaxonomiesLoading = true;
+        state.providerTaxonomiesError = null;
+      })
+      .addCase(GetProviderTaxonomiesByPracticeId.fulfilled, (state, action) => {
+        state.providerTaxonomiesLoading = false;
+        state.providerTaxonomies = Array.isArray(action.payload)
+          ? action.payload
+          : [];
+      })
+      .addCase(GetProviderTaxonomiesByPracticeId.rejected, (state, action) => {
+        state.providerTaxonomiesLoading = false;
+        state.providerTaxonomiesError = action.payload as string;
+      })
       .addCase(GetPracticeLocationForPatient.pending, (state) => {
         state.locationsLoading = true;
         state.locationsError = null;
@@ -328,15 +427,20 @@ const scheduleSlice = createSlice({
         state.locationsLoading = false;
         state.locationsError = action.payload as string;
       })
-      .addCase(GetProviderLocationScheduleInfo.pending, (state) => {
+      // Step 4 refetches per week; only the latest request may update state,
+      // so a slow response for a week the user already left is ignored.
+      .addCase(GetProviderLocationScheduleInfo.pending, (state, action) => {
+        state.providerScheduleInfoRequestId = action.meta.requestId;
         state.providerScheduleInfoLoading = true;
         state.providerScheduleInfoError = null;
       })
       .addCase(GetProviderLocationScheduleInfo.fulfilled, (state, action) => {
+        if (action.meta.requestId !== state.providerScheduleInfoRequestId) return;
         state.providerScheduleInfoLoading = false;
         state.providerScheduleInfo = action.payload || null;
       })
       .addCase(GetProviderLocationScheduleInfo.rejected, (state, action) => {
+        if (action.meta.requestId !== state.providerScheduleInfoRequestId) return;
         state.providerScheduleInfoLoading = false;
         state.providerScheduleInfoError = action.payload as string;
       })
@@ -400,6 +504,17 @@ const scheduleSlice = createSlice({
       .addCase(DeleteAppointmentById.rejected, (state, action) => {
         state.deleteAppointmentLoading = false;
         state.deleteAppointmentError = action.payload as string;
+      })
+      .addCase(UpdateExistingAppointmentStatus.pending, (state) => {
+        state.updateAppointmentStatusLoading = true;
+        state.updateAppointmentStatusError = null;
+      })
+      .addCase(UpdateExistingAppointmentStatus.fulfilled, (state) => {
+        state.updateAppointmentStatusLoading = false;
+      })
+      .addCase(UpdateExistingAppointmentStatus.rejected, (state, action) => {
+        state.updateAppointmentStatusLoading = false;
+        state.updateAppointmentStatusError = action.payload as string;
       });
   }
 });
@@ -408,6 +523,7 @@ export const {
   clearAppointmentReasons,
   resetAppointmentReasonsError,
   resetDeleteAppointmentError,
+  resetUpdateAppointmentStatusError,
   setSelectedLocation
 } = scheduleSlice.actions;
 export default scheduleSlice.reducer;

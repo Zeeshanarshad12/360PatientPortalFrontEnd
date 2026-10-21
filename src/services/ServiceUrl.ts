@@ -9,6 +9,7 @@ export const SERVICE_URLSV2 = {
   AddPatientUser: 'patientuser/addpatientuser',
   AddExistingUser: 'patientuser/addexistinguser',
   GetToken: 'patientuser/gettoken',
+  AuthenticateUserWithToken: 'patientuser/authenticateuserwithtoken',
   DownloadDocument: 'ccda/download',
   Share: '/ccda/share',
   GetPatientByEmail: 'patientportal/getpatientbyemail',
@@ -58,11 +59,25 @@ export const SERVICE_URLSV2 = {
   GetFamilyRelations: 'patientportal/getfamilyrelation',
   searchappointmentreason: 'patientportal/searchappointmentreason',
   GetProvidersbyPracticeID: 'patientportal/GetProvidersbyPracticeID',
+  GetProviderTaxonomiesByPracticeId:
+    'patientportal/getprovidertaxonomiesbypracticeid',
   GetPracticeLocationForPatient:'patientportal/GetPracticeLocationForPatient',
-  GetProviderLocationScheduleInfo: 'patientportal/GetProviderLocationScheduleInfo',
+  // Returns the schedule plus backend-computed availableSlots/providerBusyTimes.
+  GetProviderLocationScheduleInfo:
+    'patientportal/getproviderlocationscheduleinfoportal',
   CreatePatientAppointment: 'patientportal/CreatePatientAppointment',
   UpdatePatientAppointment: 'patientportal/UpdatePatientAppointment',
   FilterAppointments: 'patientportal/filterappointment',
   GetAllAppointmentType: 'patientportal/GetAllAppointmentType',
-  DeleteAppointmentById: 'patientportal/DeleteAppointmentById'
+  DeleteAppointmentById: 'patientportal/DeleteAppointmentById',
+  UpdateExistingAppointmentStatus: 'patientportal/updateexistingappointmentstatus',
+  // Smart Intake (PatientPortalController, api/v2 like the other patientportal/* calls).
+  // Signed-in portal user + the link token from /patientportal/intake/[token].
+  SmartIntakeGetForm: 'patientportal/GetForm',
+  SmartIntakeSubmitSection: 'patientportal/SubmitSection',
+  SmartIntakeSignConsent: 'patientportal/SignConsent',
+  SmartIntakeGetIntakeLink: 'patientportal/GetIntakeLink',
+  SmartIntakeSearchDrugs: 'patientportal/SearchDrugs',
+  SmartIntakeSearchPayers: 'patientportal/SearchPayers',
+  SmartIntakeSearchZip: 'patientportal/SearchZip'
 };

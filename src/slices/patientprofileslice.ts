@@ -4,6 +4,7 @@ import apiServicesV2 from '@/services/requestHandler';
 import SnackbarUtils from '../content/snackbar';
 import { setToken } from '@/utils/functions';
 import Router from 'next/router';
+import { takePostLoginRedirect } from '@/utils/postLoginRedirect';
 
 const initialState = {
   PatientByEmailData: null,
@@ -347,7 +348,9 @@ export const GetToken: any = createAsyncThunk(
         }
 
         if (result?.access_token) {
-          Router.push('/patientportal/dashboard');
+          // Back to the page that sent the patient to sign in (e.g. a practice's intake link),
+          // else the dashboard.
+          Router.push(takePostLoginRedirect() ?? '/patientportal/dashboard');
           return result;
         }
         return result;

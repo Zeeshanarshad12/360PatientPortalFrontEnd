@@ -29,7 +29,9 @@ export interface Provider {
   locationName?: string | null;
   practiceId?: number;
   practiceName?: string | null;
-  providerSpeciality: string;
+  providerSpecialty: string;
+  taxonomy?: string | null;
+  taxonomyDescription?: string | null;
   isDefault?: boolean;
   isSupervising?: boolean;
   isBillingProvider?: boolean;

@@ -21,7 +21,7 @@ const SortableItem: React.FC<SortableItemProps> = ({ id, children }) => {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
-    marginBottom: '16px'
+    marginBottom: '8px'
   };
 
   // Clone and inject `listeners` as prop to the only child (WidgetWrapper)

@@ -31,7 +31,53 @@ interface Props {
   onSelectForm: (form: ConsentForm & { Signature?: string }) => void;
   triggerRefresh: () => void;
   noForms?: boolean;
+  /** Patient details to pre-fill the form's blanks with (the intake wizard passes the visit's
+   * patient). Without it the signed-in patient's name is used and the date of birth stays blank. */
+  prefill?: ConsentPrefill;
 }
+
+export type ConsentPrefill = { name?: string; dateOfBirth?: string };
+
+const escapeAttr = (value: string) =>
+  value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+const formatLongDate = (value: string | Date) => {
+  // A bare yyyy-MM-dd parses as UTC midnight - the day before in US time zones - so read it as local.
+  const d =
+    value instanceof Date
+      ? value
+      : new Date(/^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00` : value);
+  return Number.isNaN(d.getTime())
+    ? ''
+    : d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+};
+
+/**
+ * What to pre-fill a blank (the editor's "InputTextField") with, from the label just before it:
+ * patient name, date of birth, or today's date. A parent/guardian/representative name is the
+ * patient's own only when the signed-in user is the patient (UserAccessType "Self"); a witness
+ * or anything unrecognised is left for the patient to type. Pre-filled values stay editable.
+ */
+const prefillFor = (label: string, prefill: ConsentPrefill, isSelf: boolean): string => {
+  const l = label.toLowerCase();
+  if (/birth|\bdob\b/.test(l)) return prefill.dateOfBirth ? formatLongDate(prefill.dateOfBirth) : '';
+  if (/\bdate\b/.test(l)) return formatLongDate(new Date());
+  if (/witness|relationship/.test(l)) return '';
+  if (/parent|guardian|representative|responsible|legal/.test(l)) return isSelf ? prefill.name ?? '' : '';
+  if (/name/.test(l)) return prefill.name ?? '';
+  return '';
+};
+
+/** The text just before a blank: its label ("Patient Name:", "Date of Birth:"…), tags stripped. */
+const labelBefore = (html: string, offset: number): string => {
+  const text = html
+    .slice(Math.max(0, offset - 300), offset)
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/g, ' ');
+  // Only the label belongs to this blank - not an earlier blank's label or a previous sentence.
+  const parts = text.split(/InputTextField|[.;\n]/);
+  return (parts[parts.length - 1] ?? '').trim().slice(-60);
+};
 
 // ── Animation ─────────────────────────────────────────────────────────────
 const bounce = keyframes`
@@ -710,7 +756,8 @@ const ConsentFormViewer = ({
   pendingForms,
   onSelectForm,
   triggerRefresh,
-  noForms = false
+  noForms = false,
+  prefill
 }: Props) => {
   const dispatch = useDispatch();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -755,17 +802,28 @@ const ConsentFormViewer = ({
   .consent-form-content li > p { display: inline !important; margin: 0 !important; padding: 0 !important; }
 </style>`;
 
-    // InputTextField replacement
+    // InputTextField replacement - pre-filled from the patient's details where the label says
+    // what the blank is (name, date of birth, date); still editable before signing.
     if (form.Status === 'Pending') {
+      const known: ConsentPrefill = {
+        name: prefill?.name || [firstName, lastName].filter(Boolean).join(' '),
+        dateOfBirth: prefill?.dateOfBirth
+      };
+      const isSelf =
+        typeof window !== 'undefined' && localStorage.getItem('UserAccessType') === 'Self';
       updatedContent = updatedContent.replace(
         /InputTextField/g,
-        `<input type="text" data-field="dynamic" placeholder=""
+        (_match: string, offset: number, whole: string) => {
+          const value = prefillFor(labelBefore(whole, offset), known, isSelf);
+          const width = Math.max(120, value.length * 9 + 16);
+          return `<input type="text" data-field="dynamic" placeholder="" value="${escapeAttr(value)}"
         style="border:none; border-bottom:2px solid #000; outline:none;
           background:transparent; font-size:inherit; font-family:inherit;
-          min-width:120px; width:120px; max-width:100%; padding:2px 4px; display:inline-block;
+          min-width:120px; width:${width}px; max-width:100%; padding:2px 4px; display:inline-block;
           box-sizing:border-box; color:inherit; cursor:text;"
         oninput="this.style.width='120px'; this.style.width=Math.min(Math.max(120,this.scrollWidth), this.parentElement.clientWidth)+'px'"
-      />`
+      />`;
+        }
       );
     } else {
       updatedContent = updatedContent.replace(
@@ -805,7 +863,7 @@ const ConsentFormViewer = ({
       'Signature:'
     );
     setRenderedContent(listStyleFix + updatedContent);
-  }, [form]);
+  }, [form, prefill?.name, prefill?.dateOfBirth, firstName, lastName]);
 
   // ── 2. Countdown ──────────────────────────────────────────────────────
   useEffect(() => {
