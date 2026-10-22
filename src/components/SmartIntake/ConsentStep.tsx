@@ -35,6 +35,7 @@ export function ConsentStep({
   prefill,
   documentTitle,
   sign,
+  loadContent,
   onSignedChange
 }: {
   consent: IntakeConsent;
@@ -44,6 +45,8 @@ export function ConsentStep({
   /** Title the signed PDF is filed under (per visit). */
   documentTitle: string;
   sign: (signature: string) => Promise<void>;
+  /** Intake session: loads the text through the link (the portal's own consent API needs a portal sign-in). */
+  loadContent?: () => Promise<Row[]>;
   onSignedChange: (signed: boolean) => void;
 }) {
   const dispatch = useDispatch();
@@ -57,8 +60,9 @@ export function ConsentStep({
     setError(null);
     (async () => {
       try {
-        const response = await dispatch(GetConsentFormContent({ PatientId: patientId, FormID: consent.consentFormId })).unwrap();
-        const detail = ((response?.result as Row[] | undefined) ?? [])[0];
+        const detail = loadContent
+          ? (await loadContent())[0]
+          : (((await dispatch(GetConsentFormContent({ PatientId: patientId, FormID: consent.consentFormId })).unwrap())?.result as Row[] | undefined) ?? [])[0];
         if (cancelled) return;
         // `content` is the patient's last signed copy (signature baked in) from any visit; a form
         // not yet signed for THIS visit gets the blank template instead.
@@ -120,6 +124,7 @@ export function ConsentStep({
           prefill={prefill}
           pendingForms={[]}
           onSelectForm={() => undefined}
+          intakeSession={!!loadContent}
           triggerRefresh={() => undefined}
           onFormSigned={(_formId, signature, renderedHTML) => {
             setForm((f) => (f ? { ...f, Status: 'Signed', Signature: signature, SignedDate: new Date().toISOString(), Content: renderedHTML } : f));

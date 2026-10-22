@@ -3,7 +3,7 @@ import type { IntakeForm, IntakeSearch, IntakeSection, WizardStep } from './type
 import { fieldKind, formatValue } from './fieldRules';
 
 /** Token-bound calls the steps make. `signConsent` records a consent signed for the link's visit. */
-export type IntakeSearches = { drugs: IntakeSearch; payers: IntakeSearch; signConsent: (consentFormId: string, signature: string) => Promise<void> };
+export type IntakeSearches = { drugs: IntakeSearch; payers: IntakeSearch; signConsent: (consentFormId: string, signature: string) => Promise<void>; /** Set for an intake session: reads a required consent form's text through the link. */ consentContent?: (consentFormId: string) => Promise<Record<string, unknown>[]> };
 
 /** Demographics fields the chart can pre-fill, keyed by field code (labels are the practice's). */
 function demographicsDefaults(form: IntakeForm): Record<string, string> {
@@ -84,7 +84,8 @@ export function buildSteps(form: IntakeForm, searches: IntakeSearches): WizardSt
     // The signed PDF is filed under this title - one per visit (the portal skips a same-titled
     // upload), and the console matches it back to the visit's consent by the form-name prefix.
     documentTitle: visitDate && !Number.isNaN(visitDate.getTime()) ? `${consent.name} - visit ${visitDate.toLocaleDateString('en-US')}` : consent.name,
-    sign: (signature: string) => searches.signConsent(consent.consentFormId, signature)
+    sign: (signature: string) => searches.signConsent(consent.consentFormId, signature),
+    loadContent: searches.consentContent ? () => searches.consentContent!(consent.consentFormId) : undefined
   }));
   return [...form.sections.map((section) => buildStep(section, form, searches)), ...consentSteps];
 }

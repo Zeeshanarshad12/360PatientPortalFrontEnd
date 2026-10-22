@@ -79,6 +79,7 @@ export const SERVICE_URLSV2 = {
   SmartIntakeGetIntakeLink: 'patientportal/GetIntakeLink',
   SmartIntakeSearchDrugs: 'patientportal/SearchDrugs',
   SmartIntakeSearchPayers: 'patientportal/SearchPayers',
+  SmartIntakeGetConsent: 'patientportal/GetIntakeConsent',
   SmartIntakeSearchZip: 'patientportal/SearchZip'
 };
 

@@ -214,7 +214,12 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
     return map;
   }, [parsedSlots, selectedAppointmentType]);
 
-  const hasAnyAvailableSlot = Object.keys(slotsByDate).length > 0;
+  // "More" opens the week view, whose arrows reach later weeks. Offer it
+  // whenever there are times left this week, or the provider works at this
+  // location at all — even if this week's days have all passed, next week
+  // can still have times.
+  const canShowMore =
+    Object.keys(slotsByDate).length > 0 || scheduleItems.length > 0;
 
   // Bug 432588 (Issue 1): weeks follow a real Monday-Sunday boundary. Only
   // days that actually have bookable times are shown as columns — e.g. if
@@ -445,9 +450,9 @@ const Step4SelectProviderSchedule: React.FC<Step4Props> = ({
                 No available times today
               </Typography>
             )}
-            {/* Bug 432494 (Issue 3): "More" only when there are times to
-                show — today or on a later day the backend returned. */}
-            {hasAnyAvailableSlot && (
+            {/* Bug 432494 (Issue 3): no "More" when there's nothing to
+                book at all (provider has no schedule here). */}
+            {canShowMore && (
               <Button variant="text" onClick={() => setShowFullSchedule(true)}>
                 More
               </Button>

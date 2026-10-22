@@ -34,6 +34,10 @@ interface Props {
   /** Patient details to pre-fill the form's blanks with (the intake wizard passes the visit's
    * patient). Without it the signed-in patient's name is used and the date of birth stays blank. */
   prefill?: ConsentPrefill;
+  /** A patient signing through a one-time-code intake session: there is no portal sign-in, so the portal's
+   * own save and document upload are skipped - the intake wizard records the signature for the visit
+   * (PatientPortal/SignConsent). */
+  intakeSession?: boolean;
 }
 
 export type ConsentPrefill = { name?: string; dateOfBirth?: string };
@@ -757,7 +761,8 @@ const ConsentFormViewer = ({
   onSelectForm,
   triggerRefresh,
   noForms = false,
-  prefill
+  prefill,
+  intakeSession = false
 }: Props) => {
   const dispatch = useDispatch();
   const contentRef = useRef<HTMLDivElement>(null);
@@ -1036,6 +1041,13 @@ const ConsentFormViewer = ({
       Status: 'Signed',
       SignedDate: new Date().toISOString()
     };
+
+    if (intakeSession) {
+      setSignatureOpen(false);
+      onFormSigned(form.FormID, Signature, updatedRendered);
+      isSubmittingRef.current = false;
+      return;
+    }
 
     try {
       const response = await dispatch(saveConsentForm(updatedForm));

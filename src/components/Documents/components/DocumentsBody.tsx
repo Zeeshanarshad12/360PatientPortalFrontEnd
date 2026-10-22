@@ -44,6 +44,50 @@ interface Document {
   documentUri: string;
 }
 
+const MIME_TYPES: Record<string, string> = {
+  pdf: 'application/pdf',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  png: 'image/png',
+  gif: 'image/gif',
+  bmp: 'image/bmp',
+  tif: 'image/tiff',
+  tiff: 'image/tiff',
+  txt: 'text/plain',
+  rtf: 'application/rtf',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+};
+
+const PREVIEWABLE_MIME_TYPES = [
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'image/gif',
+  'image/bmp',
+  'image/tiff'
+];
+
+// Word-type files rendered to HTML in the browser (rtf.js / docx-preview)
+// instead of the doc viewer's MS Office renderer, which needs a public URL.
+const HTML_RENDERED_MIME_TYPES = [
+  'application/rtf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+];
+
+type HtmlDocKind = 'rtf' | 'docx';
+
+// Detect the real format from the file's first bytes; .doc files are often
+// RTF or DOCX saved with a .doc extension.
+const detectHtmlDocKind = async (blob: Blob): Promise<HtmlDocKind | null> => {
+  const bytes = new Uint8Array(await blob.slice(0, 5).arrayBuffer());
+  const head = String.fromCharCode(...Array.from(bytes));
+  if (head.startsWith('{\\rtf')) return 'rtf';
+  if (head.startsWith('PK')) return 'docx';
+  return null; // e.g. legacy binary .doc (D0 CF 11 E0) - no browser renderer
+};
+
 interface BodyProps {
   dateRange: string;
   selectedTypeId: number | null;
@@ -61,7 +105,13 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
   const [docUrl, setDocUrl] = useState<string | null>(null);
   const [docType, setDocType] = useState<string>('');
 
+  const [htmlDoc, setHtmlDoc] = useState<{
+    kind: HtmlDocKind;
+    blob: Blob;
+  } | null>(null);
+
   const viewerRef = useRef<DocViewerRef>(null);
+  const htmlContainerRef = useRef<HTMLDivElement>(null);
 
   const { patientId, practiceId } = useCurrentPatient();
 
@@ -155,41 +205,100 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
     setAnchorEl(null);
   };
 
+  // Extension is taken from documentUri (the stored file name); documentName is
+  // a user-entered title and usually has no extension.
+  const getExtension = (fileName: string = ''): string => {
+    const name = fileName.split('?')[0].split('/').pop() || '';
+    return name.includes('.') ? name.split('.').pop()!.toLowerCase() : '';
+  };
+
   const getMimeTypeFromExtension = (fileName: string): string => {
-    const ext = fileName.split('.').pop()?.toLowerCase();
-    switch (ext) {
-      case 'pdf':
-        return 'application/pdf';
-      case 'jpg':
-      case 'jpeg':
-        return 'image/jpeg';
-      case 'png':
-        return 'image/png';
-      default:
-        return 'application/octet-stream';
-    }
+    return MIME_TYPES[getExtension(fileName)] || 'application/octet-stream';
+  };
+
+  // Types the doc viewer can render from a blob URL. DOC/DOCX/RTF are not in
+  // this list: its MS Office renderer needs a publicly reachable URL and fails
+  // (blank/crashed iframe) with a blob URL, so they are rendered to HTML.
+  const isPreviewable = (mimeType: string) =>
+    PREVIEWABLE_MIME_TYPES.includes(mimeType);
+
+  const isHtmlRendered = (mimeType: string) =>
+    HTML_RENDERED_MIME_TYPES.includes(mimeType);
+
+  // Render RTF/DOCX into the viewer once the file is fetched
+  useEffect(() => {
+    const container = htmlContainerRef.current;
+    if (!htmlDoc || !container) return;
+
+    let cancelled = false;
+    container.innerHTML = '';
+
+    const render = async () => {
+      try {
+        if (htmlDoc.kind === 'rtf') {
+          const { RTFJS } = await import('rtf.js');
+          RTFJS.loggingEnabled(false);
+          const rtfDoc = new RTFJS.Document(
+            await htmlDoc.blob.arrayBuffer(),
+            {}
+          );
+          const elements = await rtfDoc.render();
+          if (!cancelled) container.append(...elements);
+        } else {
+          const { renderAsync } = await import('docx-preview');
+          if (!cancelled) await renderAsync(htmlDoc.blob, container, container);
+        }
+      } catch (err) {
+        console.error('Error rendering document:', err);
+        if (!cancelled) {
+          setHtmlDoc(null);
+          setDocType('application/octet-stream');
+        }
+      }
+    };
+
+    render();
+    return () => {
+      cancelled = true;
+    };
+  }, [htmlDoc]);
+
+  const fetchDocumentBlob = async (doc: Document): Promise<Blob> => {
+    const response = await axios({
+      url:
+        BASEURLV2 +
+        `patientportal/downloadpatientdocument?fileName=${doc.documentUri}`,
+      method: 'GET',
+      responseType: 'blob',
+      headers: { Authorization: `Bearer ${getToken()}` }
+    });
+    // Re-type the blob so the browser/viewer knows the real format
+    // (the API may return application/octet-stream).
+    return new Blob([response.data], {
+      type: getMimeTypeFromExtension(doc.documentUri)
+    });
   };
 
   const handleView = async () => {
     if (!menuDoc) return;
 
+    const mimeType = getMimeTypeFromExtension(menuDoc.documentUri);
+    setDocType(mimeType);
+    setDocUrl(null);
+    setHtmlDoc(null);
+    setOpenViewerDialog(true);
+    if (!isPreviewable(mimeType) && !isHtmlRendered(mimeType)) return;
+
     setDocLoading(true);
     try {
-      const mimeType = getMimeTypeFromExtension(menuDoc?.documentUri);
-
-      const response = await axios({
-        url:
-          BASEURLV2 +
-          `patientportal/downloadpatientdocument?fileName=${menuDoc?.documentUri}`,
-        method: 'GET',
-        responseType: 'blob',
-        headers: { Authorization: `Bearer ${getToken()}` }
-      });
-
-      const imageUrl = URL.createObjectURL(response.data);
-      setDocUrl(imageUrl);
-      setDocType(mimeType);
-      setOpenViewerDialog(true);
+      const blob = await fetchDocumentBlob(menuDoc);
+      if (isHtmlRendered(mimeType)) {
+        const kind = await detectHtmlDocKind(blob);
+        if (kind) setHtmlDoc({ kind, blob });
+        else setDocType('application/octet-stream');
+      } else {
+        setDocUrl(URL.createObjectURL(blob));
+      }
     } catch (err) {
       console.error('Error viewing document:', err);
     } finally {
@@ -201,98 +310,95 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
     if (!menuDoc) return;
 
     try {
-      const mimeType = getMimeTypeFromExtension(menuDoc?.documentUri);
+      const blob = await fetchDocumentBlob(menuDoc);
+      const url = URL.createObjectURL(blob);
 
-      await axios({
-        url:
-          BASEURLV2 +
-          `patientportal/downloadpatientdocument?fileName=${menuDoc?.documentUri}`,
-        method: 'GET',
-        responseType: 'blob',
-        headers: {
-          Authorization: `Bearer ${getToken()}`
-        }
-      })
-        .then((response) => {
-          const blob = new Blob([response.data], { type: mimeType });
-          const url = URL.createObjectURL(blob);
+      // ensure filename has the original file's extension
+      const ext = getExtension(menuDoc.documentUri);
+      const extension = ext ? `.${ext}` : '';
+      const fileName =
+        !extension ||
+        menuDoc.documentName.toLowerCase().endsWith(extension)
+          ? menuDoc.documentName
+          : menuDoc.documentName + extension;
 
-          // infer extension from MIME type
-          let extension = '';
-          switch (mimeType) {
-            case 'application/pdf':
-              extension = '.pdf';
-              break;
-            case 'image/png':
-              extension = '.png';
-              break;
-            case 'image/jpeg':
-              extension = '.jpg';
-              break;
-            default:
-              extension = '';
-          }
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
 
-          // ensure filename has extension
-          const fileName = menuDoc.documentName.endsWith(extension)
-            ? menuDoc.documentName
-            : menuDoc.documentName + extension;
-
-          const link = document.createElement('a');
-          link.href = url;
-          link.setAttribute('download', fileName);
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-
-          URL.revokeObjectURL(url);
-        })
-        .catch((err) => {
-          console.error('Error downloading document:', err);
-        })
-        .finally(() => {
-          //handleMenuClose();
-        });
+      URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading document:', error);
-    } finally {
-      //handleMenuClose();
     }
   };
 
-  const handlePrint = async () => {
-    if (!menuDoc) return;
+  // Prints through a hidden iframe instead of opening the blob URL in a new
+  // tab, so the browser's print header/footer don't show the blob URL.
+  const handlePrint = () => {
+    const htmlContent = htmlDoc ? htmlContainerRef.current?.innerHTML : null;
+    if (!htmlContent && (!docUrl || !isPreviewable(docType))) return;
 
-    try {
-      const mimeType = getMimeTypeFromExtension(menuDoc?.documentUri);
+    const iframe = document.createElement('iframe');
+    iframe.style.position = 'fixed';
+    iframe.style.right = '0';
+    iframe.style.bottom = '0';
+    iframe.style.width = '0';
+    iframe.style.height = '0';
+    iframe.style.border = '0';
 
-      await axios({
-        url:
-          BASEURLV2 +
-          `patientportal/downloadpatientdocument?fileName=${menuDoc?.documentUri}`,
-        method: 'GET',
-        responseType: 'blob',
-        headers: {
-          Authorization: `Bearer ${getToken()}`
-        }
-      })
-        .then((response) => {
-          const blob = new Blob([response.data], { type: mimeType });
-          const url = URL.createObjectURL(blob);
+    const title = (menuDoc?.documentName || 'Document').replace(
+      /[<>&"]/g,
+      ''
+    );
 
-          const printWindow = window.open(url, '_blank');
-          printWindow?.print();
+    const cleanup = () => setTimeout(() => iframe.remove(), 1000);
+    iframe.onload = () => {
+      const win = iframe.contentWindow;
+      if (!win) return;
+      win.addEventListener('afterprint', cleanup);
+      win.focus();
+      win.print();
+    };
 
-          URL.revokeObjectURL(url);
-        })
-        .catch((err) => {
-          console.error('Error downloading document:', err);
-        })
-        .finally(() => {});
-    } catch (error) {
-      console.error('Error downloading document:', error);
-    } finally {
+    if (htmlContent) {
+      // RTF/DOCX: print the HTML already rendered in the viewer. margin: 0 on
+      // @page leaves no room for the browser's header/footer.
+      iframe.srcdoc = `<!doctype html><html><head><title>${title}</title>
+        <style>
+          @page { size: auto; margin: 0; }
+          html, body { margin: 0; padding: 0; }
+          body { padding: 12mm; box-sizing: border-box; }
+          .docx-wrapper { background: none !important; padding: 0 !important; }
+          .docx-wrapper > section.docx { box-shadow: none !important; margin: 0 auto !important; }
+        </style></head>
+        <body>${htmlContent}</body></html>`;
+    } else if (docType === 'application/pdf') {
+      // The browser's PDF viewer prints the PDF itself without page headers.
+      iframe.src = docUrl!;
+    } else {
+      // Browsers can't display TIFF in <img>; reuse the viewer's rendered canvas.
+      const tiffCanvas = document.getElementById(
+        'tiff-img'
+      ) as HTMLCanvasElement | null;
+      const imgSrc =
+        docType === 'image/tiff' && tiffCanvas
+          ? tiffCanvas.toDataURL('image/png')
+          : docUrl;
+      // margin: 0 on @page leaves no room for the browser's header/footer.
+      iframe.srcdoc = `<!doctype html><html><head><title>${title}</title>
+        <style>
+          @page { size: auto; margin: 0; }
+          html, body { margin: 0; padding: 0; }
+          body { padding: 12mm; box-sizing: border-box; }
+          img { display: block; max-width: 100%; max-height: 100vh; margin: 0 auto; object-fit: contain; }
+        </style></head>
+        <body><img src="${imgSrc}" /></body></html>`;
     }
+
+    document.body.appendChild(iframe);
   };
 
   const handleDialogClose = () => {
@@ -451,7 +557,28 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
             p: { xs: 1, sm: 2 }
           }}
         >
-          {docLoading || !docUrl ? (
+          {!isPreviewable(docType) && !isHtmlRendered(docType) ? (
+            <Typography
+              variant="h5"
+              color="text.secondary"
+              sx={{ textAlign: 'center' }}
+            >
+              Preview is not available for this file type. Please download the
+              document to view it.
+            </Typography>
+          ) : htmlDoc ? (
+            <Box
+              ref={htmlContainerRef}
+              sx={{
+                alignSelf: 'stretch',
+                width: '100%',
+                height: '100%',
+                overflow: 'auto',
+                bgcolor: '#fff',
+                p: 2
+              }}
+            />
+          ) : docLoading || !docUrl ? (
             <CircularProgress />
           ) : (
             <DocViewer
@@ -503,6 +630,7 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
           <Button
             variant="outlined"
             onClick={handlePrint}
+            disabled={!htmlDoc && (!isPreviewable(docType) || !docUrl)}
             sx={{ borderRadius: '5px' }}
           >
             Print

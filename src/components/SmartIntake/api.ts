@@ -216,6 +216,11 @@ function getZip(zip: string): Promise<{ data?: unknown }> {
     : apiServicesV2.SmartIntakeSearchZip(zip)) as Promise<{ data?: unknown }>;
 }
 
+/** True when this page is open with a one-time-code intake session instead of a portal sign-in. */
+export function usingIntakeSession(token: string): boolean {
+  return intakeSessionFor(token) !== null;
+}
+
 export const intakeApi = {
   /** 404 (IntakeApiError.status) = not available to this account: unknown, expired or revoked
    * link, or one sent to a different patient — deliberately indistinguishable. */
@@ -252,6 +257,17 @@ export const intakeApi = {
     }
   },
 
+
+  /** One required consent form's text, read through the link (for an intake session, which can't use the
+   * portal's own consent endpoints). Same row shape as the portal's GetContent result. */
+  async getConsentContent(token: string, consentFormId: string): Promise<Row[]> {
+    try {
+      const result = unwrap(await postIntake(token, SERVICE_URLSV2.SmartIntakeGetConsent, { Token: token, ConsentFormId: Number(consentFormId) }, () => Promise.reject(new Error('portal'))));
+      return Array.isArray(result) ? (result as Row[]) : [];
+    } catch (err) {
+      throw toError(err, "We couldn't load this form. Please try again in a few minutes.");
+    }
+  },
   /** Marks a consent the patient just signed as signed for this link's appointment. */
   async signConsent(token: string, consentFormId: string, signature: string): Promise<void> {
     try {

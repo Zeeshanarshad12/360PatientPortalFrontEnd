@@ -95,6 +95,8 @@ export type WizardStep =
       prefill: { name: string; dateOfBirth: string };
       documentTitle: string;
       sign: (signature: string) => Promise<void>;
+      /** Intake session only: loads the form's text through the link instead of the portal's consent API. */
+      loadContent?: () => Promise<Record<string, unknown>[]>;
     };
 
 /** The steps that save answers through SubmitSection (every kind but consent). */

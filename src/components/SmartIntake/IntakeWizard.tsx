@@ -8,7 +8,7 @@ import {
   Typography
 } from '@mui/material';
 import SnackbarUtils from '@/content/snackbar';
-import { intakeApi, IntakeApiError } from './api';
+import { intakeApi, IntakeApiError, usingIntakeSession } from './api';
 import { buildSteps, type IntakeSearches } from './buildSteps';
 import type {
   IntakeDrug,
@@ -157,7 +157,10 @@ export function IntakeWizard({ token }: { token: string }) {
         return [...new Set(payers.map((p) => p.name))];
       },
       signConsent: (consentFormId, signature) =>
-        intakeApi.signConsent(token, consentFormId, signature)
+        intakeApi.signConsent(token, consentFormId, signature),
+      consentContent: usingIntakeSession(token)
+        ? (consentFormId) => intakeApi.getConsentContent(token, consentFormId)
+        : undefined
     }),
     [token]
   );

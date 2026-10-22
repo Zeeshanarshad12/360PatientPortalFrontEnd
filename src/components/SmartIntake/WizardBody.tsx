@@ -217,6 +217,7 @@ export function WizardBody({
             prefill={step.prefill}
             documentTitle={step.documentTitle}
             sign={step.sign}
+            loadContent={step.loadContent}
             onSignedChange={(isSigned) => {
               const at = current;
               setSigned((prev) => ({ ...prev, [at]: isSigned }));

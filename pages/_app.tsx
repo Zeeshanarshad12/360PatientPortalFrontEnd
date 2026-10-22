@@ -78,6 +78,9 @@ function MyApp(props: MyAppProps) {
     setPortalSession(!!localStorage.getItem('token'));
   }, [router.asPath]);
   const standalone = isAuthPage || (isIntakePage && portalSession === false);
+  // The intake page signed in with a one-time code still needs the few providers the consent viewer and the
+  // wizard use (they hold no portal data: local state and localStorage reads only).
+  const intakeStandalone = isIntakePage && portalSession === false;
 
   return (
     <CacheProvider value={emotionCache}>
@@ -98,7 +101,22 @@ function MyApp(props: MyAppProps) {
           // Auth pages: no PersistGate, minimal providers
           <ThemeProvider>
             <CssBaseline />
-            <Component {...pageProps} />
+            {intakeStandalone ? (
+              <SnackbarProvider
+                maxSnack={6}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                action={(key) => <SnackbarCloseButton key={key} />}
+              >
+                <SnackbarUtilsConfigurator />
+                <ConsentFormProvider>
+                  <CurrentPatientProvider>
+                    <Component {...pageProps} />
+                  </CurrentPatientProvider>
+                </ConsentFormProvider>
+              </SnackbarProvider>
+            ) : (
+              <Component {...pageProps} />
+            )}
           </ThemeProvider>
         ) : (
           // Main app: full provider tree, wrapped in PersistGate
