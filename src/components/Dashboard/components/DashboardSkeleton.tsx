@@ -8,15 +8,14 @@ import {
   useMediaQuery,
   useTheme
 } from '@mui/material';
-import { widgetContent } from '@/components/Dashboard/contexts/widgetData';
+import {
+  widgetContent,
+  DEFAULT_LAYOUT
+} from '@/components/Dashboard/contexts/widgetData';
 
 // Default widget arrangement, shown only until the saved layout and session
 // are ready so the dashboard never appears as an empty area.
-const DEFAULT_SKELETON_LAYOUT: string[][] = [
-  ['currentMedications', 'myHealthConditions', 'labResults'],
-  ['myVitals', 'myMedicalTimeline'],
-  ['upcomingAppointments', 'allergies']
-];
+const DEFAULT_SKELETON_LAYOUT = DEFAULT_LAYOUT;
 
 const WidgetSkeleton: React.FC<{ id: string }> = ({ id }) => (
   <Card sx={{ minHeight: 250, borderRadius: 3, mb: 1 }}>

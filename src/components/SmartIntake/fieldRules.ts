@@ -165,7 +165,10 @@ export function formatValue(kind: FieldKind, value: string): string {
 const EMAIL =
   /^[A-Za-z0-9]+(?:[._%+-][A-Za-z0-9]+)*@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/i;
 const ZIP = /^\d{5}(-\d{4})?$/;
-const HAS_DIGIT = /\d/;
+// The characters the Console's Add/Edit Patient form accepts in a name (patient-dialog.tsx NAME_RE, after the
+// EMR's CreatePatientV3ValidationSchema): letters, digits and . , _ - ' @ and spaces. Digits ARE allowed, so a
+// name the Console saved ("Nadeem 2") isn't rejected when the patient confirms it on the intake form.
+const NAME_CHARS = /^[.,_\-\\'@\sa-zA-Z0-9]+$/;
 
 function dateError(value: string, label: string): string | null {
   const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(value);
@@ -202,7 +205,7 @@ function formatError(field: FormField, value: string): string | null {
     case 'email':
       return EMAIL.test(value) ? null : "Email doesn't look right.";
     case 'name':
-      if (HAS_DIGIT.test(value)) return "Names can't contain numbers.";
+      if (!NAME_CHARS.test(value)) return 'Invalid characters';
       if (value.length > 100) return 'Too long.';
       return null;
     case 'select':

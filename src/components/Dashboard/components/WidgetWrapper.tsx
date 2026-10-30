@@ -28,7 +28,38 @@ const WidgetWrapper: React.FC<Props> = ({ id, dragHandleProps }) => {
     billingInsurance: <BillingInsurance dragHandleProps={dragHandleProps} />,
   };
 
-  return components[id] || <div>Widget not found</div>;
+  return (
+    <WidgetErrorBoundary id={id}>
+      {components[id] || <div>Widget not found</div>}
+    </WidgetErrorBoundary>
+  );
 };
+
+// One widget throwing on unexpected data must not take down the whole dashboard.
+class WidgetErrorBoundary extends React.Component<
+  { id: string; children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: unknown) {
+    console.error(`Dashboard widget "${this.props.id}" failed to render:`, error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div style={{ padding: 16, color: '#888', textAlign: 'center' }}>
+          Unable to load this section.
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default WidgetWrapper;

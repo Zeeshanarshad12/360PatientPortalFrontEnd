@@ -65,6 +65,7 @@ export type OtpErrorCode =
   | 'OTP_CHALLENGE_INVALID'
   | 'RESEND_NOT_AVAILABLE'
   | 'RATE_LIMITED'
+  | 'NO_CONTACT_ON_FILE'
   | 'NETWORK'
   | 'UNKNOWN';
 
@@ -109,7 +110,8 @@ const KNOWN_CODES: OtpErrorCode[] = [
   'OTP_LOCKED',
   'OTP_CHALLENGE_INVALID',
   'RESEND_NOT_AVAILABLE',
-  'RATE_LIMITED'
+  'RATE_LIMITED',
+  'NO_CONTACT_ON_FILE'
 ];
 
 const toOtpError = (error: any): OtpLoginError => {

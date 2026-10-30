@@ -50,6 +50,8 @@ const messageFor = (error: unknown): string => {
     case 'RATE_LIMITED':
     case 'RESEND_NOT_AVAILABLE':
       return NEUTRAL_LIMIT_MESSAGE;
+    case 'NO_CONTACT_ON_FILE':
+      return "We don't have an email address or mobile number on file for you, so we can't send a code. Please contact your practice to add one, then open this link again.";
     case 'NETWORK':
       return "We couldn't reach the portal. Check your connection and try again.";
     default:

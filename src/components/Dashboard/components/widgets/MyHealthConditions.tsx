@@ -39,7 +39,7 @@ const MyHealthConditions: React.FC<Props> = ({ dragHandleProps }) => {
           };
           const response = await dispatch(getpatientproblems(Obj)).unwrap();
           const data = response.result;
-          sethealthConditions(data);
+          sethealthConditions(Array.isArray(data) ? data : []);
         }
       } catch (error) {
         console.error('Error fetching Health conditions:', error);

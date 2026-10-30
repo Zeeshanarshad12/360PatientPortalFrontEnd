@@ -50,7 +50,7 @@ const MyMedicalTimeline: React.FC<Props> = ({ dragHandleProps }) => {
             GetPatientEncounterDetails(Obj)
           ).unwrap();
           const data = response;
-          settimelineEvents(data);
+          settimelineEvents(Array.isArray(data) ? data : []);
         }
       } catch (error) {
         console.error('Error fetching medications:', error);

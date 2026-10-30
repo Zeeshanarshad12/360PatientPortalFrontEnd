@@ -67,6 +67,9 @@ const prefillFor = (label: string, prefill: ConsentPrefill, isSelf: boolean): st
   if (/birth|\bdob\b/.test(l)) return prefill.dateOfBirth ? formatLongDate(prefill.dateOfBirth) : '';
   if (/\bdate\b/.test(l)) return formatLongDate(new Date());
   if (/witness|relationship/.test(l)) return '';
+  // Someone else's name, not the patient's - "Provider/Doctor Name:" on a release-of-information form is
+  // for the patient to fill in. It used to match the generic "name" rule below and got the patient's own name.
+  if (/provider|doctor|physician|practitioner|clinic|hospital|facility|pharmacy|employer|spouse|emergency|contact/.test(l)) return '';
   if (/parent|guardian|representative|responsible|legal/.test(l)) return isSelf ? prefill.name ?? '' : '';
   if (/name/.test(l)) return prefill.name ?? '';
   return '';

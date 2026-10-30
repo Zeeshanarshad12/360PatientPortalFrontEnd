@@ -51,7 +51,7 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
         if (!isNull(patientId) && !isNull(practiceId)) {
           const Obj = { PatientId: patientId, PracticeId: practiceId };
           const response = await dispatch(getpatientvitals(Obj)).unwrap();
-          const data = response.result;
+          const data = Array.isArray(response?.result) ? response.result : [];
 
           // Build Dates
           const extractedDates = data.map((d) => {

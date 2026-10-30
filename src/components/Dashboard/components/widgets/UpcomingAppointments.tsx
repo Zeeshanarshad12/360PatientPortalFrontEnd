@@ -311,7 +311,7 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
 
         const response = await dispatch(getpatientappointments(Obj)).unwrap();
         const data = response.result;
-        setappointments(data);
+        setappointments(Array.isArray(data) ? data : []);
         setAppointmentsError(null);
       }
     } catch (error) {

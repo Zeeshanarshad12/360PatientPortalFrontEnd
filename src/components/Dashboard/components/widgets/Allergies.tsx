@@ -38,7 +38,7 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
 
           const response = await dispatch(GetPatientAllergies(Obj)).unwrap();
           const data = response.result;
-          setAllergies(data);
+          setAllergies(Array.isArray(data) ? data : []);
         }
       } catch (error) {
         console.error('Error fetching allergies:', error);
@@ -51,7 +51,7 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
   }, [dispatch, practiceId, patientId]);
 
   const getSeverityColor = (severity: string) => {
-    switch (severity.toLowerCase()) {
+    switch ((severity ?? '').toLowerCase()) {
       case 'severe':
         return {
           bgcolor: '#ffebee',

@@ -41,7 +41,7 @@ const CurrentMedications: React.FC<Props> = ({ dragHandleProps }) => {
             GetPatientActiveMedications(Obj)
           ).unwrap();
           const data = response.result;
-          setMedications(data);
+          setMedications(Array.isArray(data) ? data : []);
         }
       } catch (error) {
         console.error('Error fetching medications:', error);

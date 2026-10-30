@@ -64,28 +64,111 @@ const PREVIEWABLE_MIME_TYPES = [
   'image/jpeg',
   'image/png',
   'image/gif',
-  'image/bmp',
-  'image/tiff'
+  'image/bmp'
 ];
 
-// Word-type files rendered to HTML in the browser (rtf.js / docx-preview)
-// instead of the doc viewer's MS Office renderer, which needs a public URL.
+// Files rendered to HTML in the browser instead of by the doc viewer: Word
+// types (its MS Office renderer needs a public URL) and TIFF (its decoder
+// skips Fax G3/G4, LZW and JPEG compression, so scans show random pixels).
 const HTML_RENDERED_MIME_TYPES = [
   'application/rtf',
   'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/tiff'
 ];
 
-type HtmlDocKind = 'rtf' | 'docx';
+type HtmlDocKind = 'rtf' | 'docx' | 'doc' | 'tiff';
 
 // Detect the real format from the file's first bytes; .doc files are often
 // RTF or DOCX saved with a .doc extension.
 const detectHtmlDocKind = async (blob: Blob): Promise<HtmlDocKind | null> => {
-  const bytes = new Uint8Array(await blob.slice(0, 5).arrayBuffer());
+  const bytes = new Uint8Array(await blob.slice(0, 8).arrayBuffer());
   const head = String.fromCharCode(...Array.from(bytes));
   if (head.startsWith('{\\rtf')) return 'rtf';
   if (head.startsWith('PK')) return 'docx';
-  return null; // e.g. legacy binary .doc (D0 CF 11 E0) - no browser renderer
+  if (head.startsWith('II*\0') || head.startsWith('MM\0*')) return 'tiff';
+  if (head.startsWith('\xD0\xCF\x11\xE0')) return 'doc'; // legacy binary Word
+  return null;
+};
+
+// Decodes every page of a TIFF to a PNG data URL.
+const renderTiffPages = async (buffer: ArrayBuffer): Promise<string[]> => {
+  const UTIF = (await import('utif')).default;
+  const ifds = UTIF.decode(buffer);
+  const pages: string[] = [];
+  for (const ifd of ifds) {
+    UTIF.decodeImage(buffer, ifd, ifds);
+    if (!ifd.width || !ifd.height) continue; // not an image page
+    const canvas = document.createElement('canvas');
+    canvas.width = ifd.width;
+    canvas.height = ifd.height;
+    const ctx = canvas.getContext('2d')!;
+    const imageData = ctx.createImageData(ifd.width, ifd.height);
+    imageData.data.set(UTIF.toRGBA8(ifd));
+    ctx.putImageData(imageData, 0, 0);
+    pages.push(canvas.toDataURL('image/png'));
+  }
+  if (!pages.length) throw new Error('TIFF has no image pages');
+  return pages;
+};
+
+// Extracts the main body text of a legacy binary .doc (Word 97-2003) from its
+// piece table. Formatting is not recovered - same as SummitEHR's text-only view.
+const extractLegacyDocText = async (buffer: ArrayBuffer): Promise<string> => {
+  const CFB = await import('cfb');
+  const cfb = CFB.read(new Uint8Array(buffer), { type: 'array' });
+  const streamBytes = (name: string) => {
+    const entry = CFB.find(cfb, name);
+    if (!entry?.content) throw new Error(`Missing ${name} stream`);
+    return Uint8Array.from(entry.content as ArrayLike<number>);
+  };
+
+  const word = streamBytes('WordDocument');
+  const wordView = new DataView(word.buffer);
+  const flags = wordView.getUint16(0x0a, true);
+  if (flags & 0x0100) throw new Error('Encrypted .doc');
+  const table = streamBytes(flags & 0x0200 ? '1Table' : '0Table');
+  const tableView = new DataView(table.buffer);
+
+  const ccpText = wordView.getInt32(0x4c, true); // main document length (chars)
+  const fcClx = wordView.getUint32(0x1a2, true);
+  const lcbClx = wordView.getUint32(0x1a6, true);
+
+  // Clx: skip property runs (0x01) to reach the piece table (0x02)
+  let pos = fcClx;
+  while (pos < fcClx + lcbClx && table[pos] === 0x01) {
+    pos += 3 + tableView.getUint16(pos + 1, true);
+  }
+  if (table[pos] !== 0x02) throw new Error('Piece table not found');
+  const lcb = tableView.getUint32(pos + 1, true);
+  const plc = pos + 5;
+  const pieceCount = (lcb - 4) / 12;
+
+  const cp1252 = new TextDecoder('windows-1252');
+  const utf16 = new TextDecoder('utf-16le');
+  let text = '';
+  for (let i = 0; i < pieceCount && text.length < ccpText; i++) {
+    const cpStart = tableView.getUint32(plc + i * 4, true);
+    const cpEnd = tableView.getUint32(plc + (i + 1) * 4, true);
+    const fcRaw = tableView.getUint32(plc + (pieceCount + 1) * 4 + i * 8 + 2, true);
+    const chars = cpEnd - cpStart;
+    if (fcRaw & 0x40000000) {
+      const fc = (fcRaw & ~0x40000000) / 2;
+      text += cp1252.decode(word.subarray(fc, fc + chars));
+    } else {
+      text += utf16.decode(word.subarray(fcRaw, fcRaw + chars * 2));
+    }
+  }
+  text = text.slice(0, ccpText);
+
+  // Field codes: keep the displayed result, drop the instruction
+  // (0x13 instruction 0x14 result 0x15).
+  text = text.replace(/\x13[^\x13\x14\x15]*\x14/g, '').replace(/\x13[^\x13\x15]*\x15/g, '');
+  return text
+    .replace(/\x07\r?/g, '\t') // table cell / row marks
+    .replace(/[\r\x0b\x0c]/g, '\n') // paragraph, line and page breaks
+    .replace(/[\x00-\x08\x0e-\x1f]/g, '')
+    .trim();
 };
 
 interface BodyProps {
@@ -244,6 +327,30 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
           );
           const elements = await rtfDoc.render();
           if (!cancelled) container.append(...elements);
+        } else if (htmlDoc.kind === 'tiff') {
+          const pages = await renderTiffPages(await htmlDoc.blob.arrayBuffer());
+          if (cancelled) return;
+          pages.forEach((src, i) => {
+            const img = document.createElement('img');
+            img.src = src;
+            img.alt = `Page ${i + 1}`;
+            img.style.cssText =
+              'display:block;max-width:100%;margin:0 auto 16px;';
+            container.append(img);
+          });
+        } else if (htmlDoc.kind === 'doc') {
+          const text = await extractLegacyDocText(
+            await htmlDoc.blob.arrayBuffer()
+          );
+          if (cancelled) return;
+          const note = document.createElement('p');
+          note.textContent =
+            "Formatting isn't available for legacy .doc files — showing text only.";
+          note.style.cssText = 'color:#888;font-size:12px;margin:0 0 12px;';
+          const body = document.createElement('div');
+          body.textContent = text;
+          body.style.cssText = 'white-space:pre-wrap;word-break:break-word;';
+          container.append(note, body);
         } else {
           const { renderAsync } = await import('docx-preview');
           if (!cancelled) await renderAsync(htmlDoc.blob, container, container);
@@ -364,13 +471,15 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
     };
 
     if (htmlContent) {
-      // RTF/DOCX: print the HTML already rendered in the viewer. margin: 0 on
-      // @page leaves no room for the browser's header/footer.
+      // RTF/DOC/DOCX/TIFF: print the HTML already rendered in the viewer.
+      // margin: 0 on @page leaves no room for the browser's header/footer.
       iframe.srcdoc = `<!doctype html><html><head><title>${title}</title>
         <style>
           @page { size: auto; margin: 0; }
           html, body { margin: 0; padding: 0; }
           body { padding: 12mm; box-sizing: border-box; }
+          img { max-height: calc(100vh - 24mm); object-fit: contain; page-break-after: always; }
+          img:last-child { page-break-after: auto; }
           .docx-wrapper { background: none !important; padding: 0 !important; }
           .docx-wrapper > section.docx { box-shadow: none !important; margin: 0 auto !important; }
         </style></head>
@@ -379,14 +488,7 @@ const DocumentsBody: React.FC<BodyProps> = ({ dateRange, selectedTypeId }) => {
       // The browser's PDF viewer prints the PDF itself without page headers.
       iframe.src = docUrl!;
     } else {
-      // Browsers can't display TIFF in <img>; reuse the viewer's rendered canvas.
-      const tiffCanvas = document.getElementById(
-        'tiff-img'
-      ) as HTMLCanvasElement | null;
-      const imgSrc =
-        docType === 'image/tiff' && tiffCanvas
-          ? tiffCanvas.toDataURL('image/png')
-          : docUrl;
+      const imgSrc = docUrl;
       // margin: 0 on @page leaves no room for the browser's header/footer.
       iframe.srcdoc = `<!doctype html><html><head><title>${title}</title>
         <style>

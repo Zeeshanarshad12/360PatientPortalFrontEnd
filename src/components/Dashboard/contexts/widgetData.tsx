@@ -2,6 +2,46 @@ import { useDispatch } from '@/store/index';
 import { useState, useEffect } from 'react';
 import { getdashboardconfigurations } from '@/slices/patientprofileslice';
 
+// Default widget arrangement, one array per column.
+export const DEFAULT_LAYOUT: string[][] = [
+  ['currentMedications', 'myHealthConditions', 'labResults'],
+  ['myVitals', 'myMedicalTimeline'],
+  ['upcomingAppointments', 'allergies']
+];
+
+// A saved layout can leave a column with no widgets, which shows as an empty
+// dashed box. An empty column first takes back its default widgets (e.g.
+// Appointments on top of column 3), then if still empty takes the bottom
+// widget of the longest column. Layouts without an empty column are returned
+// unchanged. Display only - the saved layout is updated the next time the
+// patient drags a widget.
+const fillEmptyColumns = (
+  layout: Record<string, string[]>
+): Record<string, string[]> => {
+  const cols = Object.fromEntries(
+    Object.entries(layout).map(([key, widgets]) => [key, [...widgets]])
+  );
+  const keys = Object.keys(cols);
+  keys.forEach((emptyKey, index) => {
+    if (cols[emptyKey].length > 0) return;
+    for (const widget of DEFAULT_LAYOUT[index] ?? []) {
+      const fromKey = keys.find((k) => cols[k].includes(widget));
+      if (!fromKey || cols[fromKey].length < 2) continue; // keep source non-empty
+      cols[fromKey] = cols[fromKey].filter((w) => w !== widget);
+      cols[emptyKey].push(widget);
+    }
+  });
+  for (const emptyKey of keys) {
+    if (cols[emptyKey].length > 0) continue;
+    const longestKey = keys.reduce((a, b) =>
+      cols[b].length > cols[a].length ? b : a
+    );
+    if (cols[longestKey].length < 2) break; // nothing to spare
+    cols[emptyKey].push(cols[longestKey].pop()!);
+  }
+  return cols;
+};
+
 export const useInitialLayout = () => {
   const [layout, setLayout] = useState<Record<string, string[]>>({
     column1: [],
@@ -50,7 +90,7 @@ export const useInitialLayout = () => {
             .map((item) => item.header);
         });
 
-        setLayout(finalLayout);
+        setLayout(fillEmptyColumns(finalLayout));
       } catch (error) {
         console.error('Error fetching Layout:', error);
       } finally {
