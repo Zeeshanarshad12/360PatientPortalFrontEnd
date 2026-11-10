@@ -626,7 +626,7 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                         color="text.secondary"
                         sx={{ mr: 1 }}
                       >
-                        {moment(appt.appointmentDate).format('MM/DD/YYYY')}
+                        {moment(appt.appointmentDate).format('M/D/YYYY')}
                       </Typography>
                       <Typography
                         variant="body2"
@@ -639,9 +639,7 @@ const UpcomingAppointments: React.FC<Props> = ({ dragHandleProps }) => {
                         sx={{ fontSize: 16, mr: 0.5, color: 'text.secondary' }}
                       />
                       <Typography variant="body2" color="text.secondary">
-                        {moment(appt.startTime).format('hh:mm A') +
-                          ' - ' +
-                          moment(appt.endTime).format('hh:mm A')}
+                        {moment(appt.startTime).format('h:mm A')}
                       </Typography>
                     </Box>
                     <Box display="flex" alignItems="center">

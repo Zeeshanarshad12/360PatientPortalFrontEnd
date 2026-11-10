@@ -156,7 +156,7 @@ export const widgetContent: Record<string, any> = {
     title: 'My Health Conditions'
   },
   myMedicalTimeline: {
-    title: 'My Medical Timeline'
+    title: 'Visit History'
   },
   allergies: {
     title: 'Allergies'

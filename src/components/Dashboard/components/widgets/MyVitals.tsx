@@ -56,9 +56,10 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
           // Build Dates
           const extractedDates = data.map((d) => {
             const dateObj = new Date(d.sessionDate);
-            const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-            const day = String(dateObj.getDate()).padStart(2, '0');
-            return `${month}/${day}`;
+            const month = dateObj.getMonth() + 1;
+            const day = dateObj.getDate();
+            const year = dateObj.getFullYear();
+            return `${month}/${day}/${year}`;
           });
           setDates(extractedDates);
 
@@ -69,7 +70,6 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
             'Body Weight',
             'Body Height',
             'Heart Rate',
-            'Pain Level',
             'Temperature'
           ];
 
@@ -79,7 +79,6 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
             'Body Weight': 'Weight (lbs)',
             'Body Height': 'Height (ft-in)',
             'Heart Rate': 'Heart Rate (bpm)',
-            'Pain Level': 'Pain Scale',
             Temperature: 'Temp (°F)'
           };
 
@@ -103,12 +102,6 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
               const feet = findByVstName(list, 'Feet')?.value ?? '-';
               const inches = findByVstName(list, 'Inches')?.value ?? '-';
               return `${feet}'${inches}"`;
-            }
-
-            if (originalName.toLowerCase() === 'pain level') {
-              const painScale = list?.[0]?.value ?? '0';
-              const painUnit = list?.[0]?.painScale;
-              return painUnit ? `${painScale} - ${painUnit}` : `${painScale}`;
             }
 
             return list?.[0]?.value !== undefined ? `${list[0].value}` : '-';
@@ -188,7 +181,8 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
                   color: 'text.secondary',
                   fontWeight: 'bold',
                   pb: 1,
-                  bgcolor: 'background.paper'
+                  bgcolor: 'background.paper',
+                  whiteSpace: 'nowrap'
                 }}
               >
                 {date}
@@ -276,8 +270,7 @@ const MyVitals: React.FC<Props> = ({ dragHandleProps }) => {
       'Body Weight': '#FF9800',
       'Body Height': '#9C27B0',
       'Heart Rate': '#F44336',
-      Temperature: '#00BCD4',
-      'Pain Level': '#795548'
+      Temperature: '#00BCD4'
     };
 
     return {

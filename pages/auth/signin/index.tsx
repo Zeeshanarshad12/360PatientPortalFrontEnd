@@ -59,10 +59,29 @@ const Login = () => {
       password: password
     };
 
-    const response = await dispatch(GetToken(loginobj)).unwrap();
+    let response: any;
+    try {
+      response = await dispatch(GetToken(loginobj)).unwrap();
+    } catch (err) {
+      // Request failed (network / server error). Auth pages have no snackbar, so show it inline.
+      console.error('Sign-in request failed', err);
+      setError(
+        err?.data?.message ||
+          `Unable to sign in right now. Please try again later.${
+            err?.status ? ` (HTTP ${err.status})` : ' (no response from server)'
+          }`
+      );
+      setLoading(false);
+      return;
+    }
     if (!response || !response.access_token || response.error_description) {
       // setError('Invalid Credentials');
-      if (response.error_description === 'user is blocked') {
+      if (!response) {
+        // The token call succeeded but returned no usable result.
+        setError(
+          'Unable to sign in right now. Please try again later. (empty sign-in response)'
+        );
+      } else if (response.error_description === 'user is blocked') {
         setError('Your account has been blocked.');
       } else if (
         response.error_description?.includes(
@@ -112,22 +131,6 @@ const Login = () => {
         flexDirection: 'column'
       }}
     >
-      {/* Orange Emergency Banner */}
-      <Box
-        sx={{
-          bgcolor: '#ff9800',
-          color: '#000000',
-          py: 1,
-          px: 2,
-          textAlign: 'center',
-          fontSize: '0.9rem',
-          fontWeight: 'bold'
-        }}
-      >
-        This portal is not for emergencies. If you need urgent medical
-        attention, call 911 or go to the closest emergency facility.
-      </Box>
-
       {/* Main Content */}
       <Box sx={{ flex: 1, display: 'flex', bgcolor: 'white' }}>
         {/* Left Section - Background Image Original Size */}
@@ -262,7 +265,7 @@ const Login = () => {
                 component="h6"
                 sx={{ mt: 1, textAlign: 'left', mb: 2, fontWeight: 'bold' }}
               >
-                Enter your email address and password to sign in
+                Enter your Summit EHR patient portal credentials. 
               </Typography>
 
               {/* Error message */}
@@ -423,9 +426,7 @@ const Login = () => {
                 component="p"
                 sx={{ mt: 3, textAlign: 'justify', mb: 2 }}
               >
-                To use the patient portal, you need an invitation from your
-                provider. If you haven't registered yet, please request your
-                doctor or their office to send an invite.
+                Ready to use Summit Now? If you have not received an invitation from your doctor's office, please contact them for an invitation.
               </Typography>
               <Typography
                 variant="subtitle2"
@@ -437,6 +438,22 @@ const Login = () => {
             </Box>
           </Container>
         </Box>
+      </Box>
+
+      {/* Emergency Notice */}
+      <Box
+        sx={{
+          bgcolor: 'white',
+          color: '#000000',
+          py: 1,
+          px: 2,
+          textAlign: 'center',
+          fontSize: '0.9rem',
+          fontWeight: 'bold'
+        }}
+      >
+        This portal is not intended for emergencies. If you are experiencing a
+        medical emergency, please call 911 or visit the closest emergency room.
       </Box>
     </Box>
   );

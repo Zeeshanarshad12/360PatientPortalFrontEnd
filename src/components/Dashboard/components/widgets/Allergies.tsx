@@ -50,35 +50,6 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
     fetchData();
   }, [dispatch, practiceId, patientId]);
 
-  const getSeverityColor = (severity: string) => {
-    switch ((severity ?? '').toLowerCase()) {
-      case 'severe':
-        return {
-          bgcolor: '#ffebee',
-          textColor: '#b71c1c',
-          chipColor: '#d32f2f'
-        };
-      case 'mild':
-        return {
-          bgcolor: '#fff3e0',
-          textColor: '#bf360c',
-          chipColor: '#f57c00'
-        };
-      case 'moderate':
-        return {
-          bgcolor: '#e8f5e8',
-          textColor: '#2e7d32',
-          chipColor: '#2e7d32'
-        };
-      default:
-        return {
-          bgcolor: '#f5f5f5',
-          textColor: '#666',
-          chipColor: '#666'
-        };
-    }
-  };
-
   return (
     <>
       {loading ? (
@@ -150,7 +121,6 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
             {/* Scrollable Allergies List */}
             <Box sx={{ maxHeight: 350, overflowY: 'auto', pr: 1 }}>
               {allergies.map((allergy: any, index: number) => {
-                const colors = getSeverityColor(allergy.severity);
                 return (
                   <Box
                     key={index}
@@ -160,7 +130,7 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
                       p: 1.5,
                       mb: 1,
                       position: 'relative',
-                      bgcolor: colors.bgcolor
+                      bgcolor: '#fafafa'
                     }}
                   >
                     {/* Allergy Details */}
@@ -168,7 +138,6 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
                       color="text.primary"
                       fontWeight="bold"
                       sx={{
-                        color: colors.textColor,
                         mb: 1,
                         pr: 8,
                         textTransform: 'capitalize'
@@ -186,8 +155,6 @@ const Allergies: React.FC<Props> = ({ dragHandleProps }) => {
                             right: 15,
                             fontSize: '0.75rem',
                             borderRadius: '15px',
-                            bgcolor: colors.chipColor,
-                            color: 'white',
                             fontWeight: 'bold'
                           }}
                         />
